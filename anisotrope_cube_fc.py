@@ -39,15 +39,42 @@ spheres = geompy.MakeMultiTranslation1D(spheres, axes[2], 1, 2)
 
 sphere2 = geompy.MakeSpherePntR(vtx[2], math.sqrt(2) / 4 / (1 - alpha[0]))
 
-Pore = geompy.MakeCutList(box, [spheres, sphere2], True)
+PoreFC = geompy.MakeCutList(box, [spheres, sphere2], True)
 
-geompy.addToStudy(Pore, 'Pore')
+geompy.addToStudy(PoreFC, 'PoreFC')
 
 box2 = geompy.MakeBoxTwoPnt(geompy.MakeVertex(0, 0, 0), vtx[3])
 box2 = geompy.MakeRotation(box2, axes[2], -45 * math.pi / 180.0)
-Segment1_8 = geompy.MakeCommonList([Pore, box2], True)
+Segment1_8 = geompy.MakeCommonList([PoreFC, box2], True)
 
 geompy.addToStudy(Segment1_8, 'Segment1_8')
+
+mesh = smesh.Mesh(PoreFC)
+netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
+
+param = netgen.Parameters()
+param.SetSecondOrder( 0 )
+param.SetOptimize( 1 )
+param.SetChordalError( -1 )
+param.SetChordalErrorEnabled( 0 )
+param.SetUseSurfaceCurvature( 1 )
+param.SetFuseEdges( 1 )
+param.SetCheckChartBoundary( 0 )
+param.SetMinSize( 0.01 )
+param.SetMaxSize( 0.02 )
+param.SetFineness( 5 )
+param.SetGrowthRate( 0.1 )
+param.SetNbSegPerEdge( 5 )
+param.SetNbSegPerRadius( 10 )
+param.SetQuadAllowed( 1 )
+
+#vlayer = netgen.ViscousLayers(0.05, 3, 1.5, [15, 29, 54], 1, smeshBuilder.SURF_OFFSET_SMOOTH)
+
+isDone = mesh.Compute()
+
+if not isDone:
+    print("Mesh is not computed")
+
 
 if salome.sg.hasDesktop():
     salome.sg.updateObjBrowser()

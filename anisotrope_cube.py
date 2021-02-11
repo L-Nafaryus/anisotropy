@@ -10,6 +10,7 @@ from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
 import math
+import os
 
 axes = [
     geompy.MakeVectorDXDYDZ(1, 0, 0),
@@ -65,8 +66,8 @@ geompy.addToStudy(Segment1_8, 'Segment1_8')
 
 ###
 
-SegmentMesh = smesh.Mesh(Segment1_8)
-netgen = SegmentMesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
+mesh = smesh.Mesh(Pore)
+netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
 
 param = netgen.Parameters()
 param.SetSecondOrder( 0 )
@@ -76,20 +77,29 @@ param.SetChordalErrorEnabled( 0 )
 param.SetUseSurfaceCurvature( 1 )
 param.SetFuseEdges( 1 )
 param.SetCheckChartBoundary( 0 )
-param.SetMinSize( 0.05 )
-param.SetMaxSize( 0.1 )
+param.SetMinSize( 0.01 )
+param.SetMaxSize( 0.05 )
 param.SetFineness( 5 )
 param.SetGrowthRate( 0.1 )
 param.SetNbSegPerEdge( 5 )
 param.SetNbSegPerRadius( 10 )
 param.SetQuadAllowed( 1 )
 
-vlayer = netgen.ViscousLayers(0.05, 3, 1.5, [15, 29, 54], 1, smeshBuilder.SURF_OFFSET_SMOOTH)
+#vlayer = netgen.ViscousLayers(0.05, 3, 1.5, [15, 29, 54], 1, smeshBuilder.SURF_OFFSET_SMOOTH)
 
-isDone = SegmentMesh.Compute()
+isDone = mesh.Compute()
 
 if not isDone:
     print("Mesh is not computed")
+
+
+#try:
+#    dirname = os.path.dirname(__file__)
+#    filename = os.path.join(dirname, '../build/mesh.unv')
+#    mesh.ExportUNV( filename )
+#    pass
+#except:
+#    print('ExportUNV() failed. Invalid file name?')
 
 if salome.sg.hasDesktop():
     salome.sg.updateObjBrowser()
