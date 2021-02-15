@@ -17,13 +17,14 @@ def create(geomObj):
     param.SetCheckChartBoundary( 0 )
     param.SetMinSize( 0.01 )
     param.SetMaxSize( 0.05 )
-    param.SetFineness( 5 )
+    param.SetFineness( 3 )
     param.SetGrowthRate( 0.1 )
     param.SetNbSegPerEdge( 5 )
     param.SetNbSegPerRadius( 10 )
-    param.SetQuadAllowed( 1 )
+    param.SetQuadAllowed( 0 )
 
-    #vlayer = netgen.ViscousLayers(0.05, 3, 1.5, [15, 29, 54], 1, smeshBuilder.SURF_OFFSET_SMOOTH)
+    vlayer = netgen.ViscousLayers(0.01, 3, 1.5, [], 
+        1, smeshBuilder.SURF_OFFSET_SMOOTH)
     
-    return smesh, mesh
+    return mesh
 
