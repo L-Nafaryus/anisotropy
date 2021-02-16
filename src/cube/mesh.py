@@ -3,7 +3,7 @@ from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
 
-def create(geomObj):
+def create(geomObj, bc):
     mesh = smesh.Mesh(geomObj)
     netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
 
@@ -16,14 +16,19 @@ def create(geomObj):
     param.SetFuseEdges( 1 )
     param.SetCheckChartBoundary( 0 )
     param.SetMinSize( 0.01 )
-    param.SetMaxSize( 0.05 )
-    param.SetFineness( 5 )
-    param.SetGrowthRate( 0.1 )
-    param.SetNbSegPerEdge( 5 )
-    param.SetNbSegPerRadius( 10 )
-    param.SetQuadAllowed( 1 )
+    param.SetMaxSize( 0.1 )
+    param.SetFineness( 3 )
+    #param.SetGrowthRate( 0.1 )
+    #param.SetNbSegPerEdge( 5 )
+    #param.SetNbSegPerRadius( 10 )
+    param.SetQuadAllowed( 0 )
 
-    #vlayer = netgen.ViscousLayers(0.05, 3, 1.5, [15, 29, 54], 1, smeshBuilder.SURF_OFFSET_SMOOTH)
+    vlayer = netgen.ViscousLayers(0.025, 5, 1.1, [],
+        1, smeshBuilder.NODE_OFFSET)
     
+    mesh.GroupOnGeom(bc[0], 'inlet', SMESH.FACE)
+    mesh.GroupOnGeom(bc[1], 'outlet', SMESH.FACE)
+    mesh.GroupOnGeom(bc[2], 'wall', SMESH.FACE)
+
     return mesh
 
