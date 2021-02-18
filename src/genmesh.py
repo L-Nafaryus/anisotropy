@@ -4,16 +4,16 @@ import multiprocessing
 
 path = os.getcwd()
 cube = os.path.join(path, "cube/main.py")
-print(cube)
-alpha = [0.1, 0.15]
+
+alpha = [0.1, 0.15, 0.2]
 processes = []
 
-def genmesh(coef):
-    subprocess.run(["salome", "-t", "{} {}".format(cube, str(coef))])
+def salome(exePath, arg):
+    subprocess.run(["salome", "start", "-t", exePath, "args:%s" % arg])
 
 for c in alpha:
     print("starting process")
-    p = multiprocessing.Process(target=genmesh, args=(c,))
+    p = multiprocessing.Process(target = salome, args = (cube, c))
     processes.append(p)
     p.start()
 
