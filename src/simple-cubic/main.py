@@ -14,8 +14,8 @@ print("alpha = {}".format(coef))
 print("Building geometry ...")
 
 Pore, bc = geometry.create(coef)
-geometry.geompy.addToStudy(Pore, 'Pore {}'.format(coef))
-        
+#geometry.geompy.addToStudy(Pore, 'Pore {}'.format(coef))
+#geometry.geompy.addToStudyInFather(Pore, bc[0], "INLET")
 print("Building mesh ...")
 
 PoreMesh = mesh.create(Pore, bc)
