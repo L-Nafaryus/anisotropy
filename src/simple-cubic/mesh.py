@@ -17,7 +17,7 @@ def create(geomObj, bc):
     param.SetCheckChartBoundary( 0 )
     param.SetMinSize( 0.01 )
     param.SetMaxSize( 0.1 )
-    param.SetFineness( 3 )
+    param.SetFineness( 4 )
     #param.SetGrowthRate( 0.1 )
     #param.SetNbSegPerEdge( 5 )
     #param.SetNbSegPerRadius( 10 )

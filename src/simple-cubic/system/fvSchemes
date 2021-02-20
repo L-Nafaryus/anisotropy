@@ -23,17 +23,21 @@ ddtSchemes
 gradSchemes
 {
     default         Gauss linear;
+//    grad(Phi)   Gauss linear;
 }
 
 divSchemes
 {
     default         none;
     div(phi,U)      bounded Gauss linearUpwind grad(U);
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    div(nonlinearStress) Gauss linear;
 }
 
 laplacianSchemes
 {
     default         Gauss linear corrected;
+//    laplacian(1, Phi)   Gauss linear corrected;
 }
 
 interpolationSchemes
