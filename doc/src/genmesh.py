@@ -9,19 +9,12 @@ if not os.path.exists(build):
     os.makedirs(build)
 
 ###
-
 alpha = [0.1, 0.15, 0.2]
-
 simpleCubic = os.path.join(src, "simple-cubic/main.py")
-# Body-centered cubic
-#bcCubic = os.path.join(path, "bc-cubic/main.py")
-# Face-centered cubic
-#fcCubic = os.path.join(path, "fc-cubic/main.py")
 
 ###
-
 processes = []
-structure = ["simple-cubic"] #, "bc-cubic", "fc-cubic"]
+structure = ["simple-cubic"] 
 
 def salome(src_path, build_path, arg):
     subprocess.run(["salome", "start", "-t", src_path, "args:{},{}".format(build_path, arg)])

@@ -41,7 +41,19 @@ def create(alpha):
     # Main geometry
     Pore = geompy.MakeCutList(cut3, [sphere4], True)
     geompy.addToStudy(Pore, "PORE")
-   
+    # 1/4 of Pore
+    box2 = geompy.MakeBoxDXDYDZ(2, 2, 2)
+    box2 = geompy.MakeTranslation(box2, 2, 0, 0)
+    Segment1_4 = geompy.MakeCommonList([Pore, box2], True)
+    
+    # 1/8 of Pore
+    vec1 = geompy.MakeVector(geompy.MakeVertex(3, 1, 0), geompy.MakeVertex(3, 1, 1))
+    box2 = geompy.MakeRotation(box2, vec1, 45*math.pi/180.0)
+    vec2 = geompy.MakeVector(geompy.MakeVertex(3, 1, 0), geompy.MakeVertex(2, 0, 0))
+    box2 = geompy.MakeTranslationVectorDistance(box2, vec2, 1)
+    box2 = geompy.MakeTranslation(box2, -0.5, 0.5, 0)
+    Segment1_8 = geompy.MakeCommonList([Segment1_4, box2], True)
+    
     # Prepare faces
     vtx.append(geompy.MakeVertex(2, 2, 2))
     vtx.append(geompy.MakeVertexWithRef(vtx[3], 0, 0, 1))
@@ -54,8 +66,11 @@ def create(alpha):
     # Main groups (inlet, outlet, wall)
     inlet = geompy.CreateGroup(Pore, geompy.ShapeType["FACE"])
     gip = geompy.GetInPlace(Pore, common1, True)
+    #faces = geompy.SubShapeAllIDs(gip, geompy.ShapeType["FACE"])
+    #geompy.UnionIDs(inlet, faces)
     faces = geompy.SubShapeAll(gip, geompy.ShapeType["FACE"])
     geompy.UnionList(inlet, faces)
+    #geompy.addToStudyInFather(Pore, inlet, "inletich")
     
     outlet = geompy.CreateGroup(Pore, geompy.ShapeType["FACE"])
     gip = geompy.GetInPlace(Pore, common2, True)
