@@ -1,3 +1,14 @@
 __pycache__
 build/
 logs/
+*.fls
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.log
+*.pdf
+*.run.xml
+*.synctex.gz
+*.toc

@@ -1,8 +1,0 @@
-\babel@toc {russian}{}
-\contentsline {section}{\numberline {1}Введение}{2}{}%
-\contentsline {section}{\numberline {2}Процесс вычисления}{3}{}%
-\contentsline {section}{\numberline {3}Подготовительный этап}{3}{}%
-\contentsline {section}{\numberline {4}Расчёт}{7}{}%
-\contentsline {section}{\numberline {5}Анализ результатов}{9}{}%
-\contentsline {section}{\numberline {6}Выводы}{10}{}%
-\contentsline {section}{\numberline {7}Список литературы}{11}{}%
