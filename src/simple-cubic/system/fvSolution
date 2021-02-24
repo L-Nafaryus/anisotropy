@@ -58,6 +58,10 @@ solvers
 potentialFlow
 {
     nNonOrthogonalCorrectors 10;
+    PhiRefCell  0;
+    PhiRefPoint 0;
+    PhiRefValue 0;
+    Phi 0;
 }
 
 cache

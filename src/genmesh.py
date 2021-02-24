@@ -10,7 +10,7 @@ if not os.path.exists(build):
 
 ###
 
-alpha = [0.1, 0.15, 0.2]
+alpha = [0.1] #, 0.15, 0.2]
 
 simpleCubic = os.path.join(src, "simple-cubic/main.py")
 # Body-centered cubic
