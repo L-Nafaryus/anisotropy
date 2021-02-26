@@ -57,7 +57,7 @@ solvers
 
 potentialFlow
 {
-    nNonOrthogonalCorrectors 10;
+    nNonOrthogonalCorrectors 20;
     PhiRefCell  0;
     PhiRefPoint 0;
     PhiRefValue 0;
