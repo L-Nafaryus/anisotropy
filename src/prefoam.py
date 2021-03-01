@@ -9,5 +9,5 @@ if not os.path.exists(build):
 foamCase = [ "0", "constant", "system" ]
 
 for d in foamCase:
-    shutil.copytree("{}/simple-cubic/{}".format(src, d), 
+    shutil.copytree("{}/foam/{}".format(src, d), 
                     "{}/simple-cubic/0.1/{}".format(build, d))

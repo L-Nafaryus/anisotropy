@@ -12,3 +12,4 @@ logs/
 *.run.xml
 *.synctex.gz
 *.toc
+*.png

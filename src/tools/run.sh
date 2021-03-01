@@ -22,7 +22,7 @@ foamDictionary -case $path constant/polyMesh/boundary -entry entry0.wall.type -s
 decomposePar -case $path
 
 # Initial approximation
-mpirun -np 4 --oversubscribe potentialFoam -case $path -parallel
+mpirun -np 4 --oversubscribe potentialFoam -case $path -parallel | tee -a $path/potentialFoam.log
 
 # Change boundary type for simpleFoam
 for n in {0..3}; do
