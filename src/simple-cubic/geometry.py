@@ -41,7 +41,14 @@ def create(alpha):
     # Main geometry
     Pore = geompy.MakeCutList(cut3, [sphere4], True)
     geompy.addToStudy(Pore, "PORE")
-   
+
+    #
+    #   D /\ B  A(1, 1, 0)  \vec{n}(1, 1, 0)
+    #    /  \   B(3, 3, 0)  \vec{n}(1, 1, 0)
+    #    \  /   C(3, 1, 0)  \vec{n}(-1, 1, 0)
+    #   A \/ C  D(1, 3, 0)  \vec{n}(-1, 1, 0)
+    #
+
     # Prepare faces
     vtx.append(geompy.MakeVertex(2, 2, 2))
     vtx.append(geompy.MakeVertexWithRef(vtx[3], 0, 0, 1))
@@ -51,6 +58,10 @@ def create(alpha):
     plane = geompy.MakeTranslation(plane, 0, 0, -2)
     common2 = geompy.MakeCommonList([Pore, plane], True)
     
+    # TODO: make 4 planes A B C D
+    Pore = geompy.MakeFillet(Pore, 0.1, geompy.ShapeType["EDGE"], [24, 27, 35])
+
+
     # Main groups (inlet, outlet, wall)
     inlet = geompy.CreateGroup(Pore, geompy.ShapeType["FACE"])
     gip = geompy.GetInPlace(Pore, common1, True)

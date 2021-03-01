@@ -10,8 +10,8 @@ path=.
 rm -rf postProcessing processor* *.log logs *.obj constant/polyMesh
 
 # Export and transform mesh
-ideasUnvFoam -case $path mesh.unv
-transformPoints -scale '(0.001 0.001 0.001)'
+ideasUnvToFoam -case $path mesh.unv
+transformPoints -scale '(1e-5 1e-5 1e-5)'
 #polyDualMesh 70 -overwrite
 checkMesh -case $path -allGeometry -allTopology > checkMesh.log
 
@@ -22,7 +22,7 @@ foamDictionary -case $path constant/polyMesh/boundary -entry entry0.wall.type -s
 decomposePar -case $path
 
 # Initial approximation
-potentialFoam -case $path -parallel
+mpirun -np 4 --oversubscribe potentialFoam -case $path -parallel
 
 # Change boundary type for simpleFoam
 for n in {0..3}; do
@@ -31,6 +31,7 @@ for n in {0..3}; do
     foamDictionary "processor${n}/0/U" -entry boundaryField.inlet.value -set 'uniform (0 0 0)'
 done
 
+sleep 2
 # Main calculation
-mpirun -np 4 --oversubscribe simpleFoam -parallel -case $path > $path/simpleFoam.log
+mpirun -np 4 --oversubscribe simpleFoam -parallel -case $path | tee -a $path/simpleFoam.log
 
