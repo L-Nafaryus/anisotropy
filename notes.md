@@ -19,11 +19,12 @@
 | 1e-5  | 1e-5  | 499           |
 
 ##
-\[
+
+```math
 U = \frac{\Delta p L}{mu} \frac{9}{256} (\sqrt 2 - \frac{1}{1 - \alpha})^2
 L = 2 R_0
 R_0 = 1
 scale = 1e-5
 mu = 1e-3
 \Delta p = 1
-\]
+```
