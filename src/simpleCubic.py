@@ -12,6 +12,7 @@ class simpleCubic:
         self.geometry = None
         self.mesh = None
         self.boundary = None
+        salome.salome_init()
 
     def geometryCreate(self, alpha):
         geompy = geomBuilder.New()
@@ -69,17 +70,17 @@ class simpleCubic:
         center = geompy.MakeVertex(2, 2, 1)
         rot = [0, 0, 45]
 
-        if direction == "100":
+        if direction == "001":
             norm = geompy.MakeVector(center, 
                 geompy.MakeVertexWithRef(center, 0, 0, 1))
-            vstep = math.sqrt(2)
-            hstep = 1
-        
-        elif direction == "001":
-            norm = geompy.MakeVector(center, 
-                geompy.MakeVertexWithRef(center, 1, 0, 0))
             vstep = 1
             hstep = math.sqrt(2)
+        
+        elif direction == "100":
+            norm = geompy.MakeVector(center, 
+                geompy.MakeVertexWithRef(center, 1, 0, 0))
+            vstep = math.sqrt(2)
+            hstep = 1
         
         def createGroup(shape, name):
             group = geompy.CreateGroup(self.geometry, 
@@ -97,44 +98,71 @@ class simpleCubic:
             geompy.MakeVectorDXDYDZ(0, 0, 1)
         ]
         
-        # Main box
+        # Bounding box
         box = geompy.MakeBoxDXDYDZ(2 * math.sqrt(2), 2 * math.sqrt(2), 2)
         box = geompy.MakeRotation(box, axes[2], 45 * math.pi / 180.0)
         box = geompy.MakeTranslation(box, 2, 0, 0)
         planes = geompy.ExtractShapes(box, 
             geompy.ShapeType["FACE"], True)
-        planecommon = []
 
+        vplanes = []
+        hplanes = []
         for plane in planes:
-            planecommon.append(geompy.MakeCommonList([self.geometry, plane], True))
+            planeNorm = geompy.GetNormal(plane)
+            angle = geompy.GetAngle(planeNorm, norm)
 
-        planegroup = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"])
-        for planecom in planecommon:
-            faces = geompy.SubShapeAllIDs(planecom, geompy.ShapeType["FACE"]) 
-            geompy.UnionIDs(planegroup, faces)
-        
-        
-        # Prepare faces
-        #vtx.append(geompy.MakeVertex(2, 2, 2))
-        #vtx.append(geompy.MakeVertexWithRef(vtx[3], 0, 0, 1))
-        #vec2 = geompy.MakeVector(vtx[3], vtx[4])
-        plane = geompy.MakePlane(center, norm, 5)
-        
-        plane2 = geompy.MakeTranslationVectorDistance(plane, norm, vstep)
-        common2 = geompy.MakeCommonList([self.geometry, plane2], True)
-        inlet = createGroup(common2, "inlet")
+            if angle == 0 or angle == 180:
+                vplanes.append(plane)
 
-        plane3 = geompy.MakeTranslationVectorDistance(plane, norm, -vstep)
-        common3 = geompy.MakeCommonList([self.geometry, plane3], True)
-        outlet = createGroup(common3, "outlet")
+            else:
+                hplanes.append(plane)
         
-        symetryPlane = geompy.CutListOfGroups([planegroup], [inlet, outlet])
+        zvplane1 = vplanes[0]
+        zvplane2 = vplanes[1]
 
-        PoreGroup = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"])
+        if direction == "001":
+            if geompy.GetPosition(zvplane1)[3] > geompy.GetPosition(zvplane1)[3]:
+                inletplane = zvplane1
+                outletplane = zvplane2
+            
+            else:
+                inletplane = zvplane2
+                outletplane = zvplane1
+
+        elif direction == "100":
+            if geompy.GetPosition(zvplane1)[1] > geompy.GetPosition(zvplane1)[1]:
+                inletplane = zvplane1
+                outletplane = zvplane2
+            
+            else:
+                inletplane = zvplane2
+                outletplane = zvplane1
+
+
+        # inlet and outlet
+        common1 = geompy.MakeCommonList([self.geometry, inletplane], True)
+        inlet = createGroup(common1, "inlet")
+
+        common2 = geompy.MakeCommonList([self.geometry, outletplane], True)
+        outlet = createGroup(common2, "outlet")
+
+        geompy.addToStudy(inletplane, "inletplane")
+        geompy.addToStudy(outletplane, "outletplane")
+        
+        # symetryPlane(s)
+        symetryPlane = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"], "symetryPlane")
+        
+        for plane in hplanes:
+            common3 = geompy.MakeCommonList([self.geometry, plane], True)
+            gip = geompy.GetInPlace(self.geometry, common3, True)
+            faces = geompy.SubShapeAll(gip, geompy.ShapeType["FACE"])
+            geompy.UnionList(symetryPlane, faces)
+
+        # wall
+        allgroup = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"])
         faces = geompy.SubShapeAllIDs(self.geometry, geompy.ShapeType["FACE"]) 
-        geompy.UnionIDs(PoreGroup, faces)
-        
-        wall = geompy.CutListOfGroups([PoreGroup], [inlet, outlet, symetryPlane])
+        geompy.UnionIDs(allgroup, faces)
+        wall = geompy.CutListOfGroups([allgroup], [inlet, outlet, symetryPlane], "wall")
         
         self.boundary = {
             "inlet": inlet,
@@ -147,7 +175,6 @@ class simpleCubic:
 
     def meshCreate(self):
         smesh = smeshBuilder.New()
-
 
         mesh = smesh.Mesh(geomObj)
         netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
@@ -171,9 +198,10 @@ class simpleCubic:
         vlayer = netgen.ViscousLayers(0.025, 2, 1.1, [],
             1, smeshBuilder.NODE_OFFSET)
         
-        mesh.GroupOnGeom(bc[0], 'inlet', SMESH.FACE)
-        mesh.GroupOnGeom(bc[1], 'outlet', SMESH.FACE)
-        mesh.GroupOnGeom(bc[2], 'wall', SMESH.FACE)
+        mesh.GroupOnGeom(self.boundary["inlet"], "inlet", SMESH.FACE)
+        mesh.GroupOnGeom(self.boundary["outlet"], "outlet", SMESH.FACE)
+        mesh.GroupOnGeom(self.boundary["symetryPlane"], "symetryPlane", SMESH.FACE)
+        mesh.GroupOnGeom(self.boundary["wall"], "wall", SMESH.FACE)
 
         self.mesh = mesh
 
@@ -202,7 +230,7 @@ if __name__ == "__main__":
     alpha = float(sys.argv[2])
     direction = str(sys.argv[3])
 
-    salome.salome_init()
+    #salome.salome_init()
     sc = simpleCubic("simpleCubic-{}-{}".format(direction, alpha))
     sc.geometryCreate(alpha)
     sc.boundaryCreate(direction)
