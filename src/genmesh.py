@@ -2,52 +2,40 @@ import os
 import subprocess
 import multiprocessing
 
-src = os.getcwd()
-build = os.path.join(src, "../build")
+def salome(src_path, build_path, coefficient, direction):
+    subprocess.run(["salome", "start", "-t", src_path, "args:{},{}".format(build_path, coefficient, direction)])
 
-if not os.path.exists(build):
-    os.makedirs(build)
+if __name__ == "__main__":
+    # Get main paths
+    project = os.getcwd()
+    src = os.path.join(project, "src")
+    build = os.path.join(project, "build")
 
-###
+    if not os.path.exists(build):
+        os.makedirs(build)
 
-alpha = []
+    ###
+    processes = []
+    structures = ["simple-cubic"] #, "bc-cubic", "fc-cubic"]
+    directions = ["001", "100"]
+    coefficients = [ alpha * 0.01 for alpha in range(1, 13 + 1) ]
 
-for n in range(0.01, 0.13 + 0.01, 0.01):
-    alpha.append(n)
+    for structure in structures:
+        for direction in directions:
+            for coefficient in coefficients:
+                src_path = os.path.join(src, "{}.py".format(structure))
+                build_path = os.path.join(build, 
+                    structure, 
+                    "direction-{}".format(direction), 
+                    "alpha-{}".format(coefficient))
+                
+                if not os.path.exists(build_path):
+                    os.makedirs(build_path)
 
-# Structures
-simpleCubic = os.path.join(src, "simple-cubic/main.py")
-# Body-centered cubic
-#bcCubic = os.path.join(path, "bc-cubic/main.py")
-# Face-centered cubic
-#fcCubic = os.path.join(path, "fc-cubic/main.py")
+                print("starting process")
+                p = multiprocessing.Process(target = salome, args = (src_path, build_path, coefficient, direction))
+                processes.append(p)
+                p.start()
 
-###
-
-processes = []
-structure = ["simple-cubic"] #, "bc-cubic", "fc-cubic"]
-direction = ["1"]
-
-def salome(src_path, build_path, arg):
-    subprocess.run(["salome", "start", "-t", src_path, "args:{},{}".format(build_path, arg)])
-
-for s in structure:
-    s_path = os.path.join(build, s)
-    
-    for d in direction:
-        d_path = os.path.join(s_path, d)
-
-        for c in alpha:
-            src_path = os.path.join(src, "%s/main.py" % s)
-            build_path = os.path.join(d_path, str(c))
-            
-            if not os.path.exists(build_path):
-                os.makedirs(build_path)
-
-            print("starting process")
-            p = multiprocessing.Process(target = salome, args = (src_path, build_path, c))
-            processes.append(p)
-            p.start()
-
-        for process in processes:
-            process.join()
+    for process in processes:
+        process.join()

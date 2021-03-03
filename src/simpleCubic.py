@@ -15,6 +15,19 @@ class simpleCubic:
         salome.salome_init()
 
     def geometryCreate(self, alpha):
+        """
+        Create the simple cubic geometry.
+
+        Parameters:
+            alpha (float): Sphere intersection parameter which used for cutting spheres from box.
+                
+                Radius = R_0 / (1 - alpha)
+                Should be from 0.01 to 0.13
+
+        Returns:
+            Configured geometry.
+        """
+
         geompy = geomBuilder.New()
         
         #
@@ -58,15 +71,44 @@ class simpleCubic:
         
         geompy.addToStudy(self.geometry, self.name)
 
+        return self.geometry
+
     def boundaryCreate(self, direction):
-        geompy = geomBuilder.New()
+        """
+        Create the boundary faces from the geometry.
+
+        Parameters:
+            direction (str): Direction of the flow.
+
+                '001' for the flow with normal vector (0, 0, -1) to face.
+                '100' for the flow with normal vector (-1, 0, 0) to face.
+
+        Returns:
+            boundary (dict):
+
+            {
+                "inlet": <GEOM._objref_GEOM_Object>,
+                "outlet": <GEOM._objref_GEOM_Object>,
+                "symetryPlane": <GEOM._objref_GEOM_Object>,
+                "wall": <GEOM._objref_GEOM_Object>
+            }
+
+        """
         #
-        #   D /\ B  A(1, 1, 0)  \vec{n}(1, 1, 0)
-        #    /  \   B(3, 3, 0)  \vec{n}(1, 1, 0)
-        #    \  /   C(3, 1, 0)  \vec{n}(-1, 1, 0)
-        #   A \/ C  D(1, 3, 0)  \vec{n}(-1, 1, 0)
+        #      _____    z      |
+        #     //////|   |      | flow
+        #    ////// |   |___y  f
+        #    |    | /   /     
+        #    |____|/   /x      direction [0, 0, 1]
+        #
+        #      _____    z        f
+        #     /    /|   |       / flow
+        #    /____/ |   |___y  /
+        #    |||||| /   /      
+        #    ||||||/   /x      direction [1, 0, 0]
         #
         
+        geompy = geomBuilder.New() 
         center = geompy.MakeVertex(2, 2, 1)
         rot = [0, 0, 45]
 
@@ -78,7 +120,9 @@ class simpleCubic:
         
         elif direction == "100":
             norm = geompy.MakeVector(center, 
-                geompy.MakeVertexWithRef(center, 1, 0, 0))
+                geompy.MakeVertexWithRef(center, 
+                    math.cos((90 + rot[2]) * math.pi / 180.0), 
+                    -math.sin((90 + rot[2]) * math.pi / 180.0), 0))
             vstep = math.sqrt(2)
             hstep = 1
         
@@ -102,14 +146,13 @@ class simpleCubic:
         box = geompy.MakeBoxDXDYDZ(2 * math.sqrt(2), 2 * math.sqrt(2), 2)
         box = geompy.MakeRotation(box, axes[2], 45 * math.pi / 180.0)
         box = geompy.MakeTranslation(box, 2, 0, 0)
-        planes = geompy.ExtractShapes(box, 
-            geompy.ShapeType["FACE"], True)
+        planes = geompy.ExtractShapes(box, geompy.ShapeType["FACE"], True)
 
         vplanes = []
         hplanes = []
         for plane in planes:
             planeNorm = geompy.GetNormal(plane)
-            angle = geompy.GetAngle(planeNorm, norm)
+            angle = abs(geompy.GetAngle(planeNorm, norm))
 
             if angle == 0 or angle == 180:
                 vplanes.append(plane)
@@ -117,26 +160,29 @@ class simpleCubic:
             else:
                 hplanes.append(plane)
         
-        zvplane1 = vplanes[0]
-        zvplane2 = vplanes[1]
-
         if direction == "001":
-            if geompy.GetPosition(zvplane1)[3] > geompy.GetPosition(zvplane1)[3]:
-                inletplane = zvplane1
-                outletplane = zvplane2
+            z1 = geompy.GetPosition(vplanes[0])[3]
+            z2 = geompy.GetPosition(vplanes[1])[3]
+
+            if z1 > z2:
+                inletplane = vplanes[0]
+                outletplane = vplanes[1]
             
             else:
-                inletplane = zvplane2
-                outletplane = zvplane1
+                inletplane = vplanes[1]
+                outletplane = vplanes[0]
 
         elif direction == "100":
-            if geompy.GetPosition(zvplane1)[1] > geompy.GetPosition(zvplane1)[1]:
-                inletplane = zvplane1
-                outletplane = zvplane2
+            x1 = geompy.GetPosition(vplanes[0])[1]
+            x2 = geompy.GetPosition(vplanes[1])[1]
+
+            if x1 > x2:
+                inletplane = vplanes[0]
+                outletplane = vplanes[1]
             
             else:
-                inletplane = zvplane2
-                outletplane = zvplane1
+                inletplane = vplanes[1]
+                outletplane = vplanes[0]
 
 
         # inlet and outlet
@@ -146,9 +192,6 @@ class simpleCubic:
         common2 = geompy.MakeCommonList([self.geometry, outletplane], True)
         outlet = createGroup(common2, "outlet")
 
-        geompy.addToStudy(inletplane, "inletplane")
-        geompy.addToStudy(outletplane, "outletplane")
-        
         # symetryPlane(s)
         symetryPlane = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"], "symetryPlane")
         
@@ -173,10 +216,35 @@ class simpleCubic:
 
         return self.boundary
 
-    def meshCreate(self):
+    def meshCreate(self, fineness, viscousLayers=None):
+        """
+        Creates a mesh from a geometry.
+
+        Parameters:
+            fineness (int): Fineness of mesh.
+                
+                0 - Very coarse,
+                1 - Coarse,
+                2 - Moderate,
+                3 - Fine,
+                4 - Very fine.
+
+            viscousLayers (dict or None): Defines viscous layers for mesh. 
+                By default, inlets and outlets specified without layers.
+                
+                {
+                    "thickness": float,
+                    "number": int,
+                    "stretch": float
+                }
+
+        Returns:
+            Configured instance of class <SMESH.SMESH_Mesh>, containig the parameters and boundary groups.
+
+        """
         smesh = smeshBuilder.New()
 
-        mesh = smesh.Mesh(geomObj)
+        mesh = smesh.Mesh(self.geometry)
         netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
 
         param = netgen.Parameters()
@@ -189,25 +257,28 @@ class simpleCubic:
         param.SetCheckChartBoundary( 0 )
         param.SetMinSize( 0.01 )
         param.SetMaxSize( 0.1 )
-        param.SetFineness( 4 )
+        param.SetFineness(fineness)
         #param.SetGrowthRate( 0.1 )
         #param.SetNbSegPerEdge( 5 )
         #param.SetNbSegPerRadius( 10 )
         param.SetQuadAllowed( 0 )
-
-        vlayer = netgen.ViscousLayers(0.025, 2, 1.1, [],
-            1, smeshBuilder.NODE_OFFSET)
         
-        mesh.GroupOnGeom(self.boundary["inlet"], "inlet", SMESH.FACE)
-        mesh.GroupOnGeom(self.boundary["outlet"], "outlet", SMESH.FACE)
-        mesh.GroupOnGeom(self.boundary["symetryPlane"], "symetryPlane", SMESH.FACE)
-        mesh.GroupOnGeom(self.boundary["wall"], "wall", SMESH.FACE)
+        if not viscousLayers is None:
+            vlayer = netgen.ViscousLayers(viscousLayers["thickness"], 
+                                          viscousLayers["number"], 
+                                          viscousLayers["stretch"], 
+                                          [self.boundary["inlet"], self.boundary["outlet"]],
+                                          1, smeshBuilder.NODE_OFFSET)
+        
+        for name, boundary in self.boundary.items():
+            mesh.GroupOnGeom(boundary, name, SMESH.FACE)
 
         self.mesh = mesh
 
         return self.mesh
 
     def meshCompute(self):
+        """Compute the mesh."""
         status = self.mesh.Compute()
         
         if status:
@@ -217,6 +288,12 @@ class simpleCubic:
             print("Mesh is not computed.")
 
     def meshExport(self, path):
+        """
+        Export the mesh in a file in UNV format.
+
+        Parameters:
+            path (string): full path to the expected directory.
+        """
         exportpath = os.path.join(path, "{}.unv".format(self.name))
 
         try:
@@ -230,12 +307,15 @@ if __name__ == "__main__":
     alpha = float(sys.argv[2])
     direction = str(sys.argv[3])
 
-    #salome.salome_init()
     sc = simpleCubic("simpleCubic-{}-{}".format(direction, alpha))
     sc.geometryCreate(alpha)
     sc.boundaryCreate(direction)
-    #sc.meshCreate()
-    #sc.meshCompute()
+    sc.meshCreate(2, {
+        "thickness": 0.02,
+        "number": 2,
+        "stretch": 1.1
+    })
+    sc.meshCompute()
     #sc.meshExport(build)
 
     if salome.sg.hasDesktop():
