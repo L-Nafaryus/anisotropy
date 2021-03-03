@@ -5,6 +5,9 @@ from salome.geom import geomBuilder
 from salome.smesh import smeshBuilder
 import math
 import os, sys
+import logging
+import time
+from datetime import timedelta
 
 class simpleCubic:
     def __init__(self, name = None):
@@ -303,20 +306,41 @@ class simpleCubic:
             print("Error: Cannot export mesh to '{}'".format(exportpath))
 
 if __name__ == "__main__":
+    # Arguments
     buildpath = str(sys.argv[1])
     alpha = float(sys.argv[2])
     direction = str(sys.argv[3])
+    
+    name = "simpleCubic-{}-{}".format(direction, alpha)
 
-    sc = simpleCubic("simpleCubic-{}-{}".format(direction, alpha))
+    # Logger
+    logging.basicConfig(filename="{}/{}.log".format(buildpath, name), 
+        level=logging.INFO, format="%(levelname)s: %(name)s:  %(message)s")
+    start_time = time.monotonic()
+       
+    # Simple cubic
+    sc = simpleCubic(name)
+    
+    logging.info("Creating the geometry ...")
     sc.geometryCreate(alpha)
+    
+    logging.info("Extracting boundaries ...")
     sc.boundaryCreate(direction)
+    
+    logging.info("Creating the mesh ...")
     sc.meshCreate(2, {
         "thickness": 0.02,
         "number": 2,
         "stretch": 1.1
     })
     sc.meshCompute()
-    #sc.meshExport(build)
-
+    
+    logging.info("Exporting the mesh ...")
+    sc.meshExport(buildpath)
+    
+    end_time = time.monotonic()
+    logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
+    logging.info("Done.")
+    
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
