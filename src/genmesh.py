@@ -14,14 +14,29 @@ def salome(port, src_path, build_path, coefficient, direction):
         src_path (str): Path to the execution script.
         build_path (str): Output path.
     """
-    logging.info("Starting SALOME on port {} for {}".format(port, build_path))
-    subprocess.run(["salome", "start", 
-                    "--port", str(port), 
-                    "-t", src_path, 
-                    "args:{},{},{}".format(build_path, coefficient, direction)])
+    logging.info("Starting SALOME on port {}.".format(port))
+    salomelog = open("{}/salome.log".format(build_path), "a")
+
+    subprocess.run([
+        "salome", "start", 
+        "--port", str(port), 
+        "-t", src_path, 
+        "args:{},{},{}".format(build_path, coefficient, direction)
+        ], 
+        stdout=salomelog, 
+        stderr=salomelog)
+        
+    logging.info("Terminating SALOME on port {}.".format(port))
     
-    logging.info("Terminating SALOME on port {} for {}".format(port, build_path))
-    subprocess.run(["salome", "kill", str(port)])
+    subprocess.run([
+        "salome", "kill", 
+        str(port)
+        ],
+        stdout=salomelog,
+        stderr=salomelog)
+
+    salomelog.close()
+
 
 if __name__ == "__main__":
     # Get main paths
@@ -33,8 +48,13 @@ if __name__ == "__main__":
         os.makedirs(build) 
 
     # Logger
-    logging.basicConfig(filename="{}/genmesh.log".format(build), 
-        level=logging.INFO, format="%(levelname)s: %(name)s:  %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, 
+        format="%(levelname)s: %(message)s",
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler("{}/genmesh.log".format(build))
+        ])
     start_time = time.monotonic()
     
     # Start in parallel
@@ -55,7 +75,6 @@ if __name__ == "__main__":
                 
                 if not os.path.exists(build_path):
                     os.makedirs(build_path)
-                    logging.info("{} created.".format(build_path))
 
                 p = multiprocessing.Process(target = salome, 
                     args = (port, src_path, build_path, coefficient, direction))

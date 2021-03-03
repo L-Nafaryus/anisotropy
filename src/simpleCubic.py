@@ -285,10 +285,10 @@ class simpleCubic:
         status = self.mesh.Compute()
         
         if status:
-            print("Mesh succesfully computed.")
+            logging.info("Mesh succesfully computed.")
 
         else:
-            print("Mesh is not computed.")
+            logging.warning("Mesh is not computed.")
 
     def meshExport(self, path):
         """
@@ -303,7 +303,7 @@ class simpleCubic:
             self.mesh.ExportUNV(exportpath)
         
         except:
-            print("Error: Cannot export mesh to '{}'".format(exportpath))
+            logging.error("Cannot export mesh to '{}'".format(exportpath))
 
 if __name__ == "__main__":
     # Arguments
@@ -314,8 +314,13 @@ if __name__ == "__main__":
     name = "simpleCubic-{}-{}".format(direction, alpha)
 
     # Logger
-    logging.basicConfig(filename="{}/{}.log".format(buildpath, name), 
-        level=logging.INFO, format="%(levelname)s: %(name)s:  %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, 
+        format="%(levelname)s: %(message)s",
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler("{}/{}.log".format(buildpath, name))
+        ])
     start_time = time.monotonic()
        
     # Simple cubic
