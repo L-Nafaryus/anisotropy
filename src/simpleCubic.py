@@ -13,8 +13,13 @@ class simpleCubic:
     def __init__(self, name = None):
         self.name = name if type(name) != None else "simpleCubic"
         self.geometry = None
+        self.geometrybbox = None
         self.mesh = None
         self.boundary = None
+        
+        self.rombus = None
+        self.rombusbbox = None
+
         salome.salome_init()
 
     def geometryCreate(self, alpha):
@@ -36,7 +41,7 @@ class simpleCubic:
         #
         R_0 = 1
         R = R_0 / (1 - alpha)
-        R_fillet = 0.1
+        R_fillet = 0.05
 
         # xyz axes
         axes = [
@@ -63,16 +68,40 @@ class simpleCubic:
         sphere = geompy.MakeMultiTranslation2D(sphere, None, 2, 3, None, 2, 3)
         sphere = geompy.MakeTranslation(sphere, -2, 0, 0)
         sphere2 = geompy.MakeTranslation(sphere, 0, 0, 2)
+        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 2)
         
         sphere = geompy.ExtractShapes(sphere, geompy.ShapeType["SOLID"], True)
         sphere2 = geompy.ExtractShapes(sphere2, geompy.ShapeType["SOLID"], True)
-        
-        sphere = geompy.MakeFuseList(sphere + sphere2, True, True)
+        sphere3 = geompy.ExtractShapes(sphere3, geompy.ShapeType["SOLID"], True)
+
+        sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, True, True)
         sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
         self.geometry = geompy.MakeCutList(box, [sphere], True)
-        
+        self.geometrybbox = box
+
         geompy.addToStudy(self.geometry, self.name)
+        
+        # Rombus
+        h = 2
+
+        sk = geompy.Sketcher3D()
+        sk.addPointsAbsolute(0, 0, h * 2)
+        sk.addPointsAbsolute(h, 0, h)
+        sk.addPointsAbsolute(h, h, 0) 
+        sk.addPointsAbsolute(0, h, h)
+        sk.addPointsAbsolute(0, 0, h * 2)
+
+        a3D_Sketcher_1 = sk.wire()
+        Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
+        Vector_1 = geompy.MakeVectorDXDYDZ(h, h, 0)
+        rombus = geompy.MakePrismVecH(Face_1, Vector_1, 2 * math.sqrt(2))
+        geompy.addToStudy(rombus, "romb")
+        
+        self.rombus = geompy.MakeCutList(rombus, [sphere], True)
+        self.rombusbbox = rombus
+
+        geompy.addToStudy(self.rombus, "rombus")
 
         return self.geometry
 
@@ -112,24 +141,45 @@ class simpleCubic:
         #
         
         geompy = geomBuilder.New() 
-        center = geompy.MakeVertex(2, 2, 1)
         rot = [0, 0, 45]
+        buffergeometry = self.geometry
 
         if direction == "001":
+            center = geompy.MakeVertex(2, 2, 1)
+
             norm = geompy.MakeVector(center, 
                 geompy.MakeVertexWithRef(center, 0, 0, 1))
+            
             vstep = 1
             hstep = math.sqrt(2)
         
         elif direction == "100":
+            center = geompy.MakeVertex(2, 2, 1)
+
             norm = geompy.MakeVector(center, 
                 geompy.MakeVertexWithRef(center, 
-                    math.cos((90 + rot[2]) * math.pi / 180.0), 
-                    -math.sin((90 + rot[2]) * math.pi / 180.0), 0))
+                    -math.cos((90 + rot[2]) * math.pi / 180.0), 
+                    math.sin((90 + rot[2]) * math.pi / 180.0), 0))
+
             vstep = math.sqrt(2)
             hstep = 1
+
+        elif direction == "111":
+            center = geompy.MakeVertex(2, 2, 2)
+
+            norm = geompy.MakeVector(center,
+                geompy.MakeVertexWithRef(center,
+                    -math.cos((90 + rot[2]) * math.pi / 180.0),
+                    math.sin((90 + rot[2]) * math.pi / 180.0), math.sqrt(2) / 2))
+            
+            vstep = math.sqrt(2)
+            hstep = 1 
         
+        geompy.addToStudy(norm, "normalvector")
+
         def createGroup(shape, name):
+            self.geometry = self.rombus
+
             group = geompy.CreateGroup(self.geometry, 
                 geompy.ShapeType["FACE"], name)
             gip = geompy.GetInPlace(self.geometry, shape, True)
@@ -139,30 +189,43 @@ class simpleCubic:
             return group
         
         # xyz axes
-        axes = [
-            geompy.MakeVectorDXDYDZ(1, 0, 0),
-            geompy.MakeVectorDXDYDZ(0, 1, 0),
-            geompy.MakeVectorDXDYDZ(0, 0, 1)
-        ]
+        #axes = [
+        #    geompy.MakeVectorDXDYDZ(1, 0, 0),
+        #    geompy.MakeVectorDXDYDZ(0, 1, 0),
+        #    geompy.MakeVectorDXDYDZ(0, 0, 1)
+        #]
         
         # Bounding box
-        box = geompy.MakeBoxDXDYDZ(2 * math.sqrt(2), 2 * math.sqrt(2), 2)
-        box = geompy.MakeRotation(box, axes[2], 45 * math.pi / 180.0)
-        box = geompy.MakeTranslation(box, 2, 0, 0)
+        #box = geompy.MakeBoxDXDYDZ(2 * math.sqrt(2), 2 * math.sqrt(2), 2)
+        #box = geompy.MakeRotation(box, axes[2], 45 * math.pi / 180.0)
+        #box = geompy.MakeTranslation(box, 2, 0, 0)
+        if direction == "111":
+            box = self.rombusbbox
+
+        else:
+            box = self.geometrybbox
+        
         planes = geompy.ExtractShapes(box, geompy.ShapeType["FACE"], True)
 
         vplanes = []
         hplanes = []
+        n = 0
         for plane in planes:
             planeNorm = geompy.GetNormal(plane)
-            angle = abs(geompy.GetAngle(planeNorm, norm))
-
+            n += 1
+            geompy.addToStudy(planeNorm, "normalplane-{}".format(n))
+            angle = int(abs(geompy.GetAngle(planeNorm, norm)))
+            logging.info("angle = {}".format(angle))
             if angle == 0 or angle == 180:
                 vplanes.append(plane)
 
             else:
                 hplanes.append(plane)
-        
+        if salome.sg.hasDesktop():
+            salome.sg.updateObjBrowser()
+        logging.info(len(vplanes))
+        logging.info(len(hplanes))
+
         if direction == "001":
             z1 = geompy.GetPosition(vplanes[0])[3]
             z2 = geompy.GetPosition(vplanes[1])[3]
@@ -175,10 +238,10 @@ class simpleCubic:
                 inletplane = vplanes[1]
                 outletplane = vplanes[0]
 
-        elif direction == "100":
+        elif direction == "100" or direction == "111":
             x1 = geompy.GetPosition(vplanes[0])[1]
             x2 = geompy.GetPosition(vplanes[1])[1]
-
+            logging.info("x1 = {}, x2 = {}".format(x1, x2))
             if x1 > x2:
                 inletplane = vplanes[0]
                 outletplane = vplanes[1]
@@ -319,7 +382,7 @@ if __name__ == "__main__":
         format="%(levelname)s: %(message)s",
         handlers = [
             logging.StreamHandler(),
-            logging.FileHandler("{}/{}.log".format(buildpath, name))
+            logging.FileHandler(os.path.join(buildpath, "{}.log".format(name)))
         ])
     start_time = time.monotonic()
        
