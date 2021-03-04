@@ -7,7 +7,7 @@ import time
 from datetime import timedelta
 
 def application(name, case, log=False, args=[], parallel=False):
-    logging.info("Running '{}' for {}".format(name, case))
+    logging.info("Running '{}'.".format(name))
 
     if log:
         logfile = open("{}/{}.log".format(case, name), "a")
@@ -33,10 +33,10 @@ def checkMesh(case):
     application("checkMesh", case, True, ["-allGeometry", "-allTopology"])
 
 def foamDictionaryGet(case, foamFile, entry):
-    application("foamDictionary", case, False, [foamFile, "-entry", entry])
+    application("foamDictionary", case, True, [foamFile, "-entry", entry])
 
 def foamDictionarySet(case, foamFile, entry, value):
-    application("foamDictionary", case, False, [foamFile, "-entry", entry, "-set", value])
+    application("foamDictionary", case, True, [foamFile, "-entry", entry, "-set", value])
 
 def decomposePar(case):
     application("decomposePar", case, True)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         format="%(levelname)s: %(message)s",
         handlers = [
             logging.StreamHandler(),
-            logging.FileHandler("{}/genmesh.log".format(build))
+            logging.FileHandler("{}/foam.log".format(build))
         ])
     start_time = time.monotonic()
     
@@ -81,6 +81,7 @@ if __name__ == "__main__":
                     "direction-{}".format(direction), 
                     "alpha-{}".format(coefficient))
                 
+                
                 logging.info("Entry with parameters: {}, direction = {}, alpha = {}".format(structure, direction, coefficient))
 
                 logging.info("Copying baseFOAM case ...")
@@ -89,34 +90,39 @@ if __name__ == "__main__":
                         shutil.copytree(os.path.join(src_path, d), 
                             os.path.join(build_path, d))
                 
+                os.chdir(build_path)
+                case_path = "."
+
                 logging.info("Importing mesh to foam ...")
-                ideasUnvToFoam(build_path, "{}-{}-{}.unv".format(structure, direction, coefficient))
+                ideasUnvToFoam(case_path, "{}-{}-{}.unv".format(structure, direction, coefficient))
                 
                 logging.info("Scaling mesh ...")
-                transformPoints(build_path, "'(1e-5 1e-5 1e-5)'")
+                transformPoints(case_path, "(1e-5 1e-5 1e-5)")
                 
                 logging.info("Checking mesh ...")
-                checkMesh(build_path)
+                checkMesh(case_path)
                 
-                # TODO: change type for symetryPlane
                 logging.info("Changing mesh boundaries types ...")
-                foamDictionarySet(build_path, "constant/polyMesh/boundary", "entry0.wall.type", "wall")
-                
+                foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.wall.type", "wall")
+                foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.symetryPlane.type", "symetryPlane")
+
                 logging.info("Decomposing case ...")
-                decomposePar(build_path)
+                decomposePar(case_path)
                 
                 logging.info("Evaluating initial approximation via potentialFoam ...")
-                potentialFoam(build_path)
+                potentialFoam(case_path)
                 
                 logging.info("Preparing boundaryFields for simpleFoam ...")
                 for n in range(4):
-                    foamDictionarySet(build_path, "processor{}/0/U".format(n), 
+                    foamDictionarySet(case_path, "processor{}/0/U".format(n), 
                         "boundaryField.inlet.type", "pressureInletVelocity")
-                    foamDictionarySet(build_path, "processor{}/0/U", 
-                        "boundaryField.inlet.value", "'uniform (0 0 0)'")
+                    foamDictionarySet(case_path, "processor{}/0/U", 
+                        "boundaryField.inlet.value", "uniform (0 0 0)")
                 
                 logging.info("Calculating ...")
-                simpleFoam(build_path)
+                simpleFoam(case_path)
+
+                os.chdir(project)
 
     end_time = time.monotonic()
     logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))

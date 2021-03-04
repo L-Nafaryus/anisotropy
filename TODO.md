@@ -10,3 +10,11 @@
 ## 3.03.21
 - [x] configure salome server, ports, etc.
 - [ ] less processes for salome, optimization.
+
+## 4.03.21
+- [ ] 3rd direction
+- [ ] createPatch(Dict)
+- [ ] views (mesh, ..)
+- [ ] alpha for simpleCubic [0.01 .. 0.28]
+- [ ] translation vector (cyclicAMI)
+
