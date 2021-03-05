@@ -101,6 +101,12 @@ class simpleCubic:
         self.rombus = geompy.MakeCutList(rombus, [sphere], True)
         self.rombusbbox = rombus
 
+        Operators = ["FixShape"]
+        Parameters = ["FixShape.Tolerance3d"]
+        Values = ["1e-7"]
+        PS = geompy.ProcessShape(self.rombusbbox, Operators, Parameters, Values)
+        self.rombusbbox = PS
+
         geompy.addToStudy(self.rombus, "rombus")
 
         return self.geometry
@@ -214,7 +220,7 @@ class simpleCubic:
             planeNorm = geompy.GetNormal(plane)
             n += 1
             geompy.addToStudy(planeNorm, "normalplane-{}".format(n))
-            angle = int(abs(geompy.GetAngle(planeNorm, norm)))
+            angle = abs(geompy.GetAngle(planeNorm, norm))
             logging.info("angle = {}".format(angle))
             if angle == 0 or angle == 180:
                 vplanes.append(plane)
