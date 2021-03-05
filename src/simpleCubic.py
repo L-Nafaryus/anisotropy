@@ -41,7 +41,7 @@ class simpleCubic:
         #
         R_0 = 1
         R = R_0 / (1 - alpha)
-        R_fillet = 0.05
+        R_fillet = 0
 
         # xyz axes
         axes = [
@@ -75,7 +75,9 @@ class simpleCubic:
         sphere3 = geompy.ExtractShapes(sphere3, geompy.ShapeType["SOLID"], True)
 
         sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, True, True)
-        sphere = geompy.MakeFilletAll(sphere, R_fillet)
+        
+        if not R_fillet == 0:
+            sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
         self.geometry = geompy.MakeCutList(box, [sphere], True)
         self.geometrybbox = box
@@ -213,7 +215,8 @@ class simpleCubic:
         
         planes = geompy.ExtractShapes(box, geompy.ShapeType["FACE"], True)
 
-        vplanes = []
+        inletplane = None
+        outletplane = None
         hplanes = []
         n = 0
         for plane in planes:
@@ -222,41 +225,22 @@ class simpleCubic:
             geompy.addToStudy(planeNorm, "normalplane-{}".format(n))
             angle = abs(geompy.GetAngle(planeNorm, norm))
             logging.info("angle = {}".format(angle))
-            if angle == 0 or angle == 180:
-                vplanes.append(plane)
+
+            if angle == 0:
+                outletplane = plane
+
+            elif angle == 180:
+                inletplane = plane
 
             else:
                 hplanes.append(plane)
+
         if salome.sg.hasDesktop():
             salome.sg.updateObjBrowser()
-        logging.info(len(vplanes))
-        logging.info(len(hplanes))
 
-        if direction == "001":
-            z1 = geompy.GetPosition(vplanes[0])[3]
-            z2 = geompy.GetPosition(vplanes[1])[3]
+        logging.info("hplanes = {}".format(len(hplanes)))
 
-            if z1 > z2:
-                inletplane = vplanes[0]
-                outletplane = vplanes[1]
-            
-            else:
-                inletplane = vplanes[1]
-                outletplane = vplanes[0]
-
-        elif direction == "100" or direction == "111":
-            x1 = geompy.GetPosition(vplanes[0])[1]
-            x2 = geompy.GetPosition(vplanes[1])[1]
-            logging.info("x1 = {}, x2 = {}".format(x1, x2))
-            if x1 > x2:
-                inletplane = vplanes[0]
-                outletplane = vplanes[1]
-            
-            else:
-                inletplane = vplanes[1]
-                outletplane = vplanes[0]
-
-
+        
         # inlet and outlet
         common1 = geompy.MakeCommonList([self.geometry, inletplane], True)
         inlet = createGroup(common1, "inlet")
