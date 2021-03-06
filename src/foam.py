@@ -68,8 +68,8 @@ if __name__ == "__main__":
     
     # Main entry
     structures = ["simpleCubic"] #, "bc-cubic", "fc-cubic"]
-    directions = ["001", "100"]
-    coefficients = [ alpha * 0.01 for alpha in range(1, 13 + 1) ]
+    directions = ["001"] #, "100", "111"]
+    coefficients = [0.1] #[ alpha * 0.01 for alpha in range(1, 13 + 1) ]
 
     for structure in structures:
         for direction in directions:

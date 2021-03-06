@@ -15,6 +15,13 @@
 - [x] 3rd direction
 - [ ] createPatch(Dict)
 - [ ] views (mesh, ..)
-- [ ] alpha for simpleCubic [0.01 .. 0.28]
+- [x] alpha for simpleCubic [0.01 .. 0.28]
 - [ ] translation vector (cyclicAMI)
 - [ ] BUG: angle between the direction vector and the normal to inlet is ~1.4e-14 
+    - [x] Temporary solution
+- [ ] BUG: ideasUnvToFoam not working with param '-case PATH'
+    - [x] Temporary sulution via os.chdir(PATH)
+
+## 6.03.21
+- [ ] ERROR: MakeFuseList with alpha > 0.2
+

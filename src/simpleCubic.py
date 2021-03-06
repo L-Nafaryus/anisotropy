@@ -20,6 +20,8 @@ class simpleCubic:
         self.rombus = None
         self.rombusbbox = None
 
+        self.spheres = None
+
         salome.salome_init()
 
     def geometryCreate(self, alpha):
@@ -29,8 +31,8 @@ class simpleCubic:
         Parameters:
             alpha (float): Sphere intersection parameter which used for cutting spheres from box.
                 
-                Radius = R_0 / (1 - alpha)
-                Should be from 0.01 to 0.13
+                Radius = R0 / (1 - alpha)
+                Should be from 0.01 to 0.28
 
         Returns:
             Configured geometry.
@@ -38,10 +40,21 @@ class simpleCubic:
 
         geompy = geomBuilder.New()
         
-        #
-        R_0 = 1
-        R = R_0 / (1 - alpha)
-        R_fillet = 0
+        # Parameters
+        R0 = 1
+        R = R0 / (1 - alpha)
+        R_fillet = 0.01
+        
+        C1 = 0.8
+        C2 = 0.4
+        alpha1 = 0.01
+        alpha2 = 0.28
+        
+        Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
+        R_fillet = Cf * (R0 * math.sqrt(2) - R)
+        
+        logging.info("geometryCreate: alpha = {}".format(alpha))
+        logging.info("geometryCreate: R_fillet = {}".format(R_fillet))
 
         # xyz axes
         axes = [
@@ -75,10 +88,17 @@ class simpleCubic:
         sphere3 = geompy.ExtractShapes(sphere3, geompy.ShapeType["SOLID"], True)
 
         sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, True, True)
-        
+
+                
         if not R_fillet == 0:
             sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
+        self.spheres = sphere
+
+        #else:
+        #    sphere = sphere + sphere2 + sphere3 #geompy.MakeCompound(sphere + sphere2 + sphere3)
+        
+        # geompy.RemoveExtraEdges(obj, True)
         self.geometry = geompy.MakeCutList(box, [sphere], True)
         self.geometrybbox = box
 
@@ -86,28 +106,34 @@ class simpleCubic:
         
         # Rombus
         h = 2
-
-        sk = geompy.Sketcher3D()
-        sk.addPointsAbsolute(0, 0, h * 2)
-        sk.addPointsAbsolute(h, 0, h)
-        sk.addPointsAbsolute(h, h, 0) 
-        sk.addPointsAbsolute(0, h, h)
-        sk.addPointsAbsolute(0, 0, h * 2)
-
-        a3D_Sketcher_1 = sk.wire()
-        Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
-        Vector_1 = geompy.MakeVectorDXDYDZ(h, h, 0)
-        rombus = geompy.MakePrismVecH(Face_1, Vector_1, 2 * math.sqrt(2))
-        geompy.addToStudy(rombus, "romb")
         
-        self.rombus = geompy.MakeCutList(rombus, [sphere], True)
-        self.rombusbbox = rombus
+        Vertex_2 = geompy.MakeVertex(0, 0, 4)
+        Vertex_1 = geompy.MakeVertex(2, 0, 2)
+        Vertex_3 = geompy.MakeVertex(2, 2, 0)
+        Vertex_4 = geompy.MakeVertex(0, 2, 2)
+        Edge_1 = geompy.MakeEdge(Vertex_2, Vertex_1)
+        Edge_2 = geompy.MakeEdge(Vertex_1, Vertex_3)
+        Edge_3 = geompy.MakeEdge(Vertex_3, Vertex_4)
+        Edge_4 = geompy.MakeEdge(Vertex_4, Vertex_2)
+        Face_1 = geompy.MakeFaceWires([Edge_1, Edge_2, Edge_3, Edge_4], 1)
 
-        Operators = ["FixShape"]
-        Parameters = ["FixShape.Tolerance3d"]
-        Values = ["1e-7"]
-        PS = geompy.ProcessShape(self.rombusbbox, Operators, Parameters, Values)
-        self.rombusbbox = PS
+
+        #sk = geompy.Sketcher3D()
+        #sk.addPointsAbsolute(0, 0, h * 2)
+        #sk.addPointsAbsolute(h, 0, h)
+        #sk.addPointsAbsolute(h, h, 0) 
+        #sk.addPointsAbsolute(0, h, h)
+        #sk.addPointsAbsolute(0, 0, h * 2)
+
+        #a3D_Sketcher_1 = sk.wire()
+        #Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
+        Vector_1 = geompy.MakeVectorDXDYDZ(1, 1, 0)
+        rombusbbox = geompy.MakePrismVecH(Face_1, Vector_1, round(2 * math.sqrt(2), 14))
+
+        geompy.addToStudy(rombusbbox, "rombusbbox")
+        
+        self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
+        self.rombusbbox = rombusbbox
 
         geompy.addToStudy(self.rombus, "rombus")
 
@@ -134,20 +160,6 @@ class simpleCubic:
             }
 
         """
-        #
-        #      _____    z      |
-        #     //////|   |      | flow
-        #    ////// |   |___y  f
-        #    |    | /   /     
-        #    |____|/   /x      direction [0, 0, 1]
-        #
-        #      _____    z        f
-        #     /    /|   |       / flow
-        #    /____/ |   |___y  /
-        #    |||||| /   /      
-        #    ||||||/   /x      direction [1, 0, 0]
-        #
-        
         geompy = geomBuilder.New() 
         rot = [0, 0, 45]
         buffergeometry = self.geometry
@@ -174,88 +186,75 @@ class simpleCubic:
 
         elif direction == "111":
             center = geompy.MakeVertex(2, 2, 2)
+            self.geometry = self.rombus
 
             norm = geompy.MakeVector(center,
-                geompy.MakeVertexWithRef(center,
-                    -math.cos((90 + rot[2]) * math.pi / 180.0),
-                    math.sin((90 + rot[2]) * math.pi / 180.0), math.sqrt(2) / 2))
+                geompy.MakeVertexWithRef(center, 1, 1, 1))
+                    #-math.cos((90 + rot[2]) * math.pi / 180.0),
+                    #math.sin((90 + rot[2]) * math.pi / 180.0), math.sqrt(2) / 2))
             
             vstep = math.sqrt(2)
             hstep = 1 
         
+        logging.info("boundaryCreate: direction = {}".format(direction))
+
         geompy.addToStudy(norm, "normalvector")
 
-        def createGroup(shape, name):
-            self.geometry = self.rombus
-
-            group = geompy.CreateGroup(self.geometry, 
-                geompy.ShapeType["FACE"], name)
-            gip = geompy.GetInPlace(self.geometry, shape, True)
-            faces = geompy.SubShapeAll(gip, geompy.ShapeType["FACE"])
-            geompy.UnionList(group, faces)
-
-            return group
-        
-        # xyz axes
-        #axes = [
-        #    geompy.MakeVectorDXDYDZ(1, 0, 0),
-        #    geompy.MakeVectorDXDYDZ(0, 1, 0),
-        #    geompy.MakeVectorDXDYDZ(0, 0, 1)
-        #]
-        
-        # Bounding box
-        #box = geompy.MakeBoxDXDYDZ(2 * math.sqrt(2), 2 * math.sqrt(2), 2)
-        #box = geompy.MakeRotation(box, axes[2], 45 * math.pi / 180.0)
-        #box = geompy.MakeTranslation(box, 2, 0, 0)
         if direction == "111":
-            box = self.rombusbbox
+            box = self.rombus
 
         else:
             box = self.geometrybbox
         
         planes = geompy.ExtractShapes(box, geompy.ShapeType["FACE"], True)
-
-        inletplane = None
-        outletplane = None
+        inletplane = []
+        outletplane = []
         hplanes = []
-        n = 0
+        
         for plane in planes:
             planeNorm = geompy.GetNormal(plane)
-            n += 1
-            geompy.addToStudy(planeNorm, "normalplane-{}".format(n))
-            angle = abs(geompy.GetAngle(planeNorm, norm))
-            logging.info("angle = {}".format(angle))
+            
+            angle = round(abs(geompy.GetAngle(planeNorm, norm)), 0)
 
             if angle == 0:
-                outletplane = plane
+                outletplane.append(plane)    
 
             elif angle == 180:
-                inletplane = plane
+                inletplane.append(plane)
 
-            else:
+            elif direction == "111" and (angle == 109 or angle == 71):
                 hplanes.append(plane)
+
+            elif direction == "100" or direction == "001":
+                if angle == 90:
+                    hplanes.append(plane)
 
         if salome.sg.hasDesktop():
             salome.sg.updateObjBrowser()
 
-        logging.info("hplanes = {}".format(len(hplanes)))
+        logging.info("boundaryCreate: inletplanes = {}, outletplanes = {}, hplanes = {}".format(
+            len(inletplane), len(outletplane), len(hplanes)))
 
         
-        # inlet and outlet
-        common1 = geompy.MakeCommonList([self.geometry, inletplane], True)
-        inlet = createGroup(common1, "inlet")
+        def createGroup(planelist, name):
+            gr = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"], name)
+            
+            grcomp = geompy.MakeCompound(planelist)
+            grcut = geompy.MakeCutList(grcomp, [self.spheres], True)
 
-        common2 = geompy.MakeCommonList([self.geometry, outletplane], True)
-        outlet = createGroup(common2, "outlet")
-
-        # symetryPlane(s)
-        symetryPlane = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"], "symetryPlane")
-        
-        for plane in hplanes:
-            common3 = geompy.MakeCommonList([self.geometry, plane], True)
-            gip = geompy.GetInPlace(self.geometry, common3, True)
+            gip = geompy.GetInPlace(self.geometry, grcut, True)
             faces = geompy.SubShapeAll(gip, geompy.ShapeType["FACE"])
-            geompy.UnionList(symetryPlane, faces)
+            geompy.UnionList(gr, faces)
+
+            return gr
+
+        
+        # Main groups
+        inlet = createGroup(inletplane, "inlet")
+
+        outlet = createGroup(outletplane, "outlet")
+
+        symetryPlane = createGroup(hplanes, "symetryPlane")
 
         # wall
         allgroup = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"])
@@ -299,6 +298,15 @@ class simpleCubic:
 
         """
         smesh = smeshBuilder.New()
+        Fineness = { 
+            0: "Very coarse",
+            1: "Coarse",
+            2: "Moderate",
+            3: "Fine",
+            4: "Very fine"
+        }[fineness]
+
+        logging.info("meshCreate: mesh fineness - {}".format(Fineness))
 
         mesh = smesh.Mesh(self.geometry)
         netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
@@ -320,12 +328,18 @@ class simpleCubic:
         param.SetQuadAllowed( 0 )
         
         if not viscousLayers is None:
+            logging.info("meshCreate: viscous layers params - thickness = {}, number = {}, stretch factor = {}".format(
+                viscousLayers["thickness"], viscousLayers["number"], viscousLayers["stretch"]))
+
             vlayer = netgen.ViscousLayers(viscousLayers["thickness"], 
                                           viscousLayers["number"], 
                                           viscousLayers["stretch"], 
                                           [self.boundary["inlet"], self.boundary["outlet"]],
                                           1, smeshBuilder.NODE_OFFSET)
         
+        else:
+            logging.info("meshCreate: viscous layers are disabled")
+
         for name, boundary in self.boundary.items():
             mesh.GroupOnGeom(boundary, name, SMESH.FACE)
 
@@ -386,11 +400,11 @@ if __name__ == "__main__":
     sc.boundaryCreate(direction)
     
     logging.info("Creating the mesh ...")
-    sc.meshCreate(2, {
-        "thickness": 0.02,
-        "number": 2,
-        "stretch": 1.1
-    })
+    sc.meshCreate(2) #, {
+    #    "thickness": 0.001,
+    #    "number": 1,
+    #    "stretch": 1.1
+    #})
     sc.meshCompute()
     
     logging.info("Exporting the mesh ...")
