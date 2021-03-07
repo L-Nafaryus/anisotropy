@@ -9,9 +9,9 @@ import logging
 import time
 from datetime import timedelta
 
-class simpleCubic:
+class faceCenteredCubic:
     def __init__(self, name = None):
-        self.name = name if type(name) != None else "simpleCubic"
+        self.name = name if type(name) != None else "faceCenteredCubic"
         self.geometry = None
         self.geometrybbox = None
         self.mesh = None
@@ -41,7 +41,7 @@ class simpleCubic:
         geompy = geomBuilder.New()
         
         # Parameters
-        R0 = 1
+        R0 = math.sqrt(2) / 4
         R = R0 / (1 - alpha)
         
         C1 = 0.8
@@ -50,7 +50,7 @@ class simpleCubic:
         alpha2 = 0.28
         
         Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
-        R_fillet = Cf * (R0 * math.sqrt(2) - R)
+        R_fillet = 0 #Cf * (R0 * math.sqrt(2) - R)
         
         logging.info("geometryCreate: alpha = {}".format(alpha))
         logging.info("geometryCreate: R_fillet = {}".format(R_fillet))
@@ -63,10 +63,10 @@ class simpleCubic:
         ]
         
         # Main box
-        size = [2 * math.sqrt(2), 2 * math.sqrt(2), 2]
+        size = [1 / math.sqrt(2), 1 / math.sqrt(2), 1]
         angle = [0, 0, 45]
-        pos = [2, 0, 0]
-        
+        pos = [0.5, 0, 0]
+
         box = geompy.MakeBoxDXDYDZ(size[0], size[1], size[2])
 
         for n in range(3):
@@ -78,11 +78,11 @@ class simpleCubic:
         pos = [x, y, z]
         
         # Spheres for cutting
-        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(2, 0, 0), R)
-        sphere = geompy.MakeMultiTranslation2D(sphere, None, 2, 3, None, 2, 3)
-        sphere = geompy.MakeTranslation(sphere, -2, 0, 0)
-        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 2)
-        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 2)
+        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(0.5, 0, 0), R)
+        sphere = geompy.MakeMultiTranslation2D(sphere, None, 1 / math.sqrt(2), 3, None, 1 / math.sqrt(2), 3)
+        sphere = geompy.MakeTranslation(sphere, -1 / math.sqrt(2), 0, 0)
+        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 1 / math.sqrt(2))
+        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 1 / math.sqrt(2))
         
         sphere = geompy.ExtractShapes(sphere, geompy.ShapeType["SOLID"], True)
         sphere2 = geompy.ExtractShapes(sphere2, geompy.ShapeType["SOLID"], True)
@@ -95,7 +95,7 @@ class simpleCubic:
             sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
         self.spheres = sphere
-
+        geompy.addToStudy(sphere, "spheres")
         #else:
         #    sphere = sphere + sphere2 + sphere3 #geompy.MakeCompound(sphere + sphere2 + sphere3)
         
@@ -108,35 +108,12 @@ class simpleCubic:
         # Rombus
         h = 2
         
-        Vertex_2 = geompy.MakeVertex(0, 0, 4)
-        Vertex_1 = geompy.MakeVertex(2, 0, 2)
-        Vertex_3 = geompy.MakeVertex(2, 2, 0)
-        Vertex_4 = geompy.MakeVertex(0, 2, 2)
-        Edge_1 = geompy.MakeEdge(Vertex_2, Vertex_1)
-        Edge_2 = geompy.MakeEdge(Vertex_1, Vertex_3)
-        Edge_3 = geompy.MakeEdge(Vertex_3, Vertex_4)
-        Edge_4 = geompy.MakeEdge(Vertex_4, Vertex_2)
-        Face_1 = geompy.MakeFaceWires([Edge_1, Edge_2, Edge_3, Edge_4], 1)
-
-
-        #sk = geompy.Sketcher3D()
-        #sk.addPointsAbsolute(0, 0, h * 2)
-        #sk.addPointsAbsolute(h, 0, h)
-        #sk.addPointsAbsolute(h, h, 0) 
-        #sk.addPointsAbsolute(0, h, h)
-        #sk.addPointsAbsolute(0, 0, h * 2)
-
-        #a3D_Sketcher_1 = sk.wire()
-        #Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
-        Vector_1 = geompy.MakeVectorDXDYDZ(1, 1, 0)
-        rombusbbox = geompy.MakePrismVecH(Face_1, Vector_1, round(2 * math.sqrt(2), 14))
-
-        geompy.addToStudy(rombusbbox, "rombusbbox")
+        #geompy.addToStudy(rombusbbox, "rombusbbox")
         
-        self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
-        self.rombusbbox = rombusbbox
+        #self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
+        #self.rombusbbox = rombusbbox
 
-        geompy.addToStudy(self.rombus, "rombus")
+        #geompy.addToStudy(self.rombus, "rombus")
 
         return self.geometry
 
@@ -462,7 +439,7 @@ if __name__ == "__main__":
     alpha = float(sys.argv[2])
     direction = str(sys.argv[3])
     
-    name = "simpleCubic-{}-{}".format(direction, alpha)
+    name = "faceCenteredCubic-{}-{}".format(direction, alpha)
 
     # Logger
     logging.basicConfig(
@@ -475,24 +452,24 @@ if __name__ == "__main__":
     start_time = time.monotonic()
        
     # Simple cubic
-    sc = simpleCubic(name)
+    fcc = faceCenteredCubic(name)
     
     logging.info("Creating the geometry ...")
-    sc.geometryCreate(alpha)
+    fcc.geometryCreate(alpha)
     
-    logging.info("Extracting boundaries ...")
-    sc.boundaryCreate(direction)
+    #logging.info("Extracting boundaries ...")
+    #fcc.boundaryCreate(direction)
     
-    logging.info("Creating the mesh ...")
-    sc.meshCreate(2) #, {
+    #logging.info("Creating the mesh ...")
+    #fcc.meshCreate(2) #, {
     #    "thickness": 0.001,
     #    "number": 1,
     #    "stretch": 1.1
     #})
-    sc.meshCompute()
+    #fcc.meshCompute()
     
-    logging.info("Exporting the mesh ...")
-    sc.meshExport(buildpath)
+    #logging.info("Exporting the mesh ...")
+    #fcc.meshExport(buildpath)
     
     end_time = time.monotonic()
     logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))

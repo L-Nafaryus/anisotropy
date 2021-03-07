@@ -13,7 +13,7 @@
 
 ## 4.03.21
 - [x] 3rd direction
-- [ ] createPatch(Dict)
+- [x] createPatch(Dict)
 - [ ] views (mesh, ..)
 - [x] alpha for simpleCubic [0.01 .. 0.28]
 - [ ] translation vector (cyclicAMI)
@@ -25,3 +25,5 @@
 ## 6.03.21
 - [ ] ERROR: MakeFuseList with alpha > 0.2
 
+## 7.03.21
+- [ ] Split the symetryPlane to 4 faces

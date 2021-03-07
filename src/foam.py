@@ -26,6 +26,9 @@ def application(name, case, log=False, args=[], parallel=False):
 def ideasUnvToFoam(case, mesh):
     application("ideasUnvToFoam", case, True, [mesh])
 
+def createPatch(case):
+    application("createPatch", case, True, ["-overwrite"])
+
 def transformPoints(case, vector):
     application("transformPoints", case, True, ["-scale", vector])
 
@@ -75,7 +78,7 @@ if __name__ == "__main__":
         for direction in directions:
             for coefficient in coefficients:
                 foamCase = [ "0", "constant", "system" ]
-                src_path = os.path.join(src, "baseFOAM")
+                src_path = os.path.join(src, "{}Foam".format(structure))
                 build_path = os.path.join(build, 
                     structure, 
                     "direction-{}".format(direction), 
@@ -96,15 +99,18 @@ if __name__ == "__main__":
                 logging.info("Importing mesh to foam ...")
                 ideasUnvToFoam(case_path, "{}-{}-{}.unv".format(structure, direction, coefficient))
                 
+                logging.info("Creating patches ...")
+                createPatch(case_path)
+
                 logging.info("Scaling mesh ...")
                 transformPoints(case_path, "(1e-5 1e-5 1e-5)")
                 
                 logging.info("Checking mesh ...")
                 checkMesh(case_path)
                 
-                logging.info("Changing mesh boundaries types ...")
-                foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.wall.type", "wall")
-                foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.symetryPlane.type", "symetryPlane")
+                #logging.info("Changing mesh boundaries types ...")
+                #foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.wall.type", "wall")
+                #foamDictionarySet(case_path, "constant/polyMesh/boundary", "entry0.symetryPlane.type", "symetryPlane")
 
                 logging.info("Decomposing case ...")
                 decomposePar(case_path)
