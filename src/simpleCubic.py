@@ -74,21 +74,21 @@ class simpleCubic:
 
         box = geompy.MakeTranslation(box, pos[0], pos[1], pos[2])
         
-        [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(box)
-        pos = [x, y, z]
+        #[x, y, z, _, _, _, _, _, _] = geompy.GetPosition(box)
+        #pos = [x, y, z]
         
         # Spheres for cutting
-        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(2, 0, 0), R)
-        sphere = geompy.MakeMultiTranslation2D(sphere, None, 2, 3, None, 2, 3)
-        sphere = geompy.MakeTranslation(sphere, -2, 0, 0)
-        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 2)
-        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 2)
+        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(pos[0], pos[1], pos[2]), R)
+        sphere = geompy.MakeMultiTranslation2D(sphere, None, 2 * R0, 3, None, 2 * R0, 3)
+        sphere = geompy.MakeTranslation(sphere, -2 * R0, 0, 0)
+        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 2 * R0)
+        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 2 * R0)
         
         sphere = geompy.ExtractShapes(sphere, geompy.ShapeType["SOLID"], True)
         sphere2 = geompy.ExtractShapes(sphere2, geompy.ShapeType["SOLID"], True)
         sphere3 = geompy.ExtractShapes(sphere3, geompy.ShapeType["SOLID"], True)
 
-        sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, True, True)
+        sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, False, False)
 
                 
         if not R_fillet == 0:

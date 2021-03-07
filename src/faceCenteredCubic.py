@@ -53,6 +53,7 @@ class faceCenteredCubic:
         R_fillet = 0 #Cf * (R0 * math.sqrt(2) - R)
         
         logging.info("geometryCreate: alpha = {}".format(alpha))
+        logging.info("geometryCreate: R = {}".format(R))
         logging.info("geometryCreate: R_fillet = {}".format(R_fillet))
 
         # xyz axes
@@ -64,8 +65,8 @@ class faceCenteredCubic:
         
         # Main box
         size = [1 / math.sqrt(2), 1 / math.sqrt(2), 1]
-        angle = [0, 0, 45]
-        pos = [0.5, 0, 0]
+        angle = [0, 0, 0]
+        pos = [0, 0, 0]
 
         box = geompy.MakeBoxDXDYDZ(size[0], size[1], size[2])
 
@@ -74,21 +75,20 @@ class faceCenteredCubic:
 
         box = geompy.MakeTranslation(box, pos[0], pos[1], pos[2])
         
-        [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(box)
-        pos = [x, y, z]
+        #[x, y, z, _, _, _, _, _, _] = geompy.GetPosition(box)
+        #pos = [x, y, z]
         
         # Spheres for cutting
-        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(0.5, 0, 0), R)
-        sphere = geompy.MakeMultiTranslation2D(sphere, None, 1 / math.sqrt(2), 3, None, 1 / math.sqrt(2), 3)
-        sphere = geompy.MakeTranslation(sphere, -1 / math.sqrt(2), 0, 0)
-        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 1 / math.sqrt(2))
-        sphere3 = geompy.MakeTranslation(sphere2, 0, 0, 1 / math.sqrt(2))
+        sphere = geompy.MakeSpherePntR(geompy.MakeVertex(pos[0], pos[1], pos[2]), R)
+        sphere = geompy.MakeMultiTranslation2D(sphere, None, 2 * R0, 3, None, 2 * R0, 3)
+        sphere2 = geompy.MakeTranslation(sphere, 0, 0, 2 * math.sqrt(2) * R0)
+        sphere3 = geompy.MakeTranslation(sphere, R0, R0, 0.5)
         
         sphere = geompy.ExtractShapes(sphere, geompy.ShapeType["SOLID"], True)
         sphere2 = geompy.ExtractShapes(sphere2, geompy.ShapeType["SOLID"], True)
         sphere3 = geompy.ExtractShapes(sphere3, geompy.ShapeType["SOLID"], True)
 
-        sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, True, True)
+        sphere = geompy.MakeFuseList(sphere + sphere2 + sphere3, False, False)
 
                 
         if not R_fillet == 0:
@@ -106,9 +106,18 @@ class faceCenteredCubic:
         geompy.addToStudy(self.geometry, self.name)
         
         # Rombus
-        h = 2
+        sk = geompy.Sketcher3D()
+        sk.addPointsAbsolute(0, 0, size[2])
+        sk.addPointsAbsolute(size[2] / 2, 0, size[2] / 2)
+        sk.addPointsAbsolute(size[2] / 2, size[2] / 2, 0)
+        sk.addPointsAbsolute(0, size[2] / 2, size[2] / 2)
+        sk.addPointsAbsolute(0, 0, size[2])
+        face = geompy.MakeFaceWires([sk.wire()], 1)
+        rombusbbox = geompy.MakePrismVecH(face, geompy.MakeVectorDXDYDZ(1, 1, 0), size[2] / 2)
+
+        geompy.addToStudy(face, "rombus")
         
-        #geompy.addToStudy(rombusbbox, "rombusbbox")
+        geompy.addToStudy(rombusbbox, "rombusbbox")
         
         #self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
         #self.rombusbbox = rombusbbox
