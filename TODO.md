@@ -5,7 +5,7 @@
 - [x] boundary type (wall or symetryPlane)
 - [x] restruct for ways
 - [x] build alpha = 0.01 .. 0.13
-- [ ] ! symetryPlane -> cyclicAMI
+- [x] ! symetryPlane -> cyclicAMI
 
 ## 3.03.21
 - [x] configure salome server, ports, etc.
@@ -16,9 +16,9 @@
 - [x] createPatch(Dict)
 - [ ] views (mesh, ..)
 - [x] alpha for simpleCubic [0.01 .. 0.28]
-- [ ] translation vector (cyclicAMI)
+- [x] translation vector (cyclicAMI)
 - [ ] BUG: angle between the direction vector and the normal to inlet is ~1.4e-14 
-    - [x] Temporary solution
+    - [x] Another solution
 - [ ] BUG: ideasUnvToFoam not working with param '-case PATH'
     - [x] Temporary sulution via os.chdir(PATH)
 
@@ -26,4 +26,4 @@
 - [ ] ERROR: MakeFuseList with alpha > 0.2
 
 ## 7.03.21
-- [ ] Split the symetryPlane to 4 faces
+- [x] Split the symetryPlane to 4 faces

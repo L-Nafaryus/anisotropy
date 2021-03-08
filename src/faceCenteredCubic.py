@@ -95,7 +95,7 @@ class faceCenteredCubic:
             sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
         self.spheres = sphere
-        geompy.addToStudy(sphere, "spheres")
+        geompy.addToStudy(self.spheres, "spheres")
         #else:
         #    sphere = sphere + sphere2 + sphere3 #geompy.MakeCompound(sphere + sphere2 + sphere3)
         
@@ -103,7 +103,7 @@ class faceCenteredCubic:
         self.geometry = geompy.MakeCutList(box, [sphere], True)
         self.geometrybbox = box
 
-        geompy.addToStudy(self.geometry, self.name)
+        #geompy.addToStudy(self.geometry, self.name)
         
         # Rombus
         sk = geompy.Sketcher3D()
@@ -112,17 +112,29 @@ class faceCenteredCubic:
         sk.addPointsAbsolute(size[2] / 2, size[2] / 2, 0)
         sk.addPointsAbsolute(0, size[2] / 2, size[2] / 2)
         sk.addPointsAbsolute(0, 0, size[2])
+
         face = geompy.MakeFaceWires([sk.wire()], 1)
-        rombusbbox = geompy.MakePrismVecH(face, geompy.MakeVectorDXDYDZ(1, 1, 0), size[2] / 2)
+        rombusbbox = geompy.MakePrismVecH(face, geompy.MakeVectorDXDYDZ(1, 1, 0), size[0])
+        rombusbbox = geompy.MakeRotation(rombusbbox, axes[2], 45 * math.pi / 180.0)
+        rombusbbox = geompy.MakeTranslation(rombusbbox, size[0], 0, 0)
 
-        geompy.addToStudy(face, "rombus")
-        
+        self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
+        self.rombusbbox = rombusbbox
+
+        # Change position
+        self.geometry = geompy.MakeRotation(self.geometry, axes[2], -45 * math.pi / 180.0)
+        self.geometry = geompy.MakeTranslation(self.geometry, 0, 0.5, 0)
+        self.geometrybbox = geompy.MakeRotation(self.geometrybbox, axes[2], -45 * math.pi / 180.0)
+        self.geometrybbox = geompy.MakeTranslation(self.geometrybbox, 0, 0.5, 0)
+
+        self.rombus = geompy.MakeRotation(self.rombus, axes[2], -45 * math.pi / 180.0)
+        self.rombus = geompy.MakeTranslation(self.rombus, 0, 0.5, 0)
+        self.rombusbbox = geompy.MakeRotation(self.rombusbbox, axes[2], -45 * math.pi / 180.0)
+        self.rombusbbox = geompy.MakeTranslation(self.rombusbbox, 0, 0.5, 0)
+
+        geompy.addToStudy(self.geometry, self.name)
+        geompy.addToStudy(self.rombus, "rombus")
         geompy.addToStudy(rombusbbox, "rombusbbox")
-        
-        #self.rombus = geompy.MakeCutList(rombusbbox, [sphere], True)
-        #self.rombusbbox = rombusbbox
-
-        #geompy.addToStudy(self.rombus, "rombus")
 
         return self.geometry
 
@@ -152,7 +164,8 @@ class faceCenteredCubic:
         buffergeometry = self.geometry
 
         if direction == "001":
-            center = geompy.MakeVertex(2, 2, 1)
+            [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(self.geometry)
+            center = geompy.MakeVertex(x, y, z)
 
             norm = geompy.MakeVector(center, 
                 geompy.MakeVertexWithRef(center, 0, 0, 1))
@@ -167,11 +180,9 @@ class faceCenteredCubic:
                     -math.cos((0 + rot[2]) * math.pi / 180.0), 
                     math.sin((0 + rot[2]) * math.pi / 180.0), 0))  
 
-            vstep = 1
-            hstep = math.sqrt(2)
-        
         elif direction == "100":
-            center = geompy.MakeVertex(2, 2, 1)
+            [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(self.geometry)
+            center = geompy.MakeVertex(x, y, z)
 
             norm = geompy.MakeVector(center, 
                 geompy.MakeVertexWithRef(center, 
@@ -186,12 +197,10 @@ class faceCenteredCubic:
                     -math.cos((0 + rot[2]) * math.pi / 180.0), 
                     math.sin((0 + rot[2]) * math.pi / 180.0), 0))  
 
-            vstep = math.sqrt(2)
-            hstep = 1
-
         elif direction == "111":
-            center = geompy.MakeVertex(2, 2, 2)
             self.geometry = self.rombus
+            [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(self.geometry)
+            center = geompy.MakeVertex(x, y, z)
 
             norm = geompy.MakeVector(center,
                 geompy.MakeVertexWithRef(center, 1, 1, 1))
@@ -207,9 +216,6 @@ class faceCenteredCubic:
                 geompy.MakeVertexWithRef(center, -1, 1, 1))
                     #-math.cos((0 + rot[2]) * math.pi / 180.0), 
                     #math.sin((0 + rot[2]) * math.pi / 180.0), 0)) 
-
-            vstep = math.sqrt(2)
-            hstep = 1 
         
         logging.info("boundaryCreate: direction = {}".format(direction))
 
@@ -313,16 +319,15 @@ class faceCenteredCubic:
         
         # Main groups
         inlet = createGroup(inletplane, "inlet")
-
         outlet = createGroup(outletplane, "outlet")
 
-        #symetryPlane = createGroup(hplanes, "symetryPlane")
+        # Symetry planes
         symetryPlaneFW = createGroup(fwplanes, "symetryPlaneFW")
         symetryPlaneBW = createGroup(bwplanes, "symetryPlaneBW")
         symetryPlaneL = createGroup(lplanes, "symetryPlaneL")
         symetryPlaneR = createGroup(rplanes, "symetryPlaneR")
 
-        # wall
+        # Wall
         allgroup = geompy.CreateGroup(self.geometry, geompy.ShapeType["FACE"])
         faces = geompy.SubShapeAllIDs(self.geometry, geompy.ShapeType["FACE"]) 
         geompy.UnionIDs(allgroup, faces)
@@ -466,19 +471,19 @@ if __name__ == "__main__":
     logging.info("Creating the geometry ...")
     fcc.geometryCreate(alpha)
     
-    #logging.info("Extracting boundaries ...")
-    #fcc.boundaryCreate(direction)
+    logging.info("Extracting boundaries ...")
+    fcc.boundaryCreate(direction)
     
-    #logging.info("Creating the mesh ...")
-    #fcc.meshCreate(2) #, {
+    logging.info("Creating the mesh ...")
+    fcc.meshCreate(2) #, {
     #    "thickness": 0.001,
     #    "number": 1,
     #    "stretch": 1.1
     #})
     #fcc.meshCompute()
     
-    #logging.info("Exporting the mesh ...")
-    #fcc.meshExport(buildpath)
+    logging.info("Exporting the mesh ...")
+    fcc.meshExport(buildpath)
     
     end_time = time.monotonic()
     logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
