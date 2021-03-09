@@ -24,7 +24,7 @@ class faceCenteredCubic:
 
         salome.salome_init()
 
-    def geometryCreate(self, alpha):
+    def geometryCreate(self, alpha, fillet):
         """
         Create the simple cubic geometry.
 
@@ -33,6 +33,12 @@ class faceCenteredCubic:
                 
                 Radius = R0 / (1 - alpha)
                 Should be from 0.01 to 0.28
+
+            fillet (list): Fillet coefficient.
+                
+                [fillet1, fillet2]
+                0 <= fillet <= 1
+                if fillet = [0, 0] then R_fillet = 0
 
         Returns:
             Configured geometry.
@@ -44,13 +50,13 @@ class faceCenteredCubic:
         R0 = math.sqrt(2) / 4
         R = R0 / (1 - alpha)
         
-        C1 = 0.8
-        C2 = 0.4
+        C1 = fillet[0]
+        C2 = fillet[1]
         alpha1 = 0.01
         alpha2 = 0.28
         
         Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
-        R_fillet = 0 #Cf * (R0 * math.sqrt(2) - R)
+        R_fillet = Cf * (R0 * math.sqrt(2) - R)
         
         logging.info("geometryCreate: alpha = {}".format(alpha))
         logging.info("geometryCreate: R = {}".format(R))
@@ -95,17 +101,13 @@ class faceCenteredCubic:
             sphere = geompy.MakeFilletAll(sphere, R_fillet)
         
         self.spheres = sphere
-        geompy.addToStudy(self.spheres, "spheres")
-        #else:
-        #    sphere = sphere + sphere2 + sphere3 #geompy.MakeCompound(sphere + sphere2 + sphere3)
         
+        # Main geometry and bounding box
         # geompy.RemoveExtraEdges(obj, True)
         self.geometry = geompy.MakeCutList(box, [sphere], True)
         self.geometrybbox = box
 
-        #geompy.addToStudy(self.geometry, self.name)
-        
-        # Rombus
+        # Rombus and bounding box
         sk = geompy.Sketcher3D()
         sk.addPointsAbsolute(0, 0, size[2])
         sk.addPointsAbsolute(size[2] / 2, 0, size[2] / 2)
@@ -122,6 +124,9 @@ class faceCenteredCubic:
         self.rombusbbox = rombusbbox
 
         # Change position
+        self.spheres = geompy.MakeRotation(self.spheres, axes[2], -45 * math.pi / 180.0)
+        self.spheres = geompy.MakeTranslation(self.spheres, 0, 0.5, 0)        
+
         self.geometry = geompy.MakeRotation(self.geometry, axes[2], -45 * math.pi / 180.0)
         self.geometry = geompy.MakeTranslation(self.geometry, 0, 0.5, 0)
         self.geometrybbox = geompy.MakeRotation(self.geometrybbox, axes[2], -45 * math.pi / 180.0)
@@ -132,6 +137,8 @@ class faceCenteredCubic:
         self.rombusbbox = geompy.MakeRotation(self.rombusbbox, axes[2], -45 * math.pi / 180.0)
         self.rombusbbox = geompy.MakeTranslation(self.rombusbbox, 0, 0.5, 0)
 
+        
+        geompy.addToStudy(self.spheres, "spheres")
         geompy.addToStudy(self.geometry, self.name)
         geompy.addToStudy(self.rombus, "rombus")
         geompy.addToStudy(rombusbbox, "rombusbbox")
@@ -145,8 +152,9 @@ class faceCenteredCubic:
         Parameters:
             direction (str): Direction of the flow.
 
-                '001' for the flow with normal vector (0, 0, -1) to face.
-                '100' for the flow with normal vector (-1, 0, 0) to face.
+                '001' for the flow with normal vector (0, 0, 1) to face.
+                '100' for the flow with normal vector (1, 0, 0) to face.
+                '111' for (1, 1, 1)
 
         Returns:
             boundary (dict):
@@ -394,7 +402,7 @@ class faceCenteredCubic:
         param.SetUseSurfaceCurvature( 1 )
         param.SetFuseEdges( 1 )
         param.SetCheckChartBoundary( 0 )
-        param.SetMinSize( 0.01 )
+        param.SetMinSize( 0.001 )
         param.SetMaxSize( 0.1 )
         param.SetFineness(fineness)
         #param.SetGrowthRate( 0.1 )
@@ -406,11 +414,12 @@ class faceCenteredCubic:
             logging.info("meshCreate: viscous layers params - thickness = {}, number = {}, stretch factor = {}".format(
                 viscousLayers["thickness"], viscousLayers["number"], viscousLayers["stretch"]))
 
-            vlayer = netgen.ViscousLayers(viscousLayers["thickness"], 
-                                          viscousLayers["number"], 
-                                          viscousLayers["stretch"], 
-                                          [self.boundary["inlet"], self.boundary["outlet"]],
-                                          1, smeshBuilder.NODE_OFFSET)
+            vlayer = netgen.ViscousLayers(
+                viscousLayers["thickness"], 
+                viscousLayers["number"], 
+                viscousLayers["stretch"], 
+                [self.boundary["inlet"], self.boundary["outlet"]],
+                1, smeshBuilder.NODE_OFFSET)
         
         else:
             logging.info("meshCreate: viscous layers are disabled")
@@ -469,18 +478,18 @@ if __name__ == "__main__":
     fcc = faceCenteredCubic(name)
     
     logging.info("Creating the geometry ...")
-    fcc.geometryCreate(alpha)
+    fcc.geometryCreate(alpha, [0, 0])
     
     logging.info("Extracting boundaries ...")
     fcc.boundaryCreate(direction)
     
     logging.info("Creating the mesh ...")
-    fcc.meshCreate(2) #, {
-    #    "thickness": 0.001,
-    #    "number": 1,
-    #    "stretch": 1.1
-    #})
-    #fcc.meshCompute()
+    fcc.meshCreate(2, {
+        "thickness": 0.01,
+        "number": 2,
+        "stretch": 1.1
+    })
+    fcc.meshCompute()
     
     logging.info("Exporting the mesh ...")
     fcc.meshExport(buildpath)

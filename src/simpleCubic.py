@@ -24,7 +24,7 @@ class simpleCubic:
 
         salome.salome_init()
 
-    def geometryCreate(self, alpha):
+    def geometryCreate(self, alpha, fillet):
         """
         Create the simple cubic geometry.
 
@@ -33,6 +33,12 @@ class simpleCubic:
                 
                 Radius = R0 / (1 - alpha)
                 Should be from 0.01 to 0.28
+
+            fillet (list): Fillet coefficient.
+                
+                [fillet1, fillet2]
+                0 <= fillet <= 1
+                if fillet = [0, 0] then R_fillet = 0
 
         Returns:
             Configured geometry.
@@ -44,8 +50,8 @@ class simpleCubic:
         R0 = 1
         R = R0 / (1 - alpha)
         
-        C1 = 0.8
-        C2 = 0.4
+        C1 = fillet[0]
+        C2 = fillet[1]
         alpha1 = 0.01
         alpha2 = 0.28
         
@@ -147,8 +153,9 @@ class simpleCubic:
         Parameters:
             direction (str): Direction of the flow.
 
-                '001' for the flow with normal vector (0, 0, -1) to face.
-                '100' for the flow with normal vector (-1, 0, 0) to face.
+                '001' for the flow with normal vector (0, 0, 1) to face.
+                '100' for the flow with normal vector (1, 0, 0) to face.
+                '111' for (1, 1, 1)
 
         Returns:
             boundary (dict):
@@ -478,7 +485,7 @@ if __name__ == "__main__":
     sc = simpleCubic(name)
     
     logging.info("Creating the geometry ...")
-    sc.geometryCreate(alpha)
+    sc.geometryCreate(alpha, [0, 0])
     
     logging.info("Extracting boundaries ...")
     sc.boundaryCreate(direction)

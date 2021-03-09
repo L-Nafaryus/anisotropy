@@ -59,7 +59,7 @@ if __name__ == "__main__":
     
     # Start in parallel
     processes = []
-    structures = ["simpleCubic"] #, "bc-cubic", "fc-cubic"]
+    structures = ["simpleCubic", "faceCenteredCubic"] #, "bodyCenteredCubic"]
     directions = ["001"] #, "100", "111"]
     coefficients = [0.1] #[ alpha * 0.01 for alpha in range(1, 13 + 1) ]
     port = 2810
