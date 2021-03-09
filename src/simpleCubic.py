@@ -172,6 +172,18 @@ class simpleCubic:
         rot = [0, 0, 45]
         buffergeometry = self.geometry
 
+        # Direction vector
+        [x, y, z, _, _, _, _, _, _] = geompy.GetPosition(self.geometry)
+        angle = []
+        center = geompy.MakeVertex(x, y, z)
+        dvec = geompy.MakeVector(center,
+            geompy.MakeVertexWithRef(center,
+                D[0] * math.cos(angle[0]), 
+                D[1] * math.sin(angle[1]), 
+                D[2] * math.sin(angle[2])))
+
+
+        ##
         if direction == "001":
             center = geompy.MakeVertex(2, 2, 1)
 

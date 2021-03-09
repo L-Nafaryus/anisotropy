@@ -55,8 +55,8 @@ patches
             neighbourPatch cyclicPlaneBW;
             transform translational;
             separationVector (2 -2 0);
-            matchTolerance 1e-2;
-            //inGroups (symetryPlane);
+            matchTolerance 1e-4;
+            inGroups (cyclic);
         }
 
         constructFrom patches;
@@ -72,8 +72,8 @@ patches
             neighbourPatch cyclicPlaneFW;
             transform translational;
             separationVector (-2 2 0);
-            matchTolerance 1e-2;
-            //inGroups (symetryPlane);
+            matchTolerance 1e-4;
+            inGroups (cyclic);
         }
 
         constructFrom patches;
@@ -89,8 +89,8 @@ patches
             neighbourPatch cyclicPlaneR;
             transform translational;
             separationVector (-2 -2 0);
-            matchTolerance 1e-2;
-            //inGroups (symetryPlane);
+            matchTolerance 1e-4;
+            inGroups (cyclic);
         }
 
         constructFrom patches;
@@ -106,8 +106,8 @@ patches
             neighbourPatch cyclicPlaneL;
             transform translational;
             separationVector (2 2 0);
-            matchTolerance 1e-2;
-            //inGroups (symetryPlane);
+            matchTolerance 1e-4;
+            inGroups (cyclic);
         }
 
         constructFrom patches;
