@@ -54,7 +54,7 @@ patches
             type cyclicAMI;
             neighbourPatch cyclicPlaneBW;
             transform translational;
-            separationVector (2 -2 0);
+            separationVector (-2 2 0);
             matchTolerance 1e-4;
             inGroups (cyclic);
         }
@@ -71,7 +71,7 @@ patches
             type cyclicAMI;
             neighbourPatch cyclicPlaneFW;
             transform translational;
-            separationVector (-2 2 0);
+            separationVector (2 -2 0);
             matchTolerance 1e-4;
             inGroups (cyclic);
         }
@@ -88,7 +88,7 @@ patches
             type cyclicAMI;
             neighbourPatch cyclicPlaneR;
             transform translational;
-            separationVector (-2 -2 0);
+            separationVector (2 2 0);
             matchTolerance 1e-4;
             inGroups (cyclic);
         }
@@ -105,7 +105,7 @@ patches
             type cyclicAMI;
             neighbourPatch cyclicPlaneL;
             transform translational;
-            separationVector (2 2 0);
+            separationVector (-2 -2 0);
             matchTolerance 1e-4;
             inGroups (cyclic);
         }

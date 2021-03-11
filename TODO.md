@@ -27,3 +27,6 @@
 
 ## 7.03.21
 - [x] Split the symetryPlane to 4 faces
+
+## 11.03.21
+- [x] Dual test for cyclicAMI
