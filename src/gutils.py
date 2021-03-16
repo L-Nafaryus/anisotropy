@@ -41,8 +41,8 @@ def boundaryCreate(gobj, dvec, grains):
         geompy.MakeVertex(dvec[0], dvec[1], dvec[2]))
     xvec = rotate(dvec, self.angle)
 
-    yvec = rotate(xvec, [0, 0.5 * math.pi, 0])
-    zvec = rotate(xvec, [0, 0, 0.5 * math.pi])
+    yvec = rotate(xvec, [0.5 * math.pi, 0, 0])
+    zvec = rotate(xvec, [0, 0.5 * math.pi, 0])
 
     logging.info("boundaryCreate: dvec = {}".format(dvec))
 

@@ -8,7 +8,8 @@ import os, sys
 import logging
 import time
 from datetime import timedelta
-import .gutils, .mutils
+from .gutils import *
+from .mutils import *
 
 class simpleCubic:
     def __init__(self, alpha, fillet, name = None):
@@ -78,20 +79,29 @@ class simpleCubic:
         self.geometrybbox = box
         
         # Grains
-        layer1 = geompy.MakeSpherePntR(geompy.MakeVertex(pos[0], pos[1], pos[2]), R)
-        layer1 = geompy.MakeMultiTranslation2D(layer1, None, 2 * R0, 3, None, 2 * R0, 3)
-        layer1 = geompy.MakeTranslation(layer1, -2 * R0, 0, 0)
-        layer2 = geompy.MakeTranslation(layer1, 0, 0, 2 * R0)
-        layer3 = geompy.MakeTranslation(layer2, 0, 0, 2 * R0)
+        stackang = [
+            0.5 * math.pi - stackAng[0], 
+            0.5 * math.pi - stackAng[1], 
+            0.5 * math.pi - stackAng[2]
+        ]
         
-        layer1 = geompy.ExtractShapes(layer1, geompy.ShapeType["SOLID"], True)
-        layer2 = geompy.ExtractShapes(layer2, geompy.ShapeType["SOLID"], True)
-        layer3 = geompy.ExtractShapes(layer3, geompy.ShapeType["SOLID"], True)
+        xvec = geompy.MakeVector(
+            geompy.MakeVertex(0, 0, 0),
+            geompy.MakeVertex(1, 0, 0))
+        yvec = rotate(xvec, [0.5 * math.pi, 0, 0])
+        zvec = rotate(xvec, [0, 0.5 * math.pi, 0])
         
-        self.grains = layer1 + layer2 + layer3
+        hvec = rotate(xvec, [stackang[0], 0, 0])
+        vvec = rotate(zvec, [0, stackang[1], stackang[2]])
+        
+        grain = geompy.MakeSpherePntR(geompy.MakeVertex(pos[0], pos[1], pos[2]), R)
+        hstack = geompy.MakeMultiTranslation1D(grain, hvec, 2 * R0, 3)
+        vstack = geompy.MakeMultiTranslation1D(hstack, vvec, 2 * Ro, 3)
+        stack = geompy.MakeTranslation(vstack, -2 * R0, 0, 0)
+        
+        self.grains = geompy.ExtractShapes(stack, geompy.ShapeType["SOLID"], True)
 
         self.grains = geompy.MakeFuseList(self.grains, False, False)
-
                 
         if not R_fillet == 0:
             self.grains = geompy.MakeFilletAll(self.grains, R_fillet)
