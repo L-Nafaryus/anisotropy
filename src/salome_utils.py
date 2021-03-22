@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import salome
+import subprocess
+import logging
 
 def hasDesktop() -> bool:
     return salome.sg.hasDesktop()

@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from . import geometry_utils
 import GEOM
 
@@ -8,6 +5,8 @@ from . import mesh_utils
 import SMESH
 
 from . import anisotropeCubic
+import salome
+import math
 
 def simpleCubic(theta, flowdirection):
     radius = 1
@@ -16,7 +15,7 @@ def simpleCubic(theta, flowdirection):
     layers = [3, 3, 3]
     grains = anisotropeCubic.StructuredGrains(radius, stackAngle, theta, layers)
     
-    scale = [1, 1, 1]
+    scale = [2 * math.sqrt(2), 2 * math.sqrt(2), 2]
     flowdirection = flowdirection if flowdirection else [1, 0, 0]
     style = 0
     cubic = anisotropeCubic.AnisotropeCubic(scale, grains, style)
@@ -34,7 +33,7 @@ def bodyCenteredCubic(theta, flowdirection):
     layers = [3, 3, 3]
     grains = anisotropeCubic.StructuredGrains(radius, stackAngle, theta, layers)
     
-    scale = [1, 1, 1]
+    scale = [2 / math.sqrt(2), 2 / math.sqrt(2), 1]
     flowdirection = flowdirection if flowdirection else [1, 0, 0]
     style = 0
     cubic = anisotropeCubic.AnisotropeCubic(scale, grains, style)
@@ -52,7 +51,7 @@ def faceCenteredCubic(theta, flowdirection):
     layers = [3, 3, 3]
     grains = anisotropeCubic.StructuredGrains(radius, stackAngle, theta, layers)
     
-    scale = [1, 1, 1]
+    scale = [1 / math.sqrt(2), 1 / math.sqrt(2), 1]
     flowdirection = flowdirection if flowdirection else [1, 0, 0]
     style = 0
     cubic = anisotropeCubic.AnisotropeCubic(scale, grains, style)
@@ -63,5 +62,8 @@ def faceCenteredCubic(theta, flowdirection):
     mesh_utils.meshCompute(mesh)
 
 
-def genMesh():
-    pass
+def genMesh(ctype, theta, flowdirection):
+    salome.salome_init()
+
+
+    salome.salome_close()

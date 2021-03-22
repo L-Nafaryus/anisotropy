@@ -1,56 +1,64 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, shutil
-import subprocess
-import logging
-import time
-from datetime import timedelta
-
-def application(name, case, log=False, args=[], parallel=False):
-    logging.info("Running '{}'.".format(name))
-
-    if log:
-        logfile = open("{}/{}.log".format(case, name), "a")
-    
-    mpirun = []
-    if parallel:
-        mpirun = ["mpirun", "-np", "4", "--oversubscribe"]
-
-    subprocess.run(mpirun + [name, "-case", case] + args, 
-        stdout=logfile if log else subprocess.STDOUT,
-        stderr=logfile if log else subprocess.STDOUT)
-
-    if log:
-        logfile.close()
-
-def ideasUnvToFoam(case, mesh):
-    application("ideasUnvToFoam", case, True, [mesh])
-
-def createPatch(case):
-    application("createPatch", case, True, ["-overwrite"])
-
-def transformPoints(case, vector):
-    application("transformPoints", case, True, ["-scale", vector])
-
-def checkMesh(case):
-    application("checkMesh", case, True, ["-allGeometry", "-allTopology"])
-
-def foamDictionaryGet(case, foamFile, entry):
-    application("foamDictionary", case, True, [foamFile, "-entry", entry])
-
-def foamDictionarySet(case, foamFile, entry, value):
-    application("foamDictionary", case, True, [foamFile, "-entry", entry, "-set", value])
-
-def decomposePar(case):
-    application("decomposePar", case, True)
-
-def potentialFoam(case):
-    application("potentialFoam", case, True, ["-parallel"], True)
-
-def simpleFoam(case):
-    application("simpleFoam", case, True, ["-parallel"], True)
 
 if __name__ == "__main__":
+    ###
+    #   SALOME
+    #
+    # Get main paths
+    project = os.getcwd()
+    src = os.path.join(project, "src")
+    build = os.path.join(project, "build")
+    
+    if not os.path.exists(build):
+        os.makedirs(build) 
+
+    # Logger
+    logging.basicConfig(
+        level=logging.INFO, 
+        format="%(levelname)s: %(message)s",
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler("{}/genmesh.log".format(build))
+        ])
+    start_time = time.monotonic()
+    
+    # Start in parallel
+    processes = []
+    structures = ["simpleCubic", "faceCenteredCubic", "bodyCenteredCubic"]
+    directions = ["001"] #, "100", "111"]
+    coefficients = [0.1] #[ alpha * 0.01 for alpha in range(1, 13 + 1) ]
+    port = 2810
+
+    for structure in structures:
+        for direction in directions:
+            for coefficient in coefficients:
+                src_path = os.path.join(src, "{}.py".format(structure))
+                build_path = os.path.join(build, 
+                    structure, 
+                    "direction-{}".format(direction), 
+                    "alpha-{}".format(coefficient))
+                
+                if not os.path.exists(build_path):
+                    os.makedirs(build_path)
+
+                p = multiprocessing.Process(target = salome, 
+                    args = (port, src_path, build_path, coefficient, direction))
+                processes.append(p)
+                p.start()
+                logging.info("{} on port {}.".format(p, port))
+                port += 1
+
+    for process in processes:
+        process.join()
+
+    end_time = time.monotonic()
+    logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
+
+    
+    ###
+    #   FOAM
+    #
     # Get main paths
     project = os.getcwd()
     src = os.path.join(project, "src")

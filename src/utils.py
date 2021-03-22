@@ -6,7 +6,7 @@ def queue(cmd, qin, qout, *args):
         # Get item from the queue
         pos, var = qin.get()
         
-        # Exit if last item is None
+        # Exit point 
         if pos is None:
             break
 
