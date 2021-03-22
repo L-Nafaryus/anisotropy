@@ -1,12 +1,27 @@
-from . import geometry_utils
+from .src import geometry_utils
 import GEOM
 
-from . import mesh_utils
+from .src import mesh_utils
 import SMESH
 
-from . import anisotropeCubic
+from .src import anisotropeCubic
 import salome
 import math
+
+def genMesh(ctype, theta, flowdirection):
+    _G = globals()
+    
+    for g in _G:
+        func = g.get(ctype)
+
+        if func:
+            salome.salome_init()
+            func(theta, flowdirection)
+            salome.salome_close()
+
+        else:
+            raise Exception("Unknown type of the sample function")
+
 
 def simpleCubic(theta, flowdirection):
     radius = 1
@@ -62,8 +77,3 @@ def faceCenteredCubic(theta, flowdirection):
     mesh_utils.meshCompute(mesh)
 
 
-def genMesh(ctype, theta, flowdirection):
-    salome.salome_init()
-
-
-    salome.salome_close()

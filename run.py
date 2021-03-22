@@ -1,5 +1,64 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+import os, sys
+from collections import namedtuple
+
+ROOT = os.getcwd()
+sys.path.append(ROOT)
+
+import src.utils
+import src.salome_utils
+
+if __name__ == "__main__":
+     
+    nprocs = os.cpu_count()
+    port = 2810
+    salomeServers = []
+    salomeServer = namedtuple("salomeServer", ["process", "port"])
+
+    for n in range(nprocs):
+        while not utils.portIsFree:
+            port += 1
+
+        s = salomeServer(salome_utils.startServer(port), port)
+        salomeServers.append(s)
+
+    var = []
+    cmd = "python "
+    
+    # TODO: pass it to samples in namedtuples
+    # get sample.directions and etc ..
+    structures = [
+        "simpleCubic", 
+        "bodyCenteredCubic", 
+        "faceCenteredCubic"
+    ]
+    directions = [
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+
+    cmd += "-m "
+    var.append((salomeServer[n].port, cmd))
+
+    utils.parallel(nprocs, var, salome_utils.execute)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     ###

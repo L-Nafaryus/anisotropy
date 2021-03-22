@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import salome
 import subprocess
 import logging
@@ -8,45 +5,37 @@ import logging
 def hasDesktop() -> bool:
     return salome.sg.hasDesktop()
 
-def startServer(port, logPath):
+def startServer(port):
 
-    log = open("{}/salome.log".format(logPath), "a")
     logging.info("Starting SALOME on port {} ...".format(port))
 
     p = subprocess.Popen(["salome", "start", "--port", str(port), "-t"],
-        shell = True,
-        stdout = log,
-        stderr = log)
-
-    log.close()
+        shell = False,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE)
 
     return p
 
-def killServer(port, logPath):
+def killServer(port):
 
-    log = open("{}/salome.log".format(logPath), "a")
     logging.info("Terminating SALOME on port {} ...".format(port))
 
     p = subprocess.Popen(["salome", "kill", str(port)],
         shell = True,
-        stdout = log,
-        stderr = log)
-
-    log.close()
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE)
 
     return p
 
-def execute(port, cmd, logPath):
+def execute(port, cmd):
 
-    log = open("{}/salome.log".format(logPath), "a")
     logging.info("Executing command in the SALOME on port {} ...".format(port))
-
-    p = subprocess.Popen(["salome", "connect", "-p", str(port), str(cmd)],
+    
+    # cmd = "python -m"; = "python -c"
+    p = subprocess.Popen(["salome", "remote", "-p", str(port), "--", str(cmd)],
         shell = True,
-        stdout = log,
-        stderr = log)
-
-    log.close()
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE)
 
     return p
 

@@ -1,4 +1,5 @@
 from multiprocessing import Queue, Process, cpu_count
+import socket
 
 def queue(cmd, qin, qout, *args):
     
@@ -64,4 +65,8 @@ def parallel(np, var, cmd):
     return results
 
     
+def portIsFree(address, port):
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex((address, port)) == 0
 
