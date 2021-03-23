@@ -18,6 +18,7 @@ def rotate(gobj, ang):
 
     # yaw
     rotated = geompy.MakeRotation(gobj, z, ang[2])
+    print(rotated)
     # pitch
     rotated = geompy.MakeRotation(rotated, y, ang[1])
     # roll
@@ -42,7 +43,7 @@ def boundaryCreate(gobj, dvec, grains):
     xvec = geompy.MakeVector(
         geompy.MakeVertex(0, 0, 0),
         geompy.MakeVertex(dvec[0], dvec[1], dvec[2]))
-    xvec = rotate(dvec, self.angle)
+    #xvec = rotate(dvec, self.angle)
 
     yvec = rotate(xvec, [0.5 * math.pi, 0, 0])
     zvec = rotate(xvec, [0, 0.5 * math.pi, 0])
