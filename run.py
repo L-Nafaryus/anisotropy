@@ -1,13 +1,36 @@
 import os, sys
 from collections import namedtuple
+import time
+import logging
+from datetime import timedelta
+import multiprocessing
 
 ROOT = os.getcwd()
 sys.path.append(ROOT)
 
-import src.utils
-import src.salome_utils
+LOG = os.path.join(ROOT, "logs")
+BUILD = os.path.join(ROOT, "build")
+
+from src import utils
+from src import salome_utils
 
 if __name__ == "__main__":
+    start_time = time.monotonic()
+    logging.info("Started at {}".format(timedelta(seconds=start_time)))
+
+    if not os.path.exists(LOG):
+        os.makedirs(LOG)
+
+    if not os.path.exists(BUILD):
+        os.makedirs(BUILD)
+
+    logging.basicConfig(
+        level=logging.INFO, 
+        format="%(levelname)s: %(message)s",
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler("{}/cubic.log".format(LOG))
+        ])
      
     nprocs = os.cpu_count()
     port = 2810
@@ -17,12 +40,15 @@ if __name__ == "__main__":
     for n in range(nprocs):
         while not utils.portIsFree:
             port += 1
+        
+        p = multiprocessing.Process(target = salome_utils.startServer, args = (port,))
+        #s = salomeServer(salome_utils.startServer(port), port)
+        s = salomeServer(p, port)
 
-        s = salomeServer(salome_utils.startServer(port), port)
         salomeServers.append(s)
+        port += 1
 
     var = []
-    cmd = "python "
     
     # TODO: pass it to samples in namedtuples
     # get sample.directions and etc ..
@@ -34,13 +60,50 @@ if __name__ == "__main__":
     directions = [
         [1, 0, 0],
         [0, 0, 1],
-        [1, 1, 1]
+        #[1, 1, 1]
     ]
 
-    cmd += "-m "
-    var.append((salomeServer[n].port, cmd))
+    cmd = """python -c
+    \"import sys;
+    sys.append('{}');
+    import samples;
+    samples.genMesh('{}', {}, {}, '{}');
+    \"
+    """.replace("\n", "")
+    tasks = []
 
-    utils.parallel(nprocs, var, salome_utils.execute)
+    for structure in structures:
+        if structure == "simpleCubic":
+            theta = [c * 0.01 for c in range(1, 14)]
+
+        elif structure == "faceCenteredCubic":
+            theta = []
+
+        elif structure == "bodyCenteredCubic":
+            theta = []
+
+        for coeff in theta:
+            for direction in directions:
+                tasks.append(cmd.format(ROOT, structure, coeff, direction, BUILD))
+
+    logging.info("tasks: {}".format(tasks))
+    n = 0
+    for cmd in tasks:
+        var.append((salomeServer[n].port, cmd))
+        n = n + 1 if n < 3 else 0
+
+    for s in salomeServers:
+        s.process.start()
+    
+    #res = utils.parallel(nprocs, var, salome_utils.remote)
+    #print(res)
+    
+    #for s in salomeServers:
+    #    s.process.join()
+
+
+    end_time = time.monotonic()
+    logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
 
 
 
@@ -58,8 +121,7 @@ if __name__ == "__main__":
 
 
 
-
-
+"""
 if __name__ == "__main__":
     ###
     #   SALOME
@@ -199,4 +261,4 @@ if __name__ == "__main__":
 
     end_time = time.monotonic()
     logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
-
+"""

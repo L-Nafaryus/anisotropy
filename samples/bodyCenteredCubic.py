@@ -118,6 +118,7 @@ def bodyCenteredCubic(alpha):
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
 
+    # Preparation
     grains = geompy.ExtractShapes(Up_Down, geompy.ShapeType["SOLID"], True)
     grains += geompy.ExtractShapes(Middle, geompy.ShapeType["SOLID"], True)
 

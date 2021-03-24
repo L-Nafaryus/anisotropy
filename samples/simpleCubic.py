@@ -99,5 +99,12 @@ def simpleCubic(alpha):
 
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
+    
+    # Preparation
+    #Cut_1 = geompy.MakeRotation(Cut_1, OZ, -pi_4)
+
+    grains = geompy.ExtractShapes(Multi_Translation_3, geompy.ShapeType["SOLID"], True)
+
+    grains = geompy.MakeFuseList(grains, False, False)
 
     return Multi_Translation_3, Cut_1, Cut_2
