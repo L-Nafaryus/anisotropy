@@ -58,7 +58,10 @@ def boundaryCreate(gobj, dvec, grains):
     geompy.addToStudy(yvec, "yvec")
     geompy.addToStudy(zvec, "zvec")
 
-    logging.info("boundaryCreate: dvec = {}".format(dvec))
+    logging.info("""boundaryCreate: 
+    direction vectors:  x = {}
+                        y = {}
+                        z = {}""".format(dvec.x, dvec.y, dvec.z))
 
     planes = geompy.ExtractShapes(gobj, geompy.ShapeType["FACE"], False)
     planes = geompy.MakeCompound(planes)
@@ -79,7 +82,7 @@ def boundaryCreate(gobj, dvec, grains):
         xang = round(geompy.GetAngle(nvec, xvec), 0)
         yang = round(geompy.GetAngle(nvec, yvec), 0)
         zang = round(geompy.GetAngle(nvec, zvec), 0)
-        print(xang, yang, zang, sep="\t")
+        #print(xang, yang, zang, sep="\t")
 
         if xang == 0:
             inletplanes.append(plane)
@@ -98,14 +101,16 @@ def boundaryCreate(gobj, dvec, grains):
 
         elif zang == 180:
             rplanes.append(plane)
-
-    logging.info(
-        "boundaryCreate: planes = {}, inletplanes = {}, outletplanes = {}".format(
-            len(planes), len(inletplanes), len(outletplanes)))
-
-    logging.info(
-        "boundaryCreate: fwplanes = {}, bwplanes = {}, lplanes = {}, rplanes = {}".format(
-            len(fwplanes), len(bwplanes), len(lplanes), len(rplanes)))
+    
+    logging.info("""boundaryCreate:
+    planes count:\t{}
+    inlet planes:\t{}
+    outlet planes:\t{}
+    forward planes:\t{}
+    backward planes:\t{}
+    left planes:\t{}
+    right planes:\t{}""".format(len(planes), len(inletplanes), len(outletplanes), 
+        len(fwplanes), len(bwplanes), len(lplanes), len(rplanes)))
 
     # Main groups
     inlet = createGroup(gobj, inletplanes, grains, "inlet")

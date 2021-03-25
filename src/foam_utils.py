@@ -1,27 +1,43 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import os, shutil
+import os, sys, shutil
 import subprocess
 import logging
 import time
 from datetime import timedelta
 
 def application(name, case, log=False, args=[], parallel=False):
-    logging.info("Running '{}'.".format(name))
+    
 
-    if log:
-        logfile = open("{}/{}.log".format(case, name), "a")
+    #if log:
+    #    logfile = open("{}/{}.log".format(case, name), "a")
     
     mpirun = []
     if parallel:
         mpirun = ["mpirun", "-np", "4", "--oversubscribe"]
+    
+    cmd = mpirun + [name, "-case", case] + args
+    logging.info("Running '{}'".format(" ".join(cmd)))
+   
+    with subprocess.Popen(cmd, 
+        #shell = True,
+        stdout = subprocess.PIPE, 
+        stderr = subprocess.PIPE) as p, \
+        open("{}/{}.log".format(case, name), "wb") as logfile:
+        
+        for line in p.stdout:
+            #sys.stdout.buffer.write(line) 
+            logfile.write(line)
 
-    subprocess.run(mpirun + [name, "-case", case] + args, 
-        stdout=logfile if log else subprocess.STDOUT,
-        stderr=logfile if log else subprocess.STDOUT)
+        #for line in p.stderr:
+        #    logfile.write(line)
 
-    if log:
-        logfile.close()
+        out, err = p.communicate()
+
+        if err:
+            logging.error("""{}:
+            {}""".format(name, str(err, "utf-8")))
+
+    return p.returncode
+
 
 def ideasUnvToFoam(case, mesh):
     application("ideasUnvToFoam", case, True, [mesh])

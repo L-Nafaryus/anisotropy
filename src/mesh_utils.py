@@ -44,7 +44,8 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
         4: "Very fine"
     }[fineness]
 
-    logging.info("meshCreate: mesh fineness - {}".format(Fineness))
+    logging.info("""meshCreate:
+    mesh fineness:\t{}""".format(Fineness))
 
     mesh = smesh.Mesh(gobj)
     netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
@@ -66,7 +67,10 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
     param.SetQuadAllowed( 0 )
 
     if not viscousLayers is None:
-        logging.info("meshCreate: viscous layers params - thickness = {}, number = {}, stretch factor = {}".format(
+        logging.info("""meshCreate:
+        viscous layers: thickness = {}
+                        number = {}
+                        stretch factor = {}""".format(
             viscousLayers["thickness"], viscousLayers["number"], viscousLayers["stretch"]))
 
         vlayer = netgen.ViscousLayers(
@@ -77,7 +81,8 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
             1, smeshBuilder.NODE_OFFSET)
 
     else:
-        logging.info("meshCreate: viscous layers are disabled")
+        logging.info("""meshCreate: 
+        viscous layers: disabled""")
 
     for name, b in boundary.items():
         mesh.GroupOnGeom(b, "{}_".format(name), SMESH.FACE)
@@ -87,12 +92,16 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
 def meshCompute(mobj):
     """Compute the mesh."""
     status = mobj.Compute()
+    msg = ""
 
     if status:
-        logging.info("Mesh succesfully computed.")
+        msg = "Computed"
 
     else:
-        logging.warning("Mesh is not computed.")
+        msg = "Not computed"
+
+    logging.info("""meshCompute:
+    status:\t{}""".format(msg))
 
 def meshExport(mobj, path):
     """
@@ -101,12 +110,15 @@ def meshExport(mobj, path):
     Parameters:
         path (string): full path to the expected directory.
     """
-    exportpath = os.path.join(path, "{}.unv".format(mobj.name))
+    exportpath = path #os.path.join(path, "{}.unv".format(mobj.name))
 
     try:
         mobj.ExportUNV(exportpath)
 
+        logging.info("""meshExport:
+        format:\t{}""".format("unv"))
+
     except:
-        logging.error("Cannot export mesh to '{}'".format(exportpath))
+        logging.error("""meshExport: Cannot export.""")
 
 

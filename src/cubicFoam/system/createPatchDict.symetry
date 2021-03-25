@@ -1,0 +1,115 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      createPatchDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+pointSync   false;
+
+// Patches to create.
+patches
+(
+    {
+        name inlet;
+        
+        patchInfo
+        {
+            type patch;
+            inGroups (inlet);
+        }
+
+        constructFrom patches;
+        patches (inlet_);
+    }
+
+    {
+        name outlet;
+        
+        
+        patchInfo
+        {
+            type patch;
+            inGroups (outlet);
+        }
+
+        constructFrom patches;   
+        patches (outlet_);
+    }
+
+    {
+        name symetryPlaneFW;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetryPlaneFW_);
+    }
+
+    {
+        name symetryPlaneBW;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetryPlaneBW_);
+    }
+
+    {
+        name symetryPlaneL;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetryPlaneL_);
+    }
+
+    {
+        name symetryPlaneR;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetryPlaneR_);
+    }
+
+    {
+        name wall;
+
+        patchInfo
+        {
+            type wall;
+            inGroups (wall);
+        }
+
+        constructFrom patches;
+        patches (wall_);
+    }
+);
+
+// ************************************************************************* //
