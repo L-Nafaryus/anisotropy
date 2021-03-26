@@ -110,12 +110,12 @@ def calculate(tasks):
 
         foam_utils.createPatch(casepath)
         
+        foam_utils.checkMesh(casepath)
+
         scale = (1e-5, 1e-5, 1e-5)
         foam_utils.transformPoints(casepath, "{}".format(scale).replace(",", ""))
         logging.info("""transformPoints:
         scale:\t{}""".format(scale))
-        
-        foam_utils.checkMesh(casepath)
         
         foam_utils.decomposePar(casepath)
         

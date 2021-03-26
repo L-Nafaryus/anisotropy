@@ -1,5 +1,10 @@
+## Usefull utils
+- createPatch
+- polyDualMesh
 - fvSolution: cellLimited
 - collapseDict: collapseEdges
+- renumberMesh
+- processorField
 
 ## 1.03.21
 - [x] boundary type (wall or symetryPlane)

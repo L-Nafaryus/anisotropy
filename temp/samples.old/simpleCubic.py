@@ -22,10 +22,9 @@ def simpleCubic(alpha):
     h2 = 2*h
     d1 = L*math.sqrt(2)
     d2 = L*math.sqrt(3)
-    d = r0/math.sqrt(3)
+    d = 1/math.sqrt(3)
     pi_4 = 45*math.pi/180.0
     pi_2 = 90*math.pi/180.0
-    n = 3                                                             # number of cubes in line
 
     Box_1 = geompy.MakeBoxDXDYDZ(d1, d1, h)
     Rotation_1 = geompy.MakeRotation(Box_1, OZ, pi_4)
@@ -36,34 +35,29 @@ def simpleCubic(alpha):
     Line_1 = geompy.MakeLineTwoPnt(Vertex_2, Vertex_3)
 
     sk = geompy.Sketcher3D()
-    sk.addPointsAbsolute(0, 0, h2)                                    #             Rombus
-    sk.addPointsAbsolute(h, 0, h)                                     # Vertex_2 of Rombus
-    sk.addPointsAbsolute(h, h, 0)                                     # Vertex_3 of Rombus
-    sk.addPointsAbsolute(0, h, h)                                     # Vertex_4 of Rombus
-    sk.addPointsAbsolute(0, 0, h2)                                    # Vertex_1 of Rombus
+    sk.addPointsAbsolute(0, 0, h2)                                    #Vertex_1 of Rombus
+    sk.addPointsAbsolute(h, 0, h)                                     #Vertex_2 of Rombus
+    sk.addPointsAbsolute(h, h, 0)                                     #Vertex_3 of Rombus
+    sk.addPointsAbsolute(0, h, h)                                     #Vertex_4 of Rombus
+    sk.addPointsAbsolute(0, 0, h2)                                    #Vertex_1 of Rombus
+
+    sk_2 = geompy.Sketcher3D()
+    sk_2.addPointsAbsolute(L, L, L)                                   #Vertex_1 of Hexagon
+    sk_2.addPointsAbsolute(5*L/3, 2*L/3, 2*L/3)                       #Vertex_2 of Hexagon
+    sk_2.addPointsAbsolute(2*L, L, 0)                                 #Vertex_3 of Hexagon
+    sk_2.addPointsAbsolute(5*L/3, 5*L/3, -L/3)                        #Vertex_4 of Hexagon
+    sk_2.addPointsAbsolute(L, 2*L, 0)                                 #Vertex_5 of Hexagon
+    sk_2.addPointsAbsolute(2*L/3, 5*L/3, 2*L/3)                       #Vertex_6 of Hexagon
+    sk_2.addPointsAbsolute(L, L, L)                                   #Vertex_1 of Hexagon
+
     a3D_Sketcher_1 = sk.wire()
     Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
     Vector_1 = geompy.MakeVectorDXDYDZ(1, 1, 0)
     Extrusion_1 = geompy.MakePrismVecH(Face_1, Vector_1, d1)
-
-    sk_2 = geompy.Sketcher3D()                                        #             Hexagon
-    sk_2.addPointsAbsolute(L, L, L)                                   # Vertex_1 of Hexagon
-    sk_2.addPointsAbsolute(5*L/3, 2*L/3, 2*L/3)                       # Vertex_2 of Hexagon
-    sk_2.addPointsAbsolute(2*L, L, 0)                                 # Vertex_3 of Hexagon
-    sk_2.addPointsAbsolute(5*L/3, 5*L/3, -L/3)                        # Vertex_4 of Hexagon
-    sk_2.addPointsAbsolute(L, 2*L, 0)                                 # Vertex_5 of Hexagon
-    sk_2.addPointsAbsolute(2*L/3, 5*L/3, 2*L/3)                       # Vertex_6 of Hexagon
-    sk_2.addPointsAbsolute(L, L, L)                                   # Vertex_1 of Hexagon
     a3D_Sketcher_2 = sk_2.wire()
     Face_2 = geompy.MakeFaceWires([a3D_Sketcher_2], 1)
     Vector_2 = geompy.MakeVectorDXDYDZ(1, 1, 1)
     Extrusion_2 = geompy.MakePrismVecH(Face_2, Vector_2, d2/3)
-
-    Translation_3 = geompy.MakeTranslation(a3D_Sketcher_2, -L-L/6, -L-L/6, 0-L/6)
-    Face_3 = geompy.MakeFaceWires([Translation_3], 1)
-    Vector_2 = geompy.MakeVectorDXDYDZ(1, 1, 1)
-    #Extrusion_3 = geompy.MakePrismVecH(Face_3, Vector_2, (n-4.0/3)*d2)    # Extrusion_3Direction
-    Extrusion_3 = geompy.MakePrismVecH(Face_3, Vector_2, (n-2.0)*d2)    # Extrusion_3Direction
 
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
@@ -85,35 +79,32 @@ def simpleCubic(alpha):
     geompy.addToStudy( Face_2, 'Face_2' )
     geompy.addToStudy( Vector_2, 'Vector_2' )
     geompy.addToStudy( Extrusion_2, 'Extrusion_2' )
-    geompy.addToStudy( Translation_3, 'a3D_Sketcher_3' )
-    geompy.addToStudy( Extrusion_3, 'Extrusion_3' )
 
     Sphere_1 = geompy.MakeSphereR(r0/(1-alpha))
-    Multi_Translation_2 = geompy.MakeMultiTranslation2D(Sphere_1, OX, L, n, OY, L, n)
-    Multi_Translation_3 = geompy.MakeMultiTranslation1D(Multi_Translation_2, OZ, L, n)
+    Multi_Translation_2 = geompy.MakeMultiTranslation2D(Sphere_1, OX, 2, 3, OY, 2, 3)
+    Multi_Translation_3 = geompy.MakeMultiTranslation1D(Multi_Translation_2, OZ, 2, 3)
     Cut_1 = geompy.MakeCutList(Translation_2, [Multi_Translation_3])
     Cut_2 = geompy.MakeCutList(Extrusion_1, [Multi_Translation_3])
     Cut_3 = geompy.MakeCutList(Extrusion_2, [Multi_Translation_3])
     Cut_V = geompy.MakeCutList(Cut_1, [Cut_3])
     #Cut_2.SetColor(SALOMEDS.Color(0,0,1))
-    Cut_4 = geompy.MakeCutList(Extrusion_3, [Multi_Translation_3])
 
     geompy.addToStudy( Sphere_1, 'Sphere_' )
-    geompy.addToStudy( Multi_Translation_2, 'Multi-Translation_2_'+str(i+1)  )
-    geompy.addToStudy( Multi_Translation_3, 'Multi-Translation_3_'+str(i+1)  )
-    geompy.addToStudy( Cut_1, 'Pore1_'+str(i+1) )
-    geompy.addToStudy( Cut_2, 'Pore2_'+str(i+1) )
-    geompy.addToStudy( Cut_3, 'Pore3_'+str(i+1) )
-    geompy.addToStudy( Cut_V, 'Cut_V_'+str(i+1) )
-    geompy.addToStudy( Cut_4, 'Pore4_'+str(i+1) )
+    geompy.addToStudy( Multi_Translation_2, 'Multi-Translation_2_'  )
+    geompy.addToStudy( Multi_Translation_3, 'Multi-Translation_3_'  )
+    geompy.addToStudy( Cut_1, 'Pore1_' )
+    geompy.addToStudy( Cut_2, 'Pore2_' )
+    geompy.addToStudy( Cut_3, 'Pore3_' )
+    geompy.addToStudy( Cut_V, 'Cut_V_' )
 
-    i = i + 1
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
-
+    
     # Preparation
+    #Cut_1 = geompy.MakeRotation(Cut_1, OZ, -pi_4)
+
     grains = geompy.ExtractShapes(Multi_Translation_3, geompy.ShapeType["SOLID"], True)
 
     grains = geompy.MakeFuseList(grains, False, False)
 
-    return grains, Cut_1, Cut_4
+    return Multi_Translation_3, Cut_1, Cut_2

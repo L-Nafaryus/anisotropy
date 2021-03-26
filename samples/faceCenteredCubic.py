@@ -24,46 +24,53 @@ def faceCenteredCubic(alpha):
     a=2*r0
     b=L/2
     #c=b/2
-    h=L/math.sqrt(3)
+    d = L*math.sqrt(3)
+    h = d/3
     Pi_4 = 45*math.pi/180.0
+    n = 3                                                               # number of cubes in line
 
     Vertex_1 = geompy.MakeVertex(-a, -a, -b)
     Vertex_2 = geompy.MakeVertex(a, a, b)
-    Vertex_3 = geompy.MakeVertex(-1, 0, -b)                             # Center of Sphere_1
-    Vertex_4 = geompy.MakeVertex(-b, 0, -0)
+    Vertex_3 = geompy.MakeVertex(-b*(n-1), 0, -b*(n-2))                 # Center of Sphere_1
+    Vertex_4 = geompy.MakeVertex(-b*n, 0, -b*(n-3))                     # Center of Sphere_2
     Vertex_5 = geompy.MakeVertex(0, 0, -b)
 
-    sk = geompy.Sketcher3D()                                            #            Rombus
-    sk.addPointsAbsolute(-b, -b, b)                                     #Vertex_1 of Rombus
-    sk.addPointsAbsolute(0, -b, 0)                                      #Vertex_2 of Rombus
-    sk.addPointsAbsolute(0, 0, -b)                                      #Vertex_3 of Rombus
-    sk.addPointsAbsolute(-b, 0, 0)                                      #Vertex_4 of Rombus
-    sk.addPointsAbsolute(-b, -b, b)                                     #Vertex_1 of Rombus
+    sk = geompy.Sketcher3D()                                            #             Rombus
+    sk.addPointsAbsolute(-b, -b, b)                                     # Vertex_1 of Rombus
+    sk.addPointsAbsolute(0, -b, 0)                                      # Vertex_2 of Rombus
+    sk.addPointsAbsolute(0, 0, -b)                                      # Vertex_3 of Rombus
+    sk.addPointsAbsolute(-b, 0, 0)                                      # Vertex_4 of Rombus
+    sk.addPointsAbsolute(-b, -b, b)                                     # Vertex_1 of Rombus
     a3D_Sketcher_1 = sk.wire()
     Face_1 = geompy.MakeFaceWires([a3D_Sketcher_1], 1)
     Face_1_Up = geompy.MakeTranslation(Face_1, b, b, 0)
     Rhombohedron = geompy.MakeHexa2Faces(Face_1, Face_1_Up)
 
-    sk_2 = geompy.Sketcher3D()                                          #            Triangle
-    sk_2.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         #Vertex_1 of Triangle
-    sk_2.addPointsAbsolute(0, -b, 0)                                    #Vertex_2 of Triangle
-    sk_2.addPointsAbsolute(-b/3, -b/3, -b/3)                            #Vertex_3 of Triangle
-    sk_2.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         #Vertex_1 of Triangle
+    sk_2 = geompy.Sketcher3D()                                          #             Triangle
+    sk_2.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         # Vertex_1 of Triangle
+    sk_2.addPointsAbsolute(0, -b, 0)                                    # Vertex_2 of Triangle
+    sk_2.addPointsAbsolute(-b/3, -b/3, -b/3)                            # Vertex_3 of Triangle
+    sk_2.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         # Vertex_1 of Triangle
     a3D_Sketcher_2 = sk_2.wire() 
     Face_2 = geompy.MakeFaceWires([a3D_Sketcher_2], 1)
     Extrusion_2 = geompy.MakePrismVecH(Face_2, V, h)
 
-    sk_3 = geompy.Sketcher3D()                                          #            Hexagon
-    sk_3.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         #Vertex_1 of Hexagon
-    sk_3.addPointsAbsolute(0, -b, 0)                                    #Vertex_2 of Hexagon
-    sk_3.addPointsAbsolute(b/3, -2*b/3, -2*b/3)                         #Vertex_3 of Hexagon
-    sk_3.addPointsAbsolute(0, 0, -b)                                    #Vertex_4 of Hexagon
-    sk_3.addPointsAbsolute(-2*b/3, b/3, -2*b/3)                         #Vertex_5 of Hexagon
-    sk_3.addPointsAbsolute(-b, 0, 0)                                    #Vertex_6 of Hexagon
-    sk_3.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         #Vertex_1 of Hexagon
+    sk_3 = geompy.Sketcher3D()                                          #             Hexagon
+    sk_3.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         # Vertex_1 of Hexagon
+    sk_3.addPointsAbsolute(0, -b, 0)                                    # Vertex_2 of Hexagon
+    sk_3.addPointsAbsolute(b/3, -2*b/3, -2*b/3)                         # Vertex_3 of Hexagon
+    sk_3.addPointsAbsolute(0, 0, -b)                                    # Vertex_4 of Hexagon
+    sk_3.addPointsAbsolute(-2*b/3, b/3, -2*b/3)                         # Vertex_5 of Hexagon
+    sk_3.addPointsAbsolute(-b, 0, 0)                                    # Vertex_6 of Hexagon
+    sk_3.addPointsAbsolute(-2*b/3, -2*b/3, b/3)                         # Vertex_1 of Hexagon
     a3D_Sketcher_3 = sk_3.wire() 
     Face_3 = geompy.MakeFaceWires([a3D_Sketcher_3], 1)
     Extrusion_3 = geompy.MakePrismVecH(Face_3, V, h)
+
+    Translation_1 = geompy.MakeTranslation(a3D_Sketcher_3, -(n-2)*L/3, -(n-2)*L/3, -(n-2)*L/3)
+    Face_4 = geompy.MakeFaceWires([Translation_1], 1)
+    Vector_1 = geompy.MakeVectorDXDYDZ(1, 1, 1)
+    Extrusion_4 = geompy.MakePrismVecH(Face_4, Vector_1, (2*n-3)/3.0*d)   # Extrusion_3Direction
 
     Box_1 = geompy.MakeBoxTwoPnt(Vertex_1, Vertex_2)
     Rotation_1 = geompy.MakeRotation(Box_1, OZ, Pi_4)
@@ -91,45 +98,53 @@ def faceCenteredCubic(alpha):
     geompy.addToStudy( a3D_Sketcher_3, 'a3D_Sketcher_3' )
     geompy.addToStudy( Face_3, 'Face_3' )
     geompy.addToStudy( Extrusion_3, 'Extrusion_3' )
-     
+    geompy.addToStudy( Face_4, 'Face_4' )
+    geompy.addToStudy( Extrusion_4, 'Extrusion_4' )
+ 
 
     Radius = r0/(1-alpha)
     Sphere_1 = geompy.MakeSpherePntR(Vertex_3, Radius)
-    Down = geompy.MakeMultiTranslation2D(Sphere_1, V_1, a, 3, V_2, a, 3)
-    Up_Down = geompy.MakeMultiTranslation1D(Down, OZ, 1, 2)
+    Down = geompy.MakeMultiTranslation2D(Sphere_1, V_1, a, n, V_2, a, n)
+    Up_Down = geompy.MakeMultiTranslation1D(Down, OZ, 1, n-1)
     Cut_1 = geompy.MakeCutList(Rotation_1, [Up_Down], True)
 
     Sphere_2 = geompy.MakeSpherePntR(Vertex_4, Radius)
-    Middle = geompy.MakeMultiTranslation2D(Sphere_2, V_1, a, 2, V_2, a, 2)
-    Cut_2 = geompy.MakeCutList(Cut_1, [Middle], True)
+    Middle = geompy.MakeMultiTranslation2D(Sphere_2, V_1, a, n+1, V_2, a, n+1)
+    Middle_Up = geompy.MakeMultiTranslation1D(Middle, OZ, 1, n-2)
+    Cut_2 = geompy.MakeCutList(Cut_1, [Middle_Up], True)
 
     Common = geompy.MakeCommonList([Cut_2, Rotation_2], True)
     Pore_3 = geompy.MakeCommonList([Rhombohedron, Cut_2], True)
 
     Cut_3 = geompy.MakeCutList(Extrusion_2, [Up_Down], True)
-    Cut_4 = geompy.MakeCutList(Cut_3, [Middle], True)
+    Cut_4 = geompy.MakeCutList(Cut_3, [Middle_Up], True)
     
     Cut_5 = geompy.MakeCutList(Extrusion_3, [Up_Down], True)
-    Cut_6 = geompy.MakeCutList(Cut_5, [Middle], True)
+    Cut_6 = geompy.MakeCutList(Cut_5, [Middle_Up], True)
 
-    #geompy.addToStudy( Sphere_1, 'Sphere_' )
-    geompy.addToStudy( Down, 'Down_' )
-    geompy.addToStudy( Up_Down, 'Up_Down_' )
-    geompy.addToStudy( Cut_1, 'Cut_1_' )
-    geompy.addToStudy( Middle, 'Middle_' )
-    geompy.addToStudy( Cut_2, 'Pore_' )
-    geompy.addToStudy( Common, 'Pore_2_' )
-    geompy.addToStudy( Pore_3, 'Pore_3_' )
-    geompy.addToStudy( Cut_4, 'Pore_3a_' )
-    geompy.addToStudy( Cut_6, 'Pore_3b_' )
+    Cut_7 = geompy.MakeCutList(Extrusion_4, [Up_Down], True)
+    Cut_8 = geompy.MakeCutList(Cut_7, [Middle_Up], True)
 
+    #geompy.addToStudy( Sphere_1, 'Sphere_'+str(i+1) )
+    geompy.addToStudy( Down, 'Down_'+str(i+1) )
+    geompy.addToStudy( Up_Down, 'Up_Down_'+str(i+1) )
+    geompy.addToStudy( Cut_1, 'Cut_1_'+str(i+1) )
+    geompy.addToStudy( Middle_Up, 'Middle_Up_'+str(i+1) )
+    geompy.addToStudy( Cut_2, 'Pore_'+str(i+1) )
+    geompy.addToStudy( Common, 'Pore_2_'+str(i+1) )
+    geompy.addToStudy( Pore_3, 'Pore_3_'+str(i+1) )
+    geompy.addToStudy( Cut_4, 'Pore_3a_'+str(i+1) )
+    geompy.addToStudy( Cut_6, 'Pore_3b_'+str(i+1) )
+    geompy.addToStudy( Cut_8, 'Pore_3c_'+str(i+1) )
+
+    i = i + 1
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
-    
+
     # Preparation
     grains = geompy.ExtractShapes(Up_Down, geompy.ShapeType["SOLID"], True)
-    grains += geompy.ExtractShapes(Middle, geompy.ShapeType["SOLID"], True)
+    grains += geompy.ExtractShapes(Middle_Up, geompy.ShapeType["SOLID"], True)
 
     grains = geompy.MakeFuseList(grains, False, False)
 
-    return grains, Common, Pore_3
+    return grains, Common, Cut_8
