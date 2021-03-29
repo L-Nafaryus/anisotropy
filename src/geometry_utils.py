@@ -7,6 +7,9 @@ geompy = geomBuilder.New()
 
 import math
 import logging
+import quaternion
+import numpy as np
+
 
 def getGeom():
     return geompy
@@ -36,6 +39,83 @@ def createGroup(gobj, planelist, grains, name):
     geompy.UnionList(gr, faces)
 
     return gr
+
+
+def createBoundary(gobj, bcount, dvec, grains):
+    
+    direction = np.quaternion(0, dvec.x[0], dvec.x[1], dvec.x[2]).normalized()
+    ax = lambda alpha: np.quaternion(np.cos(alpha * 0.5), \
+        np.sin(alpha * 0.5) * 1, np.sin(alpha * 0.5) * 1, np.sin(alpha * 0.5) * 1) 
+    ang = lambda n, count: 2 * np.pi * n / count
+    limit = bcount if np.mod(bcount, 2) else int(bcount / 2)
+
+    vecs = [ ax(ang(n, bcount)) * direction * ax(ang(n, bcount)).inverse() for n in range(limit) ]
+    
+    #
+    flowvec = geompy.MakeVector(
+        geompy.MakeVertex(0, 0, 0),
+        geompy.MakeVertex(dvec.x[0], dvec.x[1], dvec.x[2]))
+    symvec = []
+
+    for qvec in vecs:
+        vec = qvec.vec
+        symvec.append(geompy.MakeVector(
+            geompy.MakeVertex(0, 0, 0),
+            geompy.MakeVertex(vec[0], vec[1], vec[2])))
+
+
+    #
+    planes = geompy.ExtractShapes(gobj, geompy.ShapeType["FACE"], False)
+    planes = geompy.MakeCompound(planes)
+    planes = geompy.MakeCutList(planes, [grains], False)
+    planes = geompy.ExtractShapes(planes, geompy.ShapeType["FACE"], False)
+
+    inletplanes = []
+    outletplanes = []
+    symetryplanes = [[None, None] for n in range(limit)]
+
+    for plane in planes:
+        nvec = geompy.GetNormal(plane)
+        
+        fwang = round(geompy.GetAngle(nvec, flowvec), 0)
+
+        if fwang == 0:
+            inletplanes.append(plane)
+
+        elif fwang == 180:
+            outletplanes.append(plane)
+
+        for n in range(len(symvec)):
+            sang = round(geompy.GetAngle(nvec, svec[n]), 0)
+
+            if sang == 0:
+                symetryplanes[n][0] = plane
+
+            elif sang == 180:
+                symetryplanes[n][1] = plane
+
+    #
+    boundary = {}
+
+    boundary["inlet"] = createGroup(gobj, inletplanes, grains, "inlet")
+    boundary["outlet"] = createGroup(gobj, outletplanes, grains, "outlet")
+    
+    for n in range(len(symetryplanes)):
+        name = "symetryPlane{}".format(n + 1)
+        
+        boundary[name + "_1"] = createGroup(gobj, symetryplanes[n][0], grains, name + "_1")
+
+        if not symetryplanes[n][1] == None:
+            boundary[name + "_2"] = createGroup(gobj, symetryplanes[n][1], grains, name + "_2")
+
+    # wall
+    allgroup = geompy.CreateGroup(gobj, geompy.ShapeType["FACE"])
+    faces = geompy.SubShapeAllIDs(gobj, geompy.ShapeType["FACE"])
+    geompy.UnionIDs(allgroup, faces)
+    boundary["wall"] = geompy.CutListOfGroups([allgroup], list(boundary.values()), "wall")
+    
+    return boundary
+
 
 def boundaryCreate(gobj, dvec, grains):
 
