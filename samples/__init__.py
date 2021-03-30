@@ -1,6 +1,7 @@
 from collections import namedtuple
 import os, sys
 import logging
+from pyquaternion import Quaternion
 
 ROOT = "/home/nafaryus/projects/anisotrope-cube"
 sys.path.append(ROOT)
@@ -33,6 +34,17 @@ def genMesh(stype, theta, flowdirection, saveto):
             geometry = geometry2
             norm = [-1, -1, 1]
             bcount = 6
+
+            # initial angle
+            angle = math.pi / 6
+            vec = Quaternion(0, flowdirection[0], flowdirection[1], flowdirection[2])
+            ax = Quaternion(
+                math.cos(angle * 0.5), 
+                math.sin(angle * 0.5) * norm[0], 
+                math.sin(angle * 0.5) * norm[1], 
+                math.sin(angle * 0.5) * norm[2])
+            qvec = (ax * vec * ax.inverse).vector
+            norm = [qvec[0], qvec[1], qvec[2]]
             #direction = fd([1, 1, 1], [1, -1, 1], [1, -1, -1])
         
         #else:

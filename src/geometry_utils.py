@@ -7,7 +7,7 @@ geompy = geomBuilder.New()
 
 import math
 import logging
-import quaternion
+from pyquaternion import Quaternion
 import numpy as np
 
 
@@ -43,8 +43,8 @@ def createGroup(gobj, planelist, grains, name):
 
 def createBoundary(gobj, bcount, dvec, norm, grains):
     
-    direction = np.quaternion(0, dvec[0], dvec[1], dvec[2]).normalized()
-    ax = lambda alpha: np.quaternion(
+    direction = Quaternion(0, dvec[0], dvec[1], dvec[2]).normalized
+    ax = lambda alpha: Quaternion(
         np.cos(alpha * 0.5),
         np.sin(alpha * 0.5) * norm[0], 
         np.sin(alpha * 0.5) * norm[1], 
@@ -53,7 +53,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
     ang = lambda n, count: 2 * np.pi * n / count
     limit = bcount if np.mod(bcount, 2) else int(bcount / 2)
 
-    vecs = [ ax(ang(n, bcount)) * direction * ax(ang(n, bcount)).inverse() for n in range(limit) ]
+    vecs = [ ax(ang(n, bcount)) * direction * ax(ang(n, bcount)).inverse for n in range(limit) ]
     
     #
     flowvec = geompy.MakeVector(
@@ -62,7 +62,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
     symvec = []
 
     for qvec in vecs:
-        vec = qvec.vec
+        vec = qvec.vector
         symvec.append(geompy.MakeVector(
             geompy.MakeVertex(0, 0, 0),
             geompy.MakeVertex(vec[0], vec[1], vec[2])))
