@@ -41,11 +41,15 @@ def createGroup(gobj, planelist, grains, name):
     return gr
 
 
-def createBoundary(gobj, bcount, dvec, grains):
+def createBoundary(gobj, bcount, dvec, norm, grains):
     
-    direction = np.quaternion(0, dvec.x[0], dvec.x[1], dvec.x[2]).normalized()
-    ax = lambda alpha: np.quaternion(np.cos(alpha * 0.5), \
-        np.sin(alpha * 0.5) * 1, np.sin(alpha * 0.5) * 1, np.sin(alpha * 0.5) * 1) 
+    direction = np.quaternion(0, dvec[0], dvec[1], dvec[2]).normalized()
+    ax = lambda alpha: np.quaternion(
+        np.cos(alpha * 0.5),
+        np.sin(alpha * 0.5) * norm[0], 
+        np.sin(alpha * 0.5) * norm[1], 
+        np.sin(alpha * 0.5) * norm[2]) 
+    
     ang = lambda n, count: 2 * np.pi * n / count
     limit = bcount if np.mod(bcount, 2) else int(bcount / 2)
 
@@ -54,7 +58,7 @@ def createBoundary(gobj, bcount, dvec, grains):
     #
     flowvec = geompy.MakeVector(
         geompy.MakeVertex(0, 0, 0),
-        geompy.MakeVertex(dvec.x[0], dvec.x[1], dvec.x[2]))
+        geompy.MakeVertex(dvec[0], dvec[1], dvec[2]))
     symvec = []
 
     for qvec in vecs:

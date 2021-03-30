@@ -113,7 +113,19 @@ def simpleCubic(alpha):
 
     # Preparation
     grains = geompy.ExtractShapes(Multi_Translation_3, geompy.ShapeType["SOLID"], True)
-
     grains = geompy.MakeFuseList(grains, False, False)
 
-    return grains, Cut_1, Cut_4
+    R = r0 / (1 - alpha)
+    C1 = 0.8
+    C2 = 0.4
+    alpha1 = 0.01
+    alpha2 = 0.28
+    
+    Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
+    R_fillet = Cf * (r0 * math.sqrt(2) - R)
+    
+    grains = geompy.MakeFilletAll(grains, R_fillet)
+    geometry1 = geompy.MakeCutList(Cut_1, [grains], True)
+    geometry2 = geompy.MakeCutList(Cut_4, [grains], True)
+
+    return grains, geometry1, geometry2

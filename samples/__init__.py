@@ -24,24 +24,32 @@ def genMesh(stype, theta, flowdirection, saveto):
     if structure:
         salome.salome_init()
 
-        grains, cubic, rhombohedron = structure(theta)
-        fd = namedtuple("fd", ["x", "y", "z"])
-        geometry = cubic
+        #grains, cubic, rhombohedron = structure(theta)
+        #fd = namedtuple("fd", ["x", "y", "z"])
+        grains, geometry1, geometry2 = structure(theta)
+        geometry = geometry1
         
         if flowdirection == [1, 1, 1]:
-            geometry = rhombohedron
-            direction = fd([1, 1, 1], [1, -1, 1], [1, -1, -1])
+            geometry = geometry2
+            norm = [-1, -1, 1]
+            bcount = 6
+            #direction = fd([1, 1, 1], [1, -1, 1], [1, -1, -1])
         
-        else:
-            geometry = cubic
+        #else:
+        #    geometry = cubic
 
         if flowdirection == [1, 0, 0]:
-            direction = fd([1, 1, 0], [1, -1, 0], [0, 0, 1])
+            norm = [0, 0, 1]
+            bcount = 4
+            #direction = fd([1, 1, 0], [1, -1, 0], [0, 0, 1])
 
         if flowdirection == [0, 0, 1]:
-            direction = fd([0, 0, 1], [1, -1, 0], [1, 1, 0])
+            norm = [1, 1, 0]
+            bcount = 4
+            #direction = fd([0, 0, 1], [1, -1, 0], [1, 1, 0])
         
-        boundary = geometry_utils.boundaryCreate(geometry, direction, grains)
+        #boundary = geometry_utils.boundaryCreate(geometry, direction, grains)
+        boundary = geometry_utils.createBoundary(geometry, bcount, flowdirection, norm, grains)
 
         fineness = 3
         mesh = mesh_utils.meshCreate(geometry, boundary, fineness)

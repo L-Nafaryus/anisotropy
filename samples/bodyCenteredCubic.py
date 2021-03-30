@@ -149,7 +149,19 @@ def bodyCenteredCubic(alpha):
     # Preparation
     grains = geompy.ExtractShapes(Up_Down, geompy.ShapeType["SOLID"], True)
     grains += geompy.ExtractShapes(Middle, geompy.ShapeType["SOLID"], True)
-
     grains = geompy.MakeFuseList(grains, False, False)
+
+    R = r0 / (1 - alpha)
+    C1 = 0.8
+    C2 = 0.4
+    alpha1 = 0.01
+    alpha2 = 0.13
+    
+    Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
+    R_fillet = Cf * (r0 * math.sqrt(2) - R)
+    
+    grains = geompy.MakeFilletAll(grains, R_fillet)
+    geometry1 = geompy.MakeCutList(Pore_1a, [grains], True)
+    geometry2 = geompy.MakeCutList(Pore_3c, [grains], True)
 
     return grains, Pore_1a, Pore_3c
