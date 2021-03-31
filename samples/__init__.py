@@ -37,31 +37,35 @@ def genMesh(stype, theta, flowdirection, saveto):
 
             # initial angle
             angle = math.pi / 6
-            vec = Quaternion(0, flowdirection[0], flowdirection[1], flowdirection[2])
-            ax = Quaternion(
-                math.cos(angle * 0.5), 
-                math.sin(angle * 0.5) * norm[0], 
-                math.sin(angle * 0.5) * norm[1], 
-                math.sin(angle * 0.5) * norm[2])
-            qvec = (ax * vec * ax.inverse).vector
-            norm = [qvec[0], qvec[1], qvec[2]]
+            #vec = Quaternion(0, norm[0], norm[1], norm[2])
+            #ax = Quaternion(
+            #    math.cos(angle * 0.5), 
+            #    math.sin(angle * 0.5) * flowdirection[0], 
+            #    math.sin(angle * 0.5) * flowdirection[1], 
+            #    math.sin(angle * 0.5) * flowdirection[2])
+            #qvec = (ax * vec * ax.inverse).vector
+            #normvec = [qvec[0], qvec[1], qvec[2]]
+            normvec = Quaternion(axis = flowdirection, angle = angle).rotate(norm)
+            direction = [1, 1, 1]
             #direction = fd([1, 1, 1], [1, -1, 1], [1, -1, -1])
         
         #else:
         #    geometry = cubic
 
         if flowdirection == [1, 0, 0]:
-            norm = [0, 0, 1]
+            normvec = [0, 0, 1]
             bcount = 4
+            direction = [1, 1, 0]
             #direction = fd([1, 1, 0], [1, -1, 0], [0, 0, 1])
 
         if flowdirection == [0, 0, 1]:
-            norm = [1, 1, 0]
+            normvec = [1, 1, 0]
             bcount = 4
+            direction = [0, 0, 1]
             #direction = fd([0, 0, 1], [1, -1, 0], [1, 1, 0])
         
         #boundary = geometry_utils.boundaryCreate(geometry, direction, grains)
-        boundary = geometry_utils.createBoundary(geometry, bcount, flowdirection, norm, grains)
+        boundary = geometry_utils.createBoundary(geometry, bcount, direction, normvec, grains)
 
         fineness = 3
         mesh = mesh_utils.meshCreate(geometry, boundary, fineness)

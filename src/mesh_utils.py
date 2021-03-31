@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import SMESH
 from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
@@ -9,6 +6,7 @@ import logging
 
 def getSmesh():
     return smesh
+
 
 def meshCreate(gobj, boundary, fineness, viscousLayers=None):
     """
@@ -89,6 +87,7 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
 
     return mesh
 
+
 def meshCompute(mobj):
     """Compute the mesh."""
     status = mobj.Compute()
@@ -103,6 +102,7 @@ def meshCompute(mobj):
     logging.info("""meshCompute:
     status:\t{}""".format(msg))
 
+
 def meshExport(mobj, path):
     """
     Export the mesh in a file in UNV format.
@@ -110,10 +110,9 @@ def meshExport(mobj, path):
     Parameters:
         path (string): full path to the expected directory.
     """
-    exportpath = path #os.path.join(path, "{}.unv".format(mobj.name))
 
     try:
-        mobj.ExportUNV(exportpath)
+        mobj.ExportUNV(path)
 
         logging.info("""meshExport:
         format:\t{}""".format("unv"))

@@ -33,7 +33,7 @@ def createTasks():
 
     for structure in structures:
         if structure == "simpleCubic":
-            theta = [c * 0.01 for c in range(1, 14)]
+            theta = [c * 0.01 for c in range(1, 29 + 1)]
 
         elif structure == "faceCenteredCubic":
             theta = []

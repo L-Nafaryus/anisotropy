@@ -99,15 +99,14 @@ def simpleCubic(alpha):
     Cut_4 = geompy.MakeCutList(Extrusion_3, [Multi_Translation_3])
 
     geompy.addToStudy( Sphere_1, 'Sphere_' )
-    geompy.addToStudy( Multi_Translation_2, 'Multi-Translation_2_'+str(i+1)  )
-    geompy.addToStudy( Multi_Translation_3, 'Multi-Translation_3_'+str(i+1)  )
-    geompy.addToStudy( Cut_1, 'Pore1_'+str(i+1) )
-    geompy.addToStudy( Cut_2, 'Pore2_'+str(i+1) )
-    geompy.addToStudy( Cut_3, 'Pore3_'+str(i+1) )
-    geompy.addToStudy( Cut_V, 'Cut_V_'+str(i+1) )
-    geompy.addToStudy( Cut_4, 'Pore4_'+str(i+1) )
+    geompy.addToStudy( Multi_Translation_2, 'Multi-Translation_2_'  )
+    geompy.addToStudy( Multi_Translation_3, 'Multi-Translation_3_'  )
+    geompy.addToStudy( Cut_1, 'Pore1_' )
+    geompy.addToStudy( Cut_2, 'Pore2_' )
+    geompy.addToStudy( Cut_3, 'Pore3_' )
+    geompy.addToStudy( Cut_V, 'Cut_V_' )
+    geompy.addToStudy( Cut_4, 'Pore4_' )
 
-    i = i + 1
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
 

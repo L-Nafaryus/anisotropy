@@ -125,19 +125,18 @@ def faceCenteredCubic(alpha):
     Cut_7 = geompy.MakeCutList(Extrusion_4, [Up_Down], True)
     Cut_8 = geompy.MakeCutList(Cut_7, [Middle_Up], True)
 
-    #geompy.addToStudy( Sphere_1, 'Sphere_'+str(i+1) )
-    geompy.addToStudy( Down, 'Down_'+str(i+1) )
-    geompy.addToStudy( Up_Down, 'Up_Down_'+str(i+1) )
-    geompy.addToStudy( Cut_1, 'Cut_1_'+str(i+1) )
-    geompy.addToStudy( Middle_Up, 'Middle_Up_'+str(i+1) )
-    geompy.addToStudy( Cut_2, 'Pore_'+str(i+1) )
-    geompy.addToStudy( Common, 'Pore_2_'+str(i+1) )
-    geompy.addToStudy( Pore_3, 'Pore_3_'+str(i+1) )
-    geompy.addToStudy( Cut_4, 'Pore_3a_'+str(i+1) )
-    geompy.addToStudy( Cut_6, 'Pore_3b_'+str(i+1) )
-    geompy.addToStudy( Cut_8, 'Pore_3c_'+str(i+1) )
+    #geompy.addToStudy( Sphere_1, 'Sphere_' )
+    geompy.addToStudy( Down, 'Down_' )
+    geompy.addToStudy( Up_Down, 'Up_Down_' )
+    geompy.addToStudy( Cut_1, 'Cut_1_' )
+    geompy.addToStudy( Middle_Up, 'Middle_Up_' )
+    geompy.addToStudy( Cut_2, 'Pore_' )
+    geompy.addToStudy( Common, 'Pore_2_' )
+    geompy.addToStudy( Pore_3, 'Pore_3_' )
+    geompy.addToStudy( Cut_4, 'Pore_3a_' )
+    geompy.addToStudy( Cut_6, 'Pore_3b_' )
+    geompy.addToStudy( Cut_8, 'Pore_3c_' )
 
-    i = i + 1
     if salome.sg.hasDesktop():
         salome.sg.updateObjBrowser()
 

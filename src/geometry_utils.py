@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import GEOM
 from salome.geom import geomBuilder
 geompy = geomBuilder.New()
@@ -14,19 +11,19 @@ import numpy as np
 def getGeom():
     return geompy
 
-def rotate(gobj, ang):
-    x = geompy.MakeVectorDXDYDZ(1, 0, 0)
-    y = geompy.MakeVectorDXDYDZ(0, 1, 0)
-    z = geompy.MakeVectorDXDYDZ(0, 0, 1)
+#def rotate(gobj, ang):
+#    x = geompy.MakeVectorDXDYDZ(1, 0, 0)
+#    y = geompy.MakeVectorDXDYDZ(0, 1, 0)
+#    z = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
     # yaw
-    rotated = geompy.MakeRotation(gobj, z, ang[2])
+#    rotated = geompy.MakeRotation(gobj, z, ang[2])
     # pitch
-    rotated = geompy.MakeRotation(rotated, y, ang[1])
+#    rotated = geompy.MakeRotation(rotated, y, ang[1])
     # roll
-    rotated = geompy.MakeRotation(rotated, x, ang[0])
+#    rotated = geompy.MakeRotation(rotated, x, ang[0])
 
-    return rotated
+#    return rotated
 
 def createGroup(gobj, planelist, grains, name):
     gr = geompy.CreateGroup(gobj, geompy.ShapeType["FACE"], name)
@@ -43,26 +40,35 @@ def createGroup(gobj, planelist, grains, name):
 
 def createBoundary(gobj, bcount, dvec, norm, grains):
     
-    direction = Quaternion(0, dvec[0], dvec[1], dvec[2]).normalized
-    ax = lambda alpha: Quaternion(
-        np.cos(alpha * 0.5),
-        np.sin(alpha * 0.5) * norm[0], 
-        np.sin(alpha * 0.5) * norm[1], 
-        np.sin(alpha * 0.5) * norm[2]) 
+    #normvec = Quaternion(0, norm[0], norm[1], norm[2]).normalised
+    #ax = lambda alpha: Quaternion(
+    #    np.cos(alpha * 0.5),
+    #    np.sin(alpha * 0.5) * dvec[0], 
+    #    0, 0).normalised
+        #np.sin(alpha * 0.5) * dvec[1], 
+        #np.sin(alpha * 0.5) * dvec[2]).normalised 
     
     ang = lambda n, count: 2 * np.pi * n / count
     limit = bcount if np.mod(bcount, 2) else int(bcount / 2)
 
-    vecs = [ ax(ang(n, bcount)) * direction * ax(ang(n, bcount)).inverse for n in range(limit) ]
+    #vecs = [ ax(ang(n, bcount)) * normvec * ax(ang(n, bcount)).inverse for n in range(limit) ]
+    vecs = [ Quaternion(axis = dvec, angle = ang(n, bcount)).rotate(norm) for n in range(limit) ]
     
+    logging.info("""createBoundary: 
+    flow direction:\t{}
+    side boundaries:\t{}
+    normal direction:\t{}
+    angles:\t{}
+    side directions:\t{}""".format(dvec, bcount, norm, [ ang(n, bcount) / (2 * np.pi) * 360 for n in range(limit) ], [ v for v in vecs ]))
+
     #
     flowvec = geompy.MakeVector(
         geompy.MakeVertex(0, 0, 0),
         geompy.MakeVertex(dvec[0], dvec[1], dvec[2]))
     symvec = []
 
-    for qvec in vecs:
-        vec = qvec.vector
+    for vec in vecs:
+        #vec = qvec.vector
         symvec.append(geompy.MakeVector(
             geompy.MakeVertex(0, 0, 0),
             geompy.MakeVertex(vec[0], vec[1], vec[2])))
@@ -73,6 +79,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
     planes = geompy.MakeCompound(planes)
     planes = geompy.MakeCutList(planes, [grains], False)
     planes = geompy.ExtractShapes(planes, geompy.ShapeType["FACE"], False)
+    #print("planes: ", len(planes))
 
     inletplanes = []
     outletplanes = []
@@ -82,6 +89,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
         nvec = geompy.GetNormal(plane)
         
         fwang = round(geompy.GetAngle(nvec, flowvec), 0)
+        #print("fwang = ", fwang)
 
         if fwang == 0:
             inletplanes.append(plane)
@@ -90,13 +98,26 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
             outletplanes.append(plane)
 
         for n in range(len(symvec)):
-            sang = round(geompy.GetAngle(nvec, svec[n]), 0)
+            sang = round(geompy.GetAngle(nvec, symvec[n]), 0)
+            #print("sang = ", sang, "\n")
 
             if sang == 0:
-                symetryplanes[n][0] = plane
+                if symetryplanes[n][0] == None:
+                    symetryplanes[n][0] = []
+
+                symetryplanes[n][0].append(plane)
 
             elif sang == 180:
-                symetryplanes[n][1] = plane
+                if symetryplanes[n][1] == None:
+                    symetryplanes[n][1] = []
+
+                symetryplanes[n][1].append(plane)
+
+    logging.info("""createBoundary: 
+    planes:\t{}
+    inlet planes:\t{}
+    outlet planes:\t{}
+    side planes:\t{}""".format(len(planes), inletplanes, outletplanes, symetryplanes))
 
     #
     boundary = {}

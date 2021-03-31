@@ -6,10 +6,6 @@ from datetime import timedelta
 
 def application(name, case, log=False, args=[], parallel=False):
     
-
-    #if log:
-    #    logfile = open("{}/{}.log".format(case, name), "a")
-    
     mpirun = []
     if parallel:
         mpirun = ["mpirun", "-np", "4", "--oversubscribe"]
@@ -18,7 +14,6 @@ def application(name, case, log=False, args=[], parallel=False):
     logging.info("Running '{}'".format(" ".join(cmd)))
    
     with subprocess.Popen(cmd, 
-        #shell = True,
         stdout = subprocess.PIPE, 
         stderr = subprocess.PIPE) as p, \
         open("{}/{}.log".format(case, name), "wb") as logfile:
