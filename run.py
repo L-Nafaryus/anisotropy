@@ -23,9 +23,9 @@ def createTasks():
         "faceCenteredCubic"
     ]
     directions = [
-        [1, 0, 0],
-        [0, 0, 1],
-        #[1, 1, 1]
+        #[1, 0, 0],
+        #[0, 0, 1],
+        [1, 1, 1]
     ]
 
     Task = namedtuple("Task", ["structure", "coeff", "direction", "saveto"])
@@ -33,13 +33,13 @@ def createTasks():
 
     for structure in structures:
         if structure == "simpleCubic":
-            theta = [c * 0.01 for c in range(1, 29 + 1)]
+            theta = [0.01, 0.29] #[c * 0.01 for c in range(1, 29 + 1)]
 
         elif structure == "faceCenteredCubic":
-            theta = []
+            theta = [0.01, 0.13] #[c * 0.01 for c in range(1, 13 + 1)]
 
         elif structure == "bodyCenteredCubic":
-            theta = []
+            theta = [0.01, 0.13, 0.14, 0.18] #[c * 0.01 for c in range(1, 18 + 1)]
 
         for coeff in theta:
             for direction in directions:
@@ -60,10 +60,15 @@ def createMesh(tasks):
     port = 2810
 
     for task in tasks:
+        logging.info("-" * 80)
+        logging.info("""createMesh:
+        task:\t{} / {}""".format(tasks.index(task) + 1, len(tasks)))
+
         returncode = salome_utils.runExecute(port, scriptpath, task.structure, task.coeff, "".join([str(coord) for coord in task.direction]), os.path.join(task.saveto, "mesh.unv"))
         
-        logging.info("Return code: {}".format(returncode))
-        
+        logging.info("Return code:\t{}".format(returncode))
+        logging.info("-" * 80)
+
         if returncode == 1:
             break
     

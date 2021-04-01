@@ -154,8 +154,24 @@ def faceCenteredCubic(alpha):
     Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
     R_fillet = Cf * (r0 * math.sqrt(2) - R)
     
-    grains = geompy.MakeFilletAll(grains, R_fillet)
-    geometry1 = geompy.MakeCutList(Common, [grains], True)
-    geometry2 = geompy.MakeCutList(Cut_8, [grains], True)
+    #grains = geompy.MakeFilletAll(grains, R_fillet)
+    #geometry1 = geompy.MakeCutList(Common, [grains], True)
+    #geometry2 = geompy.MakeCutList(Cut_8, [grains], True)
+    
+    # Scaling up
+    scale = 100
+    grains = geompy.MakeScaleTransform(grains, O, scale)
+    geometry1 = geompy.MakeScaleTransform(Common, O, scale)
+    geometry2 = geompy.MakeScaleTransform(Cut_8, O, scale)
+    
+    # 
+    grains = geompy.MakeFilletAll(grains, R_fillet * scale)
+    geometry1 = geompy.MakeCutList(geometry1, [grains], True)
+    geometry2 = geompy.MakeCutList(geometry2, [grains], True)
+    
+    # Scaling down
+    grains = geompy.MakeScaleTransform(grains, O, 1 / scale)
+    geometry1 = geompy.MakeScaleTransform(geometry1, O, 1 / scale)
+    geometry2 = geompy.MakeScaleTransform(geometry2, O, 1 / scale)
 
     return grains, geometry1, geometry2

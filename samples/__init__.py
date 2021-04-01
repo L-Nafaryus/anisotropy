@@ -2,6 +2,7 @@ from collections import namedtuple
 import os, sys
 import logging
 from pyquaternion import Quaternion
+import math
 
 ROOT = "/home/nafaryus/projects/anisotrope-cube"
 sys.path.append(ROOT)
@@ -97,8 +98,8 @@ if __name__ == "__main__":
             logging.FileHandler("{}/cubic.log".format(LOG))
         ])
     
-    fancyline = "--------------------------------------------------------------------------------"
-    logging.info(fancyline)
+    #fancyline = "--------------------------------------------------------------------------------"
+    #logging.info(fancyline)
 
     stype = str(sys.argv[1])
     theta = float(sys.argv[2])
@@ -112,7 +113,7 @@ if __name__ == "__main__":
 
     saveto = str(sys.argv[4])
 
-    logging.info("""Args: 
+    logging.info("""genMesh: 
     structure type:\t{}
     coefficient:\t{}
     flow direction:\t{}
@@ -122,4 +123,4 @@ if __name__ == "__main__":
 
     genMesh(stype, theta, flowdirection, saveto)
 
-    logging.info(fancyline)
+    #logging.info(fancyline)

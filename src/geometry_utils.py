@@ -89,7 +89,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
         nvec = geompy.GetNormal(plane)
         
         fwang = round(geompy.GetAngle(nvec, flowvec), 0)
-        #print("fwang = ", fwang)
+        print("fwang = ", fwang)
 
         if fwang == 0:
             inletplanes.append(plane)
@@ -99,7 +99,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
 
         for n in range(len(symvec)):
             sang = round(geompy.GetAngle(nvec, symvec[n]), 0)
-            #print("sang = ", sang, "\n")
+            print("sang = ", sang)
 
             if sang == 0:
                 if symetryplanes[n][0] == None:
@@ -112,6 +112,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
                     symetryplanes[n][1] = []
 
                 symetryplanes[n][1].append(plane)
+        print("\n")
 
     logging.info("""createBoundary: 
     planes:\t{}
