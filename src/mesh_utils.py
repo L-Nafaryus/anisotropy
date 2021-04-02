@@ -39,36 +39,61 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
         1: "Coarse",
         2: "Moderate",
         3: "Fine",
-        4: "Very fine"
+        4: "Very fine",
+        5: "Custom"
     }[fineness]
-
-    logging.info("""meshCreate:
-    mesh fineness:\t{}""".format(Fineness))
 
     mesh = smesh.Mesh(gobj)
     netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
 
     param = netgen.Parameters()
+    param.SetMinSize( 0.001 )
+    param.SetMaxSize( 0.1 )
+    
     param.SetSecondOrder( 0 )
     param.SetOptimize( 1 )
+    param.SetQuadAllowed( 0 )
     param.SetChordalError( -1 )
     param.SetChordalErrorEnabled( 0 )
     param.SetUseSurfaceCurvature( 1 )
     param.SetFuseEdges( 1 )
     param.SetCheckChartBoundary( 0 )
-    param.SetMinSize( 0.01 )
-    param.SetMaxSize( 0.1 )
+    
     param.SetFineness(fineness)
-    #param.SetGrowthRate( 0.1 )
-    #param.SetNbSegPerEdge( 5 )
-    #param.SetNbSegPerRadius( 10 )
-    param.SetQuadAllowed( 0 )
+    
+    # TODO: add customization
+    if fineness == 5:
+        param.SetGrowthRate( 0.1 )
+        param.SetNbSegPerEdge( 5 )
+        param.SetNbSegPerRadius( 10 )
+    
+    
+    logging.info("""meshCreate:
+    fineness:\t{}
+    min size:\t{}
+    max size:\t{}
+    growth rate:\t{}
+    nb segs per edge:\t{}
+    nb segs per radius:\t{}
+    limit size by surface curvature:\t{}
+    quad-dominated:\t{}
+    second order:\t{}
+    optimize:\t{}""".format(
+        Fineness, param.GetMinSize(), param.GetMaxSize(), 
+        param.GetGrowthRate(), param.GetNbSegPerEdge(), param.GetNbSegPerRadius(), 
+        True if param.GetUseSurfaceCurvature() else False, 
+        True if param.GetQuadAllowed() else False, 
+        True if param.GetSecondOrder() else False, 
+        True if param.GetOptimize() else False))
+
+
 
     if not viscousLayers is None:
         logging.info("""meshCreate:
-        viscous layers: thickness = {}
-                        number = {}
-                        stretch factor = {}""".format(
+    viscous layers: 
+        thickness:\t{}
+        number:\t{}
+        stretch factor:\t{}""".format(
             viscousLayers["thickness"], viscousLayers["number"], viscousLayers["stretch"]))
 
         vlayer = netgen.ViscousLayers(
@@ -80,7 +105,7 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
 
     else:
         logging.info("""meshCreate: 
-        viscous layers: disabled""")
+    viscous layers: disabled""")
 
     for name, b in boundary.items():
         mesh.GroupOnGeom(b, "{}_".format(name), SMESH.FACE)
@@ -101,6 +126,38 @@ def meshCompute(mobj):
 
     logging.info("""meshCompute:
     status:\t{}""".format(msg))
+
+    if status:
+        omniinfo = mobj.GetMeshInfo()
+        keys = [ str(k) for k in omniinfo.keys() ]
+        vals = [ v for v in omniinfo.values() ]
+        info = {}
+
+        for n in range(len(keys)):
+            info[keys[n]] = vals[n]
+
+        edges = info["Entity_Edge"]
+        
+        triangles = info["Entity_Triangle"]
+        faces = triangles
+
+        tetra = info["Entity_Tetra"]
+        prism = info["Entity_Penta"]
+        pyramid = info["Entity_Pyramid"]
+        volumes = tetra + prism + pyramid
+
+        elements = edges + faces + volumes
+
+        logging.info("""meshCompute:
+    Elements:\t{}
+        Edges:\t{}
+        Faces:\t{}
+            Triangles:\t{}
+        Volumes:\t{}
+            Tetrahedrons:\t{}
+            Prisms:\t{}
+            Pyramid:\t{}""".format(
+            elements, edges, faces, triangles, volumes, tetra, prism, pyramid))
 
 
 def meshExport(mobj, path):

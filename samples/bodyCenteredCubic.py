@@ -151,7 +151,7 @@ def bodyCenteredCubic(alpha):
     grains = geompy.MakeFuseList(grains, False, False)
 
     R = r0 / (1 - alpha)
-    C1 = 0.8
+    C1 = 0.6
     C2 = 0.4
     alpha1 = 0.01
     alpha2 = 0.13

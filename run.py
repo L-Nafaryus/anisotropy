@@ -33,7 +33,7 @@ def createTasks():
 
     for structure in structures:
         if structure == "simpleCubic":
-            theta = [0.01, 0.29] #[c * 0.01 for c in range(1, 29 + 1)]
+            theta = [] #[0.01, 0.28] #[c * 0.01 for c in range(1, 29 + 1)]
 
         elif structure == "faceCenteredCubic":
             theta = [0.01, 0.13] #[c * 0.01 for c in range(1, 13 + 1)]
@@ -67,7 +67,7 @@ def createMesh(tasks):
         returncode = salome_utils.runExecute(port, scriptpath, task.structure, task.coeff, "".join([str(coord) for coord in task.direction]), os.path.join(task.saveto, "mesh.unv"))
         
         logging.info("Return code:\t{}".format(returncode))
-        logging.info("-" * 80)
+        #logging.info("-" * 80)
 
         if returncode == 1:
             break
@@ -76,7 +76,7 @@ def createMesh(tasks):
 def calculate(tasks):
     foamCase = [ "0", "constant", "system" ]
     rmDirs = ["0", "constant", "system", "postProcessing", "logs"] + [ "processor{}".format(n) for n in range(4)]
-    fancyline = "--------------------------------------------------------------------------------"
+    #fancyline = "--------------------------------------------------------------------------------"
 
     for task in tasks:
         
@@ -92,12 +92,13 @@ def calculate(tasks):
         os.chdir(task.saveto)
         casepath = "."
         
-        logging.info(fancyline)
-        logging.info("""Args: 
+        logging.info("-" * 80)
+        logging.info("""calculate: 
+        task:\t{} / {}
         structure type:\t{}
         coefficient:\t{}
         flow direction:\t{}
-        path:\t{}\n""".format(task.structure, task.coeff, task.direction, task.saveto))
+        path:\t{}\n""".format(tasks.index(task) + 1, len(tasks) , task.structure, task.coeff, task.direction, task.saveto))
 
         foam_utils.ideasUnvToFoam(casepath, "mesh.unv")
         
@@ -136,7 +137,7 @@ def calculate(tasks):
 
         os.chdir(ROOT)
 
-        logging.info(fancyline)
+        #logging.info(fancyline)
     
 
 if __name__ == "__main__":
@@ -178,14 +179,23 @@ if __name__ == "__main__":
     
     if args.mesh:
         start_time = time.monotonic()
-        logging.info("Started at {}".format(timedelta(seconds=start_time)))
+        #logging.info("Started at {}".format(timedelta(seconds=start_time)))
 
         createMesh(tasks)
         
         end_time = time.monotonic()
+        logging.info("-" * 80)
         logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
     
     if args.calc:
-        calculate(tasks) 
+        start_time = time.monotonic()
+        #logging.info("Started at {}".format(timedelta(seconds=start_time)))
+
+        calculate(tasks)
+        
+        end_time = time.monotonic()
+        logging.info("-" * 80)
+        logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
+         
     
 

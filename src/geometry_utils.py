@@ -59,7 +59,9 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
     side boundaries:\t{}
     normal direction:\t{}
     angles:\t{}
-    side directions:\t{}""".format(dvec, bcount, norm, [ ang(n, bcount) / (2 * np.pi) * 360 for n in range(limit) ], [ v for v in vecs ]))
+    side directions:\t{}""".format(dvec, bcount, norm, 
+        [ ang(n, bcount) / (2 * np.pi) * 360 for n in range(limit) ], 
+        len(vecs))) #[ v for v in vecs ]))
 
     #
     flowvec = geompy.MakeVector(
@@ -76,7 +78,12 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
 
     #
     planes = geompy.ExtractShapes(gobj, geompy.ShapeType["FACE"], False)
-    planes = geompy.MakeCompound(planes)
+    #planes = geompy.MakeCompound(planes)
+    planes = geompy.MakeShell(planes)
+    planes = geompy.ProcessShape(planes, 
+        [ "FixShape", "FixFaceSize", "DropSmallEdges", "SameParameter" ], 
+        [ "FixShape.Tolerance3d", "FixShape.MaxTolerance3d", "FixFaceSize.Tolerance", "DropSmallEdges.Tolerance3d", "SameParameter.Tolerance3d" ], 
+        [ "1e-7", "1", "0.05", "0.05", "1e-7" ])
     planes = geompy.MakeCutList(planes, [grains], False)
     planes = geompy.ExtractShapes(planes, geompy.ShapeType["FACE"], False)
     #print("planes: ", len(planes))
@@ -89,7 +96,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
         nvec = geompy.GetNormal(plane)
         
         fwang = round(geompy.GetAngle(nvec, flowvec), 0)
-        print("fwang = ", fwang)
+        #print("fwang = ", fwang)
 
         if fwang == 0:
             inletplanes.append(plane)
@@ -99,7 +106,7 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
 
         for n in range(len(symvec)):
             sang = round(geompy.GetAngle(nvec, symvec[n]), 0)
-            print("sang = ", sang)
+            #print("sang = ", sang)
 
             if sang == 0:
                 if symetryplanes[n][0] == None:
@@ -112,13 +119,19 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
                     symetryplanes[n][1] = []
 
                 symetryplanes[n][1].append(plane)
-        print("\n")
+        #print("\n")
+
+    symetryplanesinfo = []
+    for n in range(len(symetryplanes)):
+        symetryplanesinfo.append([])
+        for pair in range(len(symetryplanes[n])):
+            symetryplanesinfo[n].append(len(symetryplanes[n][pair]))
 
     logging.info("""createBoundary: 
     planes:\t{}
     inlet planes:\t{}
     outlet planes:\t{}
-    side planes:\t{}""".format(len(planes), inletplanes, outletplanes, symetryplanes))
+    side planes:\t{}""".format(len(planes), len(inletplanes), len(outletplanes), symetryplanesinfo))
 
     #
     boundary = {}

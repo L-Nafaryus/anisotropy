@@ -69,8 +69,13 @@ def genMesh(stype, theta, flowdirection, saveto):
         #boundary = geometry_utils.boundaryCreate(geometry, direction, grains)
         boundary = geometry_utils.createBoundary(geometry, bcount, direction, normvec, grains)
 
-        fineness = 3
-        mesh = mesh_utils.meshCreate(geometry, boundary, fineness)
+        fineness = 1
+        viscousLayers = {
+            "thickness": 0.001,
+            "number": 2,
+            "stretch": 1
+        }
+        mesh = mesh_utils.meshCreate(geometry, boundary, fineness, viscousLayers)
         mesh_utils.meshCompute(mesh)
 
         #path = os.path.join(saveto, 
@@ -118,7 +123,7 @@ if __name__ == "__main__":
     structure type:\t{}
     coefficient:\t{}
     flow direction:\t{}
-    export path:\t{}\n""".format(stype, theta, flowdirection, saveto))
+    export path:\t{}""".format(stype, theta, flowdirection, saveto))
 
     #print(flowdirection)
 
