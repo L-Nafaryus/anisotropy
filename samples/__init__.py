@@ -33,7 +33,7 @@ def genMesh(stype, theta, flowdirection, saveto):
         
         if flowdirection == [1, 1, 1]:
             geometry = geometry2
-            norm = [-1, -1, 1]
+            norm = [-1, 1, 0]
             bcount = 6
 
             # initial angle
@@ -46,7 +46,8 @@ def genMesh(stype, theta, flowdirection, saveto):
             #    math.sin(angle * 0.5) * flowdirection[2])
             #qvec = (ax * vec * ax.inverse).vector
             #normvec = [qvec[0], qvec[1], qvec[2]]
-            normvec = Quaternion(axis = flowdirection, angle = angle).rotate(norm)
+            v1 = Quaternion(axis = norm, angle = math.pi / 2).rotate(flowdirection)
+            normvec = Quaternion(axis = flowdirection, angle = angle).rotate(v1)
             direction = [1, 1, 1]
             #direction = fd([1, 1, 1], [1, -1, 1], [1, -1, -1])
         
