@@ -13,3 +13,4 @@ logs/
 *.synctex.gz
 *.toc
 *.png
+*.out

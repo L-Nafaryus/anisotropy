@@ -10,7 +10,7 @@ import SALOMEDS
 
 geompy = geomBuilder.New()
 
-def simpleCubic(alpha):
+def simpleCubic(alpha, fillet = False):
     O = geompy.MakeVertex(0, 0, 0)
     OX = geompy.MakeVectorDXDYDZ(1, 0, 0)
     OY = geompy.MakeVectorDXDYDZ(0, 1, 0)
@@ -113,31 +113,34 @@ def simpleCubic(alpha):
     # Preparation
     grains = geompy.ExtractShapes(Multi_Translation_3, geompy.ShapeType["SOLID"], True)
     grains = geompy.MakeFuseList(grains, False, False)
+    geometry1 = Cut_1
+    geometry2 = Cut_4
 
-    R = r0 / (1 - alpha)
-    C1 = 0.8
-    C2 = 0.4
-    alpha1 = 0.01
-    alpha2 = 0.28
-    
-    Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
-    R_fillet = Cf * (R - r0)
-    
-    # Scaling up
-    scale = 100
-    grains = geompy.MakeScaleTransform(grains, O, scale)
-    geometry1 = geompy.MakeScaleTransform(Cut_1, O, scale)
-    geometry2 = geompy.MakeScaleTransform(Cut_4, O, scale)
-    
-    # 
-    grains = geompy.MakeFilletAll(grains, R_fillet * scale)
-    geometry1 = geompy.MakeCutList(geometry1, [grains], True)
-    geometry2 = geompy.MakeCutList(geometry2, [grains], True)
-    
-    # Scaling down
-    grains = geompy.MakeScaleTransform(grains, O, 1 / scale)
-    geometry1 = geompy.MakeScaleTransform(geometry1, O, 1 / scale)
-    geometry2 = geompy.MakeScaleTransform(geometry2, O, 1 / scale)
+    if fillet:
+        R = r0 / (1 - alpha)
+        C1 = 0.8
+        C2 = 0.01
+        alpha1 = 0.01
+        alpha2 = 0.28
+        
+        Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
+        R_fillet = Cf * (R - r0)
+        
+        # Scaling up
+        scale = 100
+        grains = geompy.MakeScaleTransform(grains, O, scale)
+        geometry1 = geompy.MakeScaleTransform(geometry1, O, scale)
+        geometry2 = geompy.MakeScaleTransform(geometry2, O, scale)
+        
+        # 
+        grains = geompy.MakeFilletAll(grains, R_fillet * scale)
+        geometry1 = geompy.MakeCutList(geometry1, [grains], True)
+        geometry2 = geompy.MakeCutList(geometry2, [grains], True)
+        
+        # Scaling down
+        grains = geompy.MakeScaleTransform(grains, O, 1 / scale)
+        geometry1 = geompy.MakeScaleTransform(geometry1, O, 1 / scale)
+        geometry2 = geompy.MakeScaleTransform(geometry2, O, 1 / scale)
 
     #
     geompy.addToStudy(grains, "grains")

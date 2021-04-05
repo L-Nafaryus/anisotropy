@@ -23,23 +23,24 @@ def createTasks():
         "faceCenteredCubic"
     ]
     directions = [
-        #[1, 0, 0],
-        #[0, 0, 1],
+        [1, 0, 0],
+        [0, 0, 1],
         [1, 1, 1]
     ]
+    fillet = 0
 
-    Task = namedtuple("Task", ["structure", "coeff", "direction", "saveto"])
+    Task = namedtuple("Task", ["structure", "coeff", "fillet", "direction", "saveto"])
     tasks = []
 
     for structure in structures:
         if structure == "simpleCubic":
-            theta = [] #[0.01, 0.28] #[c * 0.01 for c in range(1, 29 + 1)]
+            theta = [c * 0.01 for c in range(1, 28 + 1)]
 
         elif structure == "faceCenteredCubic":
-            theta = [0.01, 0.13] #[c * 0.01 for c in range(1, 13 + 1)]
+            theta = [c * 0.01 for c in range(1, 13 + 1)]
 
         elif structure == "bodyCenteredCubic":
-            theta = [0.01, 0.13, 0.14, 0.18] #[c * 0.01 for c in range(1, 18 + 1)]
+            theta = [c * 0.01 for c in range(1, 18 + 1)]
 
         for coeff in theta:
             for direction in directions:
@@ -49,7 +50,7 @@ def createTasks():
                 if not os.path.exists(saveto):
                     os.makedirs(saveto)
                 
-                t = Task(structure, coeff, direction, saveto)
+                t = Task(structure, coeff, fillet, direction, saveto)
                 tasks.append(t)
 
     return tasks
@@ -58,19 +59,26 @@ def createTasks():
 def createMesh(tasks):
     scriptpath = os.path.join(ROOT, "samples/__init__.py")
     port = 2810
+    errors = 0
 
     for task in tasks:
         logging.info("-" * 80)
         logging.info("""createMesh:
         task:\t{} / {}""".format(tasks.index(task) + 1, len(tasks)))
+        start_time = time.monotonic()
 
-        returncode = salome_utils.runExecute(port, scriptpath, task.structure, task.coeff, "".join([str(coord) for coord in task.direction]), os.path.join(task.saveto, "mesh.unv"))
+        returncode = salome_utils.runExecute(port, scriptpath, task.structure, task.coeff, task.fillet, "".join([str(coord) for coord in task.direction]), os.path.join(task.saveto, "mesh.unv"))
         
-        logging.info("Return code:\t{}".format(returncode))
-        #logging.info("-" * 80)
+        end_time = time.monotonic()
+        logging.info("createMesh: elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
+        logging.info("salome: return code:\t{}".format(returncode))
 
         if returncode == 1:
-            break
+            #break
+            errors += 1
+            pass
+
+    return errors
     
 
 def calculate(tasks):
@@ -181,11 +189,12 @@ if __name__ == "__main__":
         start_time = time.monotonic()
         #logging.info("Started at {}".format(timedelta(seconds=start_time)))
 
-        createMesh(tasks)
+        errors = createMesh(tasks)
         
         end_time = time.monotonic()
         logging.info("-" * 80)
-        logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
+        logging.info("Elapsed time:\t{}".format(timedelta(seconds=end_time - start_time)))
+        logging.info("Errors:\t{}".format(errors))
     
     if args.calc:
         start_time = time.monotonic()
