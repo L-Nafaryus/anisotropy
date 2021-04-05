@@ -151,13 +151,13 @@ def bodyCenteredCubic(alpha):
     grains = geompy.MakeFuseList(grains, False, False)
 
     R = r0 / (1 - alpha)
-    C1 = 0.6
-    C2 = 0.4
+    C1 = 0.8
+    C2 = 0.01
     alpha1 = 0.01
-    alpha2 = 0.13
+    alpha2 = 0.18
     
     Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
-    R_fillet = Cf * (r0 * math.sqrt(2) - R)
+    R_fillet = Cf * (R - r0)
     
     #grains = geompy.MakeFilletAll(grains, R_fillet)
     #geometry1 = geompy.MakeCutList(Pore_1a, [grains], True)
@@ -179,5 +179,9 @@ def bodyCenteredCubic(alpha):
     geometry1 = geompy.MakeScaleTransform(geometry1, O, 1 / scale)
     geometry2 = geompy.MakeScaleTransform(geometry2, O, 1 / scale)
 
+    #
+    geompy.addToStudy(grains, "grains")
+    geompy.addToStudy(geometry1, "geometry1")
+    geompy.addToStudy(geometry2, "geometry2")
 
     return grains, Pore_1a, Pore_3c

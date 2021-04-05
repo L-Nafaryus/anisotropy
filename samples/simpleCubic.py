@@ -121,7 +121,7 @@ def simpleCubic(alpha):
     alpha2 = 0.28
     
     Cf = C1 + (C2 - C1) / (alpha2 - alpha1) * (alpha - alpha1)
-    R_fillet = Cf * (r0 * math.sqrt(2) - R)
+    R_fillet = Cf * (R - r0)
     
     # Scaling up
     scale = 100
@@ -138,5 +138,10 @@ def simpleCubic(alpha):
     grains = geompy.MakeScaleTransform(grains, O, 1 / scale)
     geometry1 = geompy.MakeScaleTransform(geometry1, O, 1 / scale)
     geometry2 = geompy.MakeScaleTransform(geometry2, O, 1 / scale)
+
+    #
+    geompy.addToStudy(grains, "grains")
+    geompy.addToStudy(geometry1, "geometry1")
+    geompy.addToStudy(geometry2, "geometry2")
 
     return grains, geometry1, geometry2
