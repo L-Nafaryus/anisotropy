@@ -50,13 +50,17 @@ def genMesh(stype, theta, fillet, flowdirection, saveto):
             bcount = 4
             direction = [0, 0, 1]
         
+        #
+        geometry = geometry_utils.geompy.RemoveExtraEdges(geometry, False) 
+
+        #
         boundary = geometry_utils.createBoundary(geometry, bcount, direction, normvec, grains)
 
         fineness = 1
         viscousLayers = {
-            "thickness": 0.001,
-            "number": 2,
-            "stretch": 1
+            "thickness": 0.0001,
+            "number": 3,
+            "stretch": 1.2
         }
         mesh = mesh_utils.meshCreate(geometry, boundary, fineness, viscousLayers)
         mesh_utils.meshCompute(mesh)

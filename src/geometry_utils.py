@@ -80,10 +80,10 @@ def createBoundary(gobj, bcount, dvec, norm, grains):
     planes = geompy.ExtractShapes(gobj, geompy.ShapeType["FACE"], False)
     #planes = geompy.MakeCompound(planes)
     planes = geompy.MakeShell(planes)
-    planes = geompy.ProcessShape(planes, 
-        [ "FixShape", "FixFaceSize", "DropSmallEdges", "SameParameter" ], 
-        [ "FixShape.Tolerance3d", "FixShape.MaxTolerance3d", "FixFaceSize.Tolerance", "DropSmallEdges.Tolerance3d", "SameParameter.Tolerance3d" ], 
-        [ "1e-7", "1", "0.05", "0.05", "1e-7" ])
+    #planes = geompy.ProcessShape(planes, 
+    #    [ "FixShape", "FixFaceSize", "DropSmallEdges", "SameParameter" ], 
+    #    [ "FixShape.Tolerance3d", "FixShape.MaxTolerance3d", "FixFaceSize.Tolerance", "DropSmallEdges.Tolerance3d", "SameParameter.Tolerance3d" ], 
+    #    [ "1e-7", "1", "0.05", "0.05", "1e-7" ])
     planes = geompy.MakeCutList(planes, [grains], False)
     planes = geompy.ExtractShapes(planes, geompy.ShapeType["FACE"], False)
     #print("planes: ", len(planes))

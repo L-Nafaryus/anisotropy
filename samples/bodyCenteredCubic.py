@@ -155,7 +155,7 @@ def bodyCenteredCubic(alpha, fillet = False):
     if fillet:
         R = r0 / (1 - alpha)
         C1 = 0.8
-        C2 = 0.01
+        C2 = 0.05
         alpha1 = 0.01
         alpha2 = 0.18
         

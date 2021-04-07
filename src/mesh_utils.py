@@ -116,16 +116,16 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
 def meshCompute(mobj):
     """Compute the mesh."""
     status = mobj.Compute()
-    msg = ""
+    #msg = ""
 
-    if status:
-        msg = "Computed"
+    #if status:
+    #    msg = "Computed"
 
-    else:
-        msg = "Not computed"
+    #else:
+    #    msg = "Not computed"
 
-    logging.info("""meshCompute:
-    status:\t{}""".format(msg))
+    #logging.info("""meshCompute:
+    #status:\t{}""".format(msg))
 
     if status:
         omniinfo = mobj.GetMeshInfo()
@@ -158,6 +158,9 @@ def meshCompute(mobj):
             Prisms:\t{}
             Pyramid:\t{}""".format(
             elements, edges, faces, triangles, volumes, tetra, prism, pyramid))
+
+    else:
+        logging.warning("meshCompute: not computed")
 
 
 def meshExport(mobj, path):

@@ -27,20 +27,23 @@ def createTasks():
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = 0
+    fillet = 1
 
     Task = namedtuple("Task", ["structure", "coeff", "fillet", "direction", "saveto"])
     tasks = []
 
     for structure in structures:
         if structure == "simpleCubic":
-            theta = [c * 0.01 for c in range(1, 28 + 1)]
+            #theta = [c * 0.01 for c in range(1, 28 + 1)]
+            theta = [ 0.01, 0.28 ]
 
         elif structure == "faceCenteredCubic":
-            theta = [c * 0.01 for c in range(1, 13 + 1)]
+            #theta = [c * 0.01 for c in range(1, 13 + 1)]
+            theta = [ 0.01, 0.13 ]
 
         elif structure == "bodyCenteredCubic":
-            theta = [c * 0.01 for c in range(1, 18 + 1)]
+            #theta = [c * 0.01 for c in range(1, 18 + 1)]
+            theta = [ 0.01, 0.13, 0.14, 0.18 ]
 
         for coeff in theta:
             for direction in directions:
