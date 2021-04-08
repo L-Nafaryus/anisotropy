@@ -22,20 +22,35 @@ def simpleCubic(theta = 0.01, fillet = False):
     width = L * sqrt(2)
     height = L
 
+    xl = sqrt(length ** 2 * 0.5)
+    yw = xl
+    zh = height
+
+    C1, C2 = 0.8, 0.05
+    theta1, theta2 = 0.01, 0.28
+    Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
+    filletradius = Cf * (radius - r0)
+    
+    scale = 100
+    oo = geompy.MakeVertex(0, 0, 0)
+
     ###
     #   Bounding box
     ##
     # YZ 
     sk = geompy.Sketcher3D()
-    sk.addPointsAbsolute(width, 0, 0)
-    sk.addPointsAbsolute(0, length, 0)
-    sk.addPointsAbsolute(0, length, height)
-    sk.addPointsAbsolute(width, 0, height)
-    sk.addPointsAbsolute(width, 0, 0)
+    sk.addPointsAbsolute(xl, 0, 0)
+    sk.addPointsAbsolute(0, yw, 0)
+    sk.addPointsAbsolute(0, yw, zh)
+    sk.addPointsAbsolute(xl, 0, zh)
+    sk.addPointsAbsolute(xl, 0, 0)
     
     inletface = geompy.MakeFaceWires([sk.wire()], True)
     vecflow = geompy.GetNormal(inletface)
     cubic = geompy.MakePrismVecH(inletface, vecflow, width)
+
+    inletface = geompy.MakeScaleTransform(inletface, oo, scale)
+    cubic = geompy.MakeScaleTransform(cubic, oo, scale)
 
     faces = geompy.ExtractShapes(cubic, geompy.ShapeType["FACE"], False)
     symetryface = []
@@ -59,29 +74,52 @@ def simpleCubic(theta = 0.01, fillet = False):
 
     grain = geompy.MakeSphereR(radius)
     lattice = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
-    lattice = geompy.MakeMultiTranslation1D(grains, oz, L, zn)
+    lattice = geompy.MakeMultiTranslation1D(lattice, oz, L, zn)
     
     grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
     grains = geompy.MakeFuseList(grains, False, False)
 
-    grains = grains
+    grains = geompy.MakeScaleTransform(grains, oo, scale)
+
+    if fillet:
+        grains = geompy.MakeFilletAll(grains, filletradius * scale)
 
     ###
     #   Groups
     ##
     shape = geompy.MakeCutList(cubic, [grains])
+    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
 
     sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
     geompy.UnionIDs(sall,
         geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
 
-    inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], "inlet")
+    inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
     inletshape = geompy.MakeCutList(inletface, [grains])
-    geompy.UnionList(inlet,
-        geompy.SubShapeAll(geompy.GetInPlace(shape, inletshape, True), 
-            geompy.ShapeType["FACE"]))
+    inletshape = geompy.MakeScaleTransform(inletshape, oo, 1 / scale)
+    geompy.UnionList(inlet, geompy.SubShapeAll(
+        geompy.GetInPlace(shape, inletshape, True), geompy.ShapeType["FACE"]))
 
+    outlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "outlet")
+    outletshape = geompy.MakeCutList(outletface, [grains])
+    outletshape = geompy.MakeScaleTransform(outletshape, oo, 1 / scale)
+    geompy.UnionList(outlet, geompy.SubShapeAll(
+        geompy.GetInPlace(shape, outletshape, True), geompy.ShapeType["FACE"]))
+    
+    symetry = []
+    for (n, face) in enumerate(symetryface):
+        name = "symetry" + str(n)
+        symetry.append(geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = name))
+        symetryshape = geompy.MakeCutList(face, [grains])
+        symetryshape = geompy.MakeScaleTransform(symetryshape, oo, 1 / scale)
+        geompy.UnionList(symetry[n], geompy.SubShapeAll(
+            geompy.GetInPlace(shape, symetryshape, True), geompy.ShapeType["FACE"]))
 
+    groups = []
+    groups.append(inlet)
+    groups.append(outlet)
+    groups.extend(symetry)
+    wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
 
-    wall = geompy.CutListOfGroups([sall], [], "wall")
+    return shape
     
