@@ -7,7 +7,7 @@ geompy = geomBuilder.New()
 
 from math import pi, sqrt
 
-def simpleCubic(theta = 0.01, fillet = False):
+def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     
     ###
     #   Parameters
@@ -37,17 +37,33 @@ def simpleCubic(theta = 0.01, fillet = False):
     ###
     #   Bounding box
     ##
-    sk = geompy.Sketcher3D()
-    sk.addPointsAbsolute(xl, 0, 0)
-    sk.addPointsAbsolute(0, yw, 0)
-    sk.addPointsAbsolute(0, yw, zh)
-    sk.addPointsAbsolute(xl, 0, zh)
-    sk.addPointsAbsolute(xl, 0, 0)
-    
-    inletface = geompy.MakeFaceWires([sk.wire()], True)
-    vecflow = geompy.GetNormal(inletface)
-    cubic = geompy.MakePrismVecH(inletface, vecflow, width)
+    if direction == [1, 0, 0]:
+        sk = geompy.Sketcher3D()
+        sk.addPointsAbsolute(xl, 0, 0)
+        sk.addPointsAbsolute(0, yw, 0)
+        sk.addPointsAbsolute(0, yw, zh)
+        sk.addPointsAbsolute(xl, 0, zh)
+        sk.addPointsAbsolute(xl, 0, 0)
 
+        inletface = geompy.MakeFaceWires([sk.wire()], True)
+        vecflow = geompy.GetNormal(inletface)
+        cubic = geompy.MakePrismVecH(inletface, vecflow, width)
+
+    elif direction == [0, 0, 1]:
+        sk = geompy.Sketcher3D()
+        sk.addPointsAbsolute(0, yw, 0)
+        sk.addPointsAbsolute(xl, 0, 0)
+        sk.addPointsAbsolute(2 * xl, yw, 0)
+        sk.addPointsAbsolute(xl, 2 * yw, 0)
+        sk.addPointsAbsolute(0, yw, 0)
+
+        inletface = geompy.MakeFaceWires([sk.wire()], True)
+        vecflow = geompy.GetNormal(inletface)
+        cubic = geompy.MakePrismVecH(inletface, vecflow, height)
+
+    else:
+        raise Exception("The direction is not implemented")
+    
     inletface = geompy.MakeScaleTransform(inletface, oo, scale)
     cubic = geompy.MakeScaleTransform(cubic, oo, scale)
 
@@ -119,11 +135,12 @@ def simpleCubic(theta = 0.01, fillet = False):
     groups.append(outlet)
     groups.extend(symetry)
     wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
+    groups.append(wall)
 
-    return shape
+    return shape, groups
     
 
-def simpleHexagonalPrism(theta = 0.01, fillet = False):
+def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     
     ###
     #   Parameters
@@ -239,6 +256,7 @@ def simpleHexagonalPrism(theta = 0.01, fillet = False):
     groups.append(outlet)
     groups.extend(symetry)
     wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
+    groups.append(wall)
 
-    return shape
-    
+    return shape, groups
+

@@ -11,66 +11,101 @@ LOG = os.path.join(ROOT, "logs")
 
 import salome
 
-from simpleCubic import simpleCubic
-from faceCenteredCubic import faceCenteredCubic
-from bodyCenteredCubic import bodyCenteredCubic
+from simple import simpleCubic, simpleHexagonalPrism
+from faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism
+from bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
 
 from src import geometry_utils
 from src import mesh_utils
 
-def genMesh(stype, theta, fillet, flowdirection, saveto):
-    _G = globals()
+def genMesh(stype, theta, fillet, direction, saveto):
 
-    structure = _G.get(stype)
+    logging.info("""genMesh: 
+    structure type:\t{}
+    coefficient:\t{}
+    fillet:\t{}
+    flow direction:\t{}
+    export path:\t{}""".format(stype, theta, fillet, direction, saveto))
 
-    if structure:
-        salome.salome_init()
+    params = (theta, fillet, direction)
 
-        grains, geometry1, geometry2 = structure(theta, fillet)
-        geometry = geometry1
-        
-        if flowdirection == [1, 1, 1]:
-            geometry = geometry2
-            norm = [-1, 1, 0]
-            bcount = 6
+    salome.salome_init()
+    
+    ###
+    #   Structure and mesh configurations
+    ##
+    if stype == "simple":
+        if direction in [[1, 0, 0], [0, 0, 1]]:
+            structure = simpleCubic
 
-            # initial angle
-            angle = math.pi / 6
-            v1 = Quaternion(axis = norm, angle = math.pi / 2).rotate(flowdirection)
-            normvec = Quaternion(axis = flowdirection, angle = angle).rotate(v1)
-            direction = [1, 1, 1]
+        elif direction == [1, 1, 1]:
+            structure = simpleHexagonalPrism
 
-        if flowdirection == [1, 0, 0]:
-            normvec = [0, 0, 1]
-            bcount = 4
-            direction = [1, 1, 0]
+    elif stype == "faceCentered":
+        if direction in [[1, 0, 0], [0, 0, 1]]:
+            structure = faceCenteredCubic
 
-        if flowdirection == [0, 0, 1]:
-            normvec = [1, 1, 0]
-            bcount = 4
-            direction = [0, 0, 1]
-        
-        #
-        geometry = geometry_utils.geompy.RemoveExtraEdges(geometry, False) 
+        elif direction == [1, 1, 1]:
+            structure = faceCenteredHexagonalPrism
 
-        #
-        boundary = geometry_utils.createBoundary(geometry, bcount, direction, normvec, grains)
+    elif stype == "bodyCentered":
+        if direction in [[1, 0, 0], [0, 0, 1]]:
+            structure = bodyCenteredCubic
 
-        fineness = 1
-        viscousLayers = {
-            "thickness": 0.0001,
-            "number": 3,
-            "stretch": 1.2
-        }
-        mesh = mesh_utils.meshCreate(geometry, boundary, fineness, viscousLayers)
-        mesh_utils.meshCompute(mesh)
+        elif direction == [1, 1, 1]:
+            structure = bodyCenteredHexagonalPrism
+    
+    ###
+    #   Shape
+    ##
+    geompy = geometry_utils.getGeom()
+    shape, groups = structure(*params)
+    [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
-        mesh_utils.meshExport(mesh, saveto)
+    logging.info("""shape:
+    surface area:\t{}
+    volume:\t{}""".format(surfaceArea, volume))
+    
+    ###
+    #   Mesh
+    ##
+    fineness = 1
+    parameters = mesh_utils.Parameters(
+        minSize = 0.001,
+        maxSize = 0.1,
+        growthRate = 0.1,
+        nbSegPerEdge = 5,
+        nbSegPerRadius = 10,
+        chordalErrorEnabled = False,
+        chordalError = -1,
+        secondOrder = False,
+        optimize = True,
+        quadAllowed = False,
+        useSurfaceCurvature = True,
+        fuseEdges = True,
+        checkChartBoundary = False
+    )
+    
+    facesToIgnore = []
+    for group in groups:
+        if group.GetName() in ["inlet", "outlet"]:
+            facesToIgnore.append(group)
 
-        salome.salome_close()
+    viscousLayers = mesh_utils.ViscousLayers(
+        thickness = 0.001,
+        numberOfLayers = 3,
+        stretchFactor = 1.2,
+        isFacesToIgnore = True,
+        facesToIgnore = facesToIgnore,
+        extrusionMethod = mesh_utils.smeshBuilder.NODE_OFFSET
+    )
+    
+    mesh = mesh_utils.meshCreate(shape, groups, fineness, parameters, viscousLayers)
+    mesh_utils.meshCompute(mesh)
 
-    else:
-        raise Exception("Unknown sample function")
+    mesh_utils.meshExport(mesh, saveto)
+
+    salome.salome_close()
 
 
 if __name__ == "__main__":
@@ -88,13 +123,6 @@ if __name__ == "__main__":
     fillet = True if int(sys.argv[3]) == 1 else False
     flowdirection = [int(coord) for coord in sys.argv[4]]
     saveto = str(sys.argv[5])
-
-    logging.info("""genMesh: 
-    structure type:\t{}
-    coefficient:\t{}
-    fillet:\t{}
-    flow direction:\t{}
-    export path:\t{}""".format(stype, theta, fillet, flowdirection, saveto))
 
     genMesh(stype, theta, fillet, flowdirection, saveto)
 

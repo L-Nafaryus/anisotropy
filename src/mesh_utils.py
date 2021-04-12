@@ -3,12 +3,38 @@ from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
 import logging
+from collections import namedtuple
+
+Parameters = namedtuple("Parameters", [
+    "minSize",
+    "maxSize",
+    "growthRate",
+    "nbSegPerEdge",
+    "nbSegPerRadius",
+    "chordalErrorEnabled",
+    "chordalError",
+    "secondOrder",
+    "optimize",
+    "quadAllowed",
+    "useSurfaceCurvature",
+    "fuseEdges",
+    "checkChartBoundary"
+])
+
+ViscousLayers = namedtuple("ViscousLayers", [
+    "thickness",
+    "numberOfLayers",
+    "stretchFactor",
+    "isFacesToIgnore",
+    "facesToIgnore",
+    "extrusionMethod"
+])
 
 def getSmesh():
     return smesh
 
 
-def meshCreate(gobj, boundary, fineness, viscousLayers=None):
+def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
     """
     Creates a mesh from a geometry.
 
@@ -21,19 +47,13 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
             3 - Fine,
             4 - Very fine.
 
-        viscousLayers (dict or None): Defines viscous layers for mesh.
-            By default, inlets and outlets specified without layers.
-
-            {
-                "thickness": float,
-                "number": int,
-                "stretch": float
-            }
-
     Returns:
         Configured instance of class <SMESH.SMESH_Mesh>, containig the parameters and boundary groups.
 
     """
+    ###
+    #   Netgen
+    ##
     Fineness = {
         0: "Very coarse",
         1: "Coarse",
@@ -43,31 +63,34 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
         5: "Custom"
     }[fineness]
 
-    mesh = smesh.Mesh(gobj)
+    # Mesh
+    mesh = smesh.Mesh(shape)
     netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
 
+    # Parameters
     param = netgen.Parameters()
-    param.SetMinSize( 0.001 )
-    param.SetMaxSize( 0.1 )
-    
-    param.SetSecondOrder( 0 )
-    param.SetOptimize( 1 )
-    param.SetQuadAllowed( 0 )
-    param.SetChordalError( -1 )
-    param.SetChordalErrorEnabled( 0 )
-    param.SetUseSurfaceCurvature( 1 )
-    param.SetFuseEdges( 1 )
-    param.SetCheckChartBoundary( 0 )
-    
+    param.SetMinSize(parameters.minSize)
+    param.SetMaxSize(parameters.maxSize)
     param.SetFineness(fineness)
     
-    # TODO: add customization
     if fineness == 5:
-        param.SetGrowthRate( 0.1 )
-        param.SetNbSegPerEdge( 5 )
-        param.SetNbSegPerRadius( 10 )
+        param.SetGrowthRate(parameters.growthRate)
+        param.SetNbSegPerEdge(parameters.nbSegPerEdge)
+        param.SetNbSegPerRadius(parameters.nbSegPerRadius)
     
     
+    param.SetChordalErrorEnabled(parameters.chordalErrorEnabled)
+    param.SetChordalError(parameters.chordalError)
+
+    param.SetSecondOrder(parameters.secondOrder)
+    param.SetOptimize(parameters.optimize)
+    param.SetQuadAllowed(parameters.quadAllowed)
+    
+    param.SetUseSurfaceCurvature(parameters.useSurfaceCurvature)
+    param.SetFuseEdges(parameters.fuseEdges)
+    param.SetCheckChartBoundary(parameters.checkChartBoundary)
+    
+        
     logging.info("""meshCreate:
     fineness:\t{}
     min size:\t{}
@@ -86,29 +109,41 @@ def meshCreate(gobj, boundary, fineness, viscousLayers=None):
         True if param.GetSecondOrder() else False, 
         True if param.GetOptimize() else False))
 
+    
+    ###
+    #   Groups
+    ##
+    for group in groups:
+        mesh.GroupOnGeom(group, "{}_".format(group.GetName()), SMESH.FACE)
 
-
+    ###
+    #   Viscous layers
+    ##
     if not viscousLayers is None:
+        vlayer = netgen.ViscousLayers(
+            viscousLayers.thickness,
+            viscousLayers.numberOfLayers,
+            viscousLayers.stretchFactor,
+            viscousLayers.facesToIgnore,
+            viscousLayers.isFacesToIgnore, 
+            viscousLayers.extrusionMethod
+        )
+
         logging.info("""meshCreate:
     viscous layers: 
         thickness:\t{}
         number:\t{}
         stretch factor:\t{}""".format(
-            viscousLayers["thickness"], viscousLayers["number"], viscousLayers["stretch"]))
+            viscousLayers.thickness, 
+            viscousLayers.numberOfLayers, 
+            viscousLayers.stretchFactor))
 
-        vlayer = netgen.ViscousLayers(
-            viscousLayers["thickness"],
-            viscousLayers["number"],
-            viscousLayers["stretch"],
-            [boundary["inlet"], boundary["outlet"]],
-            1, smeshBuilder.NODE_OFFSET)
+        
 
     else:
         logging.info("""meshCreate: 
     viscous layers: disabled""")
 
-    for name, b in boundary.items():
-        mesh.GroupOnGeom(b, "{}_".format(name), SMESH.FACE)
 
     return mesh
 
@@ -175,7 +210,7 @@ def meshExport(mobj, path):
         mobj.ExportUNV(path)
 
         logging.info("""meshExport:
-        format:\t{}""".format("unv"))
+    format:\t{}""".format("unv"))
 
     except:
         logging.error("""meshExport: Cannot export.""")

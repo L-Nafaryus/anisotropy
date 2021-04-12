@@ -17,10 +17,13 @@ from src import salome_utils
 from src import foam_utils
 
 def createTasks():
+    ###
+    #   Control variables
+    ##
     structures = [
-        "simpleCubic", 
-        "bodyCenteredCubic", 
-        "faceCenteredCubic"
+        "simple", 
+        #"bodyCentered", 
+        #"faceCentered"
     ]
     directions = [
         [1, 0, 0],
@@ -29,19 +32,22 @@ def createTasks():
     ]
     fillet = 1
 
+    ###
+    #   Tasks
+    ##
     Task = namedtuple("Task", ["structure", "coeff", "fillet", "direction", "saveto"])
     tasks = []
 
     for structure in structures:
-        if structure == "simpleCubic":
-            #theta = [c * 0.01 for c in range(1, 28 + 1)]
-            theta = [ 0.01, 0.28 ]
+        if structure == "simple":
+            theta = [c * 0.01 for c in range(1, 28 + 1)]
+            #theta = [ 0.01, 0.28 ]
 
-        elif structure == "faceCenteredCubic":
+        elif structure == "faceCentered":
             #theta = [c * 0.01 for c in range(1, 13 + 1)]
             theta = [ 0.01, 0.13 ]
 
-        elif structure == "bodyCenteredCubic":
+        elif structure == "bodyCentered":
             #theta = [c * 0.01 for c in range(1, 18 + 1)]
             theta = [ 0.01, 0.13, 0.14, 0.18 ]
 
