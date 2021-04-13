@@ -185,5 +185,6 @@ clip1Display.SetScalarBarVisibility(renderView1, True)
 
 # ----------------------------------------------------------------
 # finally, restore active source
-SetActiveSource(clip1)
+SetActiveSource(clip1Display)
 # ----------------------------------------------------------------
+SaveScreenshot("test.png", renderView1)

@@ -63,13 +63,14 @@ def genMesh(stype, theta, fillet, direction, saveto):
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
     logging.info("""shape:
+    edges length:\t{}
     surface area:\t{}
-    volume:\t{}""".format(surfaceArea, volume))
+    volume:\t{}""".format(length, surfaceArea, volume))
     
     ###
     #   Mesh
     ##
-    fineness = 1
+    fineness = 0
     parameters = mesh_utils.Parameters(
         minSize = 0.001,
         maxSize = 0.1,

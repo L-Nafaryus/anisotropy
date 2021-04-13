@@ -93,7 +93,6 @@ def createMesh(tasks):
 def calculate(tasks):
     foamCase = [ "0", "constant", "system" ]
     rmDirs = ["0", "constant", "system", "postProcessing", "logs"] + [ "processor{}".format(n) for n in range(4)]
-    #fancyline = "--------------------------------------------------------------------------------"
 
     for task in tasks:
         
@@ -158,9 +157,22 @@ def calculate(tasks):
     
 
 def postprocessing(tasks):
-    
-    surfaceFieldValue = []
-    dat = [ line.strip().split() for line in open("surfaceFieldValue.dat", "r").readlines() ]
+
+    surfaceFieldValue = {}
+    porosity = {}
+
+    for task in tasks:
+        direction = "direction-{}{}{}".format(task.direction[0], task.direction[1], task.direction[2]) 
+        path = os.path.join(BUILD, task.structure, "postProcessing", direction)
+        surfaceFieldValuePath = os.path.join(task.saveto, "postProcessing", "")
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+            
+        surfaceFieldValues = [ line.strip().split() for line in open(surfaceFieldValuePath, "r").readlines() ]
+
+        with open(os.path.join(path, "porosity.dat")) as io:
+            io.write("{}\t{}".format(task.coeff, surfaceFieldValues[-1][1]))
 
 
 if __name__ == "__main__":
@@ -180,22 +192,25 @@ if __name__ == "__main__":
         ])
     
     # TODO: add force arg
-    Args = namedtuple("Args", ["mesh", "calc"])
+    Args = namedtuple("Args", ["mesh", "calc", "pp"])
 
     if len(sys.argv) > 1:
         action = sys.argv[1]
         
         if action == "mesh":
-            args = Args(True, False)
+            args = Args(True, False, False)
 
         elif action == "calc":
-            args = Args(False, True)
+            args = Args(False, True, False)
+
+        elif action == "pp":
+            args = Args(False, False, True)
 
         elif action == "all":
-            args = Args(True, True)
+            args = Args(True, True, True)
 
     else:
-        args = Args(True, True)
+        args = Args(True, True, True)
 
     tasks = createTasks()    
     logging.info("Tasks: {}".format(len(tasks)))
@@ -221,5 +236,6 @@ if __name__ == "__main__":
         logging.info("-" * 80)
         logging.info("Elapsed time: {}".format(timedelta(seconds=end_time - start_time)))
          
-    
+    if args.pp:
+        postprocessing(tasks)
 
