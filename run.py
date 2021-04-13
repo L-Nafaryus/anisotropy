@@ -119,17 +119,17 @@ def calculate(tasks):
 
         foam_utils.ideasUnvToFoam(casepath, "mesh.unv")
         
-        if not task.direction == [1, 1, 1]:
-            shutil.copy(os.path.join(task.saveto, "system/createPatchDict.symetry"),
-                os.path.join(task.saveto, "system/createPatchDict"))
-            logging.info("""createPatch:
-            file:\tcreatePatchDict.symetry""")
+        #if not task.direction == [1, 1, 1]:
+        shutil.copy(os.path.join(task.saveto, "system/createPatchDict.symetry"),
+            os.path.join(task.saveto, "system/createPatchDict"))
+        logging.info("""createPatch:
+        file:\tcreatePatchDict.symetry""")
 
-        else:
-            shutil.copy(os.path.join(task.saveto, "system/createPatchDict.cyclic"),
-                os.path.join(task.saveto, "system/createPatchDict"))
-            logging.info("""createPatch:
-            file:\tcreatePatchDict.cyclic""")
+        #else:
+        #    shutil.copy(os.path.join(task.saveto, "system/createPatchDict.cyclic"),
+        #        os.path.join(task.saveto, "system/createPatchDict"))
+        #    logging.info("""createPatch:
+        #    file:\tcreatePatchDict.cyclic""")
 
         foam_utils.createPatch(casepath)
         
@@ -156,6 +156,12 @@ def calculate(tasks):
 
         #logging.info(fancyline)
     
+
+def postprocessing(tasks):
+    
+    surfaceFieldValue = []
+    dat = [ line.strip().split() for line in open("surfaceFieldValue.dat", "r").readlines() ]
+
 
 if __name__ == "__main__":
     

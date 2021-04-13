@@ -45,59 +45,7 @@ patches
         constructFrom patches;   
         patches (outlet_);
     }
-
-    {
-        name symetryPlaneFW;
-        
-        patchInfo
-        {
-            type symetryPlane;
-            inGroups (symetryPlane);
-        }
-
-        constructFrom patches;
-        patches (symetryPlaneFW_);
-    }
-
-    {
-        name symetryPlaneBW;
-        
-        patchInfo
-        {
-            type symetryPlane;
-            inGroups (symetryPlane);
-        }
-
-        constructFrom patches;
-        patches (symetryPlaneBW_);
-    }
-
-    {
-        name symetryPlaneL;
-        
-        patchInfo
-        {
-            type symetryPlane;
-            inGroups (symetryPlane);
-        }
-
-        constructFrom patches;
-        patches (symetryPlaneL_);
-    }
-
-    {
-        name symetryPlaneR;
-        
-        patchInfo
-        {
-            type symetryPlane;
-            inGroups (symetryPlane);
-        }
-
-        constructFrom patches;
-        patches (symetryPlaneR_);
-    }
-
+    
     {
         name wall;
 
@@ -109,6 +57,84 @@ patches
 
         constructFrom patches;
         patches (wall_);
+    }
+
+    {
+        name symetry0;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry0_);
+    }
+
+    {
+        name symetry1;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry1_);
+    }
+
+    {
+        name symetry2;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry2_);
+    }
+
+    {
+        name symetry3;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry3_);
+    }
+
+    {
+        name symetry4;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry4_);
+    }
+
+    {
+        name symetry5;
+        
+        patchInfo
+        {
+            type symetryPlane;
+            inGroups (symetryPlane);
+        }
+
+        constructFrom patches;
+        patches (symetry5_);
     }
 );
 
