@@ -26,9 +26,9 @@ def createTasks():
         #"faceCentered"
     ]
     directions = [
-        [1, 0, 0],
+        #[1, 0, 0],
         [0, 0, 1],
-        [1, 1, 1]
+        #[1, 1, 1]
     ]
     fillet = 1
 
@@ -40,7 +40,7 @@ def createTasks():
 
     for structure in structures:
         if structure == "simple":
-            theta = [c * 0.01 for c in range(1, 28 + 1)]
+            theta = [0.01] #[c * 0.01 for c in range(1, 28 + 1)]
             #theta = [ 0.01, 0.28 ]
 
         elif structure == "faceCentered":
@@ -114,47 +114,40 @@ def calculate(tasks):
         structure type:\t{}
         coefficient:\t{}
         flow direction:\t{}
-        path:\t{}\n""".format(tasks.index(task) + 1, len(tasks) , task.structure, task.coeff, task.direction, task.saveto))
+        path:\t{}""".format(
+            tasks.index(task) + 1, 
+            len(tasks) , 
+            task.structure, 
+            task.coeff, 
+            task.direction, 
+            task.saveto
+        ))
 
-        foam_utils.ideasUnvToFoam(casepath, "mesh.unv")
+        foam_utils.ideasUnvToFoam("mesh.unv")
         
-        #if not task.direction == [1, 1, 1]:
-        shutil.copy(os.path.join(task.saveto, "system/createPatchDict.symetry"),
-            os.path.join(task.saveto, "system/createPatchDict"))
-        logging.info("""createPatch:
-        file:\tcreatePatchDict.symetry""")
-
-        #else:
-        #    shutil.copy(os.path.join(task.saveto, "system/createPatchDict.cyclic"),
-        #        os.path.join(task.saveto, "system/createPatchDict"))
-        #    logging.info("""createPatch:
-        #    file:\tcreatePatchDict.cyclic""")
-
-        foam_utils.createPatch(casepath)
+        foam_utils.createPatch(dictfile = "system/createPatchDict.symetry")
         
-        foam_utils.checkMesh(casepath)
+        foam_utils.checkMesh()
 
         scale = (1e-5, 1e-5, 1e-5)
-        foam_utils.transformPoints(casepath, "{}".format(scale).replace(",", ""))
-        logging.info("""transformPoints:
-        scale:\t{}""".format(scale))
+        foam_utils.transformPoints(scale)
         
-        foam_utils.decomposePar(casepath)
+        foam_utils.decomposePar()
+
+        foam_utils.renumberMesh()
         
-        foam_utils.potentialFoam(casepath)
+        foam_utils.potentialFoam()
         
         for n in range(4):
-            foam_utils.foamDictionarySet(casepath, "processor{}/0/U".format(n), 
+            foam_utils.foamDictionary("processor{}/0/U".format(n), 
                 "boundaryField.inlet.type", "pressureInletVelocity")
-            foam_utils.foamDictionarySet(casepath, "processor{}/0/U".format(n), 
+            foam_utils.foamDictionary("processor{}/0/U".format(n), 
                 "boundaryField.inlet.value", "uniform (0 0 0)")
         
-        foam_utils.simpleFoam(casepath)
+        foam_utils.simpleFoam()
 
         os.chdir(ROOT)
 
-        #logging.info(fancyline)
-    
 
 def postprocessing(tasks):
 

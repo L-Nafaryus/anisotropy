@@ -74,9 +74,9 @@ def genMesh(stype, theta, fillet, direction, saveto):
     parameters = mesh_utils.Parameters(
         minSize = 0.001,
         maxSize = 0.1,
-        growthRate = 0.1,
-        nbSegPerEdge = 5,
-        nbSegPerRadius = 10,
+        growthRate = 0.5,
+        nbSegPerEdge = 0.5,
+        nbSegPerRadius = 0.5,
         chordalErrorEnabled = False,
         chordalError = -1,
         secondOrder = False,

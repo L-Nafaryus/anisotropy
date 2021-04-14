@@ -1,6 +1,7 @@
 #import salome
 import subprocess
 import logging
+import sys
 
 def hasDesktop() -> bool:
     return salome.sg.hasDesktop()
@@ -16,20 +17,41 @@ def startServer(port):
 
     return p
 
-def runExecute(port, scriptpath, *args):
+def salomeVersion() -> str:
+    return "Salome 9.6.0"
 
-    logging.info("Starting SALOME on port {}".format(port))
+def runExecute(port: int, scriptpath: str, *args) -> int:
 
-    p = subprocess.Popen(["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t", scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))],
-        stderr = subprocess.STDOUT)
-    _, err = p.communicate()
+    cmd = ["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t",
+        scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))]
 
-    if err:
-        if p.returncode == 1:
-            logging.error(err)
+    logging.info("salome: {}".format(cmd[1 : 6]))
+    #logpath = os.path.join()
 
-        else:
-            logging.warning(err)
+    #p = subprocess.Popen(["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t", scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))],
+    #    stderr = subprocess.STDOUT)
+    #_, err = p.communicate()
+
+    with subprocess.Popen(cmd,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE) as p:
+
+        #for line in p.stdout:
+        #    sys.stdout.buffer.write(line)
+        #    logfile.write(line)
+
+        out, err = p.communicate()
+        print(str(err, "utf-8"))
+        #logfile.write(err)
+
+        if err and p.returncode == 1:
+            logging.error("salome:\n\t{}".format(str(err, "utf-8")))
+    #if err:
+    #    if p.returncode == 1:
+    #        logging.error(err)
+
+     #   else:
+     #       logging.warning(err)
 
     return p.returncode
 
