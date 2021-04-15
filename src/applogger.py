@@ -37,5 +37,5 @@ class Logger():
         self.exceptions += 1
         self.logger.exception(*args)
 
-    def fanctline(self):
+    def fancyline(self):
         self.logger.info("-" * 80)
