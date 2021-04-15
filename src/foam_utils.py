@@ -119,6 +119,6 @@ def simpleFoam(case: str = None):
     with open("simpleFoam.log", "r") as io:
         for line in io:
             if re.search("solution converged", line):
-                logger.info("simpleFoam:\n\t{}".format(line))
+                logger.info("simpleFoam:\n\t{}".format(line.strip()))
 
 

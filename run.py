@@ -28,6 +28,7 @@ def main():
     tasks = createTasks()
 
     for task in tasks:
+        logger.fancyline()
         logger.info(f"""main:
         task:\t{tasks.index(task) + 1} / {len(tasks)}
         cpu count:\t{os.cpu_count()}
