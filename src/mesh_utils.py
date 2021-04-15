@@ -2,33 +2,7 @@ import SMESH
 from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
-import logging
-from collections import namedtuple
-
-Parameters = namedtuple("Parameters", [
-    "minSize",
-    "maxSize",
-    "growthRate",
-    "nbSegPerEdge",
-    "nbSegPerRadius",
-    "chordalErrorEnabled",
-    "chordalError",
-    "secondOrder",
-    "optimize",
-    "quadAllowed",
-    "useSurfaceCurvature",
-    "fuseEdges",
-    "checkChartBoundary"
-])
-
-ViscousLayers = namedtuple("ViscousLayers", [
-    "thickness",
-    "numberOfLayers",
-    "stretchFactor",
-    "isFacesToIgnore",
-    "facesToIgnore",
-    "extrusionMethod"
-])
+from config import logger
 
 def getSmesh():
     return smesh
@@ -91,7 +65,7 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
     param.SetCheckChartBoundary(parameters.checkChartBoundary)
     
         
-    logging.info("""meshCreate:
+    logger.info("""meshCreate:
     fineness:\t{}
     min size:\t{}
     max size:\t{}
@@ -129,7 +103,7 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
             viscousLayers.extrusionMethod
         )
 
-        logging.info("""meshCreate:
+        logger.info("""meshCreate:
     viscous layers: 
         thickness:\t{}
         number:\t{}
@@ -141,7 +115,7 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
         
 
     else:
-        logging.info("""meshCreate: 
+        logger.info("""meshCreate: 
     viscous layers: disabled""")
 
 
@@ -159,7 +133,7 @@ def meshCompute(mobj):
     #else:
     #    msg = "Not computed"
 
-    #logging.info("""meshCompute:
+    #logger.info("""meshCompute:
     #status:\t{}""".format(msg))
 
     if status:
@@ -183,7 +157,7 @@ def meshCompute(mobj):
 
         elements = edges + faces + volumes
 
-        logging.info("""meshCompute:
+        logger.info("""meshCompute:
     Elements:\t{}
         Edges:\t{}
         Faces:\t{}
@@ -195,7 +169,7 @@ def meshCompute(mobj):
             elements, edges, faces, triangles, volumes, tetra, prism, pyramid))
 
     else:
-        logging.warning("meshCompute: not computed")
+        logger.warning("meshCompute: not computed")
 
 
 def meshExport(mobj, path):
@@ -209,10 +183,10 @@ def meshExport(mobj, path):
     try:
         mobj.ExportUNV(path)
 
-        logging.info("""meshExport:
+        logger.info("""meshExport:
     format:\t{}""".format("unv"))
 
     except:
-        logging.error("""meshExport: Cannot export.""")
+        logger.error("""meshExport: Cannot export.""")
 
 

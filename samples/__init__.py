@@ -4,13 +4,13 @@ import logging
 from pyquaternion import Quaternion
 import math
 
-ROOT = "/home/nafaryus/projects/anisotrope-cube"
-sys.path.append(ROOT)
-
-LOG = os.path.join(ROOT, "logs")
-
 import salome
 
+sys.path.append(sys.argv[6])
+
+import config
+from config import logger
+#from src import applogger
 from simple import simpleCubic, simpleHexagonalPrism
 from faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism
 from bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
@@ -18,14 +18,26 @@ from bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
 from src import geometry_utils
 from src import mesh_utils
 
-def genMesh(stype, theta, fillet, direction, saveto):
 
-    logging.info("""genMesh: 
+def main():
+
+    stype = str(sys.argv[1])
+    theta = float(sys.argv[2])
+    fillet = int(sys.argv[3])
+    flowdirection = [int(coord) for coord in sys.argv[4]]
+    export = str(sys.argv[5])
+
+    genMesh(stype, theta, fillet, flowdirection, export)
+
+
+def genMesh(stype, theta, fillet, direction, export):
+
+    logger.info("""genMesh: 
     structure type:\t{}
     coefficient:\t{}
     fillet:\t{}
     flow direction:\t{}
-    export path:\t{}""".format(stype, theta, fillet, direction, saveto))
+    export path:\t{}""".format(stype, theta, fillet, direction, export))
 
     params = (theta, fillet, direction)
 
@@ -41,12 +53,20 @@ def genMesh(stype, theta, fillet, direction, saveto):
         elif direction == [1, 1, 1]:
             structure = simpleHexagonalPrism
 
+        fineness = config.simple.fineness
+        parameters = config.simple.parameters
+        viscousLayers = config.simple.viscousLayers
+
     elif stype == "faceCentered":
         if direction in [[1, 0, 0], [0, 0, 1]]:
             structure = faceCenteredCubic
 
         elif direction == [1, 1, 1]:
             structure = faceCenteredHexagonalPrism
+
+        fineness = config.faceCentered.fineness
+        parameters = config.faceCentered.parameters
+        viscousLayers = config.faceCentered.viscousLayers
 
     elif stype == "bodyCentered":
         if direction in [[1, 0, 0], [0, 0, 1]]:
@@ -55,6 +75,10 @@ def genMesh(stype, theta, fillet, direction, saveto):
         elif direction == [1, 1, 1]:
             structure = bodyCenteredHexagonalPrism
     
+        fineness = config.bodyCentered.fineness
+        parameters = config.bodyCentered.parameters
+        viscousLayers = config.bodyCentered.viscousLayers
+
     ###
     #   Shape
     ##
@@ -62,7 +86,7 @@ def genMesh(stype, theta, fillet, direction, saveto):
     shape, groups = structure(*params)
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
-    logging.info("""shape:
+    logger.info("""shape:
     edges length:\t{}
     surface area:\t{}
     volume:\t{}""".format(length, surfaceArea, volume))
@@ -70,60 +94,23 @@ def genMesh(stype, theta, fillet, direction, saveto):
     ###
     #   Mesh
     ##
-    fineness = 0
-    parameters = mesh_utils.Parameters(
-        minSize = 0.001,
-        maxSize = 0.1,
-        growthRate = 0.5,
-        nbSegPerEdge = 0.5,
-        nbSegPerRadius = 0.5,
-        chordalErrorEnabled = False,
-        chordalError = -1,
-        secondOrder = False,
-        optimize = True,
-        quadAllowed = False,
-        useSurfaceCurvature = True,
-        fuseEdges = True,
-        checkChartBoundary = False
-    )
-    
     facesToIgnore = []
     for group in groups:
         if group.GetName() in ["inlet", "outlet"]:
             facesToIgnore.append(group)
 
-    viscousLayers = mesh_utils.ViscousLayers(
-        thickness = 0.001,
-        numberOfLayers = 3,
-        stretchFactor = 1.2,
-        isFacesToIgnore = True,
-        facesToIgnore = facesToIgnore,
-        extrusionMethod = mesh_utils.smeshBuilder.NODE_OFFSET
-    )
+    viscousLayers.facesToIgnore = facesToIgnore
+    viscousLayers.extrusionMethod = mesh_utils.smeshBuilder.NODE_OFFSET
     
     mesh = mesh_utils.meshCreate(shape, groups, fineness, parameters, viscousLayers)
     mesh_utils.meshCompute(mesh)
 
-    mesh_utils.meshExport(mesh, saveto)
+    mesh_utils.meshExport(mesh, export)
 
     salome.salome_close()
 
 
 if __name__ == "__main__":
-    
-    logging.basicConfig(
-        level=logging.INFO, 
-        format="%(levelname)s: %(message)s",
-        handlers = [
-            logging.StreamHandler(),
-            logging.FileHandler("{}/cubic.log".format(LOG))
-        ])
-    
-    stype = str(sys.argv[1])
-    theta = float(sys.argv[2])
-    fillet = True if int(sys.argv[3]) == 1 else False
-    flowdirection = [int(coord) for coord in sys.argv[4]]
-    saveto = str(sys.argv[5])
+    main()
 
-    genMesh(stype, theta, fillet, flowdirection, saveto)
-
+    

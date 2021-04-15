@@ -151,6 +151,7 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
 
     return shape, groups
 
+
 def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     
     ###

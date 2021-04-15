@@ -11,19 +11,6 @@ import numpy as np
 def getGeom():
     return geompy
 
-#def rotate(gobj, ang):
-#    x = geompy.MakeVectorDXDYDZ(1, 0, 0)
-#    y = geompy.MakeVectorDXDYDZ(0, 1, 0)
-#    z = geompy.MakeVectorDXDYDZ(0, 0, 1)
-
-    # yaw
-#    rotated = geompy.MakeRotation(gobj, z, ang[2])
-    # pitch
-#    rotated = geompy.MakeRotation(rotated, y, ang[1])
-    # roll
-#    rotated = geompy.MakeRotation(rotated, x, ang[0])
-
-#    return rotated
 
 def createGroup(gobj, planelist, grains, name):
     gr = geompy.CreateGroup(gobj, geompy.ShapeType["FACE"], name)
@@ -39,19 +26,9 @@ def createGroup(gobj, planelist, grains, name):
 
 
 def createBoundary(gobj, bcount, dvec, norm, grains):
-    
-    #normvec = Quaternion(0, norm[0], norm[1], norm[2]).normalised
-    #ax = lambda alpha: Quaternion(
-    #    np.cos(alpha * 0.5),
-    #    np.sin(alpha * 0.5) * dvec[0], 
-    #    0, 0).normalised
-        #np.sin(alpha * 0.5) * dvec[1], 
-        #np.sin(alpha * 0.5) * dvec[2]).normalised 
-    
     ang = lambda n, count: 2 * np.pi * n / count
     limit = bcount if np.mod(bcount, 2) else int(bcount / 2)
 
-    #vecs = [ ax(ang(n, bcount)) * normvec * ax(ang(n, bcount)).inverse for n in range(limit) ]
     vecs = [ Quaternion(axis = dvec, angle = ang(n, bcount)).rotate(norm) for n in range(limit) ]
     
     logging.info("""createBoundary: 

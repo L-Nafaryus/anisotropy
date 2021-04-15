@@ -4,6 +4,7 @@ import logging
 import time
 import re
 from datetime import timedelta
+from config import logger
 
 def application(name: str, *args: str, case: str = None, stderr: bool = True, useMPI: bool = False) -> int:
     
@@ -21,7 +22,7 @@ def application(name: str, *args: str, case: str = None, stderr: bool = True, us
     if args:
         cmd.extend([*args])
         
-    logging.info("{}: {}".format(name, [*args]))
+    logger.info("{}: {}".format(name, [*args]))
     logpath = os.path.join(case if case else "", "{}.log".format(name))
    
     with subprocess.Popen(cmd, 
@@ -40,15 +41,25 @@ def application(name: str, *args: str, case: str = None, stderr: bool = True, us
         logfile.write(err)
 
         if err and stderr:
-            logging.error("""{}:
+            logger.error("""{}:
             {}""".format(name, str(err, "utf-8")))
 
     return out, p.returncode
 
 
 def foamVersion() -> str:
-    
     return "OpenFOAM-{}".format(os.environ["WM_PROJECT_VERSION"])
+
+
+def foamClean(case: str = None):
+    rmDirs = ["0", "constant", "system", "postProcessing", "logs"]
+    rmDirs.extend([ "processor{}".format(n) for n in range(os.cpu_count()) ])
+    path = case if case else ""
+
+    for d in rmDirs:
+        if os.path.exists(os.path.join(path, d)):
+            shutil.rmtree(os.path.join(path, d))
+
 
 def ideasUnvToFoam(mesh: str, case: str = None):
     application("ideasUnvToFoam", mesh, case = case, stderr = True)
@@ -79,7 +90,7 @@ def checkMesh(case: str = None):
                 warnings.append(line.replace("***", "").strip())
 
         if warnings:
-            logging.warning("checkMesh:\n\t{}".format("\n\t".join(warnings)))
+            logger.warning("checkMesh:\n\t{}".format("\n\t".join(warnings)))
 
 def foamDictionary(filepath: str, entry: str, value: str = None, case: str = None):
     args = [filepath, "-entry", entry]
@@ -88,13 +99,6 @@ def foamDictionary(filepath: str, entry: str, value: str = None, case: str = Non
         args.extend(["-set", value])
 
     application("foamDictionary", *args, case = case, stderr = False)
-
-#def foamDictionaryGet(case, foamFile, entry):
-#    application("foamDictionary", case, True, [foamFile, "-entry", entry])
-
-
-#def foamDictionarySet(case, foamFile, entry, value):
-#    application("foamDictionary", case, False, [foamFile, "-entry", entry, "-set", value])
 
 
 def decomposePar(case: str = None):
@@ -115,6 +119,6 @@ def simpleFoam(case: str = None):
     with open("simpleFoam.log", "r") as io:
         for line in io:
             if re.search("solution converged", line):
-                logging.info("simpleFoam:\n\t{}".format(line))
+                logger.info("simpleFoam:\n\t{}".format(line))
 
 
