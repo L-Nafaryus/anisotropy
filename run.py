@@ -42,7 +42,24 @@ def main():
             os.makedirs(task.export)
        
         createMesh(task)
-        calculate(task)
+
+        if os.path.exists(os.path.join(task.export, "mesh.unv")):
+            task.mesh = True
+
+        returncode = calculate(task)
+
+        if not returncode:
+            task.flow = True
+
+        with open(os.path.join(config.LOG, "tasks.log"), "a") as io:
+            idx = tasks.index(task)
+            io.write(f"""Task {idx}:
+    structure:\t{task.structure}
+    direction:\t{task.direction}
+    theta:\t{task.theta}
+    mesh:\t{task.mesh}
+    flow:\t{task.flow}\n""")
+
 
     logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
 
@@ -60,8 +77,14 @@ def checkEnv():
         logger.info(f"enviroment:\n\t{pythonVersion}\n\t{salomeVersion}\n\t{foamVersion}")
 
 
+class Task:
+    def __init__(self, **kwargs):
+        for (k, v) in kwargs.items():
+            setattr(self, k, v)
+
+
 def createTasks():
-    Task = namedtuple("Task", ["structure", "theta", "fillet", "direction", "export"])
+    #Task = namedtuple("Task", ["structure", "theta", "fillet", "direction", "export"])
     tasks = []
     structures = [ getattr(config, s)() for s in config.structures ]
 
@@ -76,9 +99,17 @@ def createTasks():
                     "theta-{}".format(theta)
                 )
 
-                tasks.append(
-                    Task(name, theta, structure.fillet, direction, export)
+                task = Task(
+                    structure = name, 
+                    theta = theta, 
+                    fillet = structure.fillet, 
+                    direction = direction, 
+                    export = export,
+                    mesh = False,
+                    flow = False
                 )
+
+                tasks.append(task)
 
     return tasks
 
@@ -139,12 +170,14 @@ def calculate(task):
         foam_utils.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.type", "pressureInletVelocity")
         foam_utils.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.value", "uniform (0 0 0)")
     
-    foam_utils.simpleFoam()
+    returncode = foam_utils.simpleFoam()
 
     os.chdir(config.ROOT)
     
     etime = time.monotonic()
     logger.info("calculate: elapsed time: {}".format(timedelta(seconds = etime - stime)))
+
+    return returncode
 
 
 def postprocessing(tasks):

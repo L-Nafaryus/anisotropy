@@ -69,7 +69,7 @@ class simple:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = True
+    fillet = False
     fineness = 1
     parameters = Parameters(
         minSize = 0.0005,
@@ -103,7 +103,7 @@ class bodyCentered:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = True
+    fillet = False
     fineness = 1
     parameters = Parameters(
         minSize = 0.0005,
@@ -137,7 +137,7 @@ class faceCentered:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = True
+    fillet = False
     fineness = 1
     parameters = Parameters(
         minSize = 0.0005,

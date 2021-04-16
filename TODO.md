@@ -6,6 +6,25 @@
 - renumberMesh
 - processorField
 
+## Errors
+- salome:
+
+th. 139990926538304 - 
+Trace /volatile/salome/jenkins/workspace/Salome_master_CO7/SALOME-9.6.0-CO7/SOURCES/SMESH/src/SMESH/SMESH_subMesh.cxx [2005] : 
+NETGEN_2D3D failed on sub-shape #1 with error COMPERR_BAD_INPUT_MESH 
+"NgException at Volume meshing: Stop meshing since surface mesh not consistent Some edges multiple times in surface mesh"
+
+th. 140588498282048 - 
+Trace /volatile/salome/jenkins/workspace/Salome_master_CO7/SALOME-9.6.0-CO7/SOURCES/SMESH/src/SMESH/SMESH_subMesh.cxx [2005] : 
+NETGEN_2D3D failed on sub-shape #47 with error COMPERR_WARNING 
+"Thickness 0.001 of viscous layers not reached, average reached thickness is 0.000928207"
+
+th. 139986338838080 - 
+Trace /volatile/salome/jenkins/workspace/Salome_master_CO7/SALOME-9.6.0-CO7/SOURCES/SMESH/src/SMESH/SMESH_subMesh.cxx [2005] : 
+NETGEN_2D3D failed on sub-shape #1 with error COMPERR_BAD_INPUT_MESH 
+"NgException at Volume meshing: Stop meshing since boundary mesh is overlapping Intersecting triangles"
+
+
 ## 1.03.21
 - [x] boundary type (wall or symetryPlane)
 - [x] restruct for ways

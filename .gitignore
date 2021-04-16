@@ -6,7 +6,6 @@ build/
 *.bcf
 *.blg
 *.fdb_latexmk
-*.log
 *.pdf
 *.run.xml
 *.synctex.gz
