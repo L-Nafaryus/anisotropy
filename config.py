@@ -59,8 +59,8 @@ class ViscousLayers(Parameters):
 ##
 structures = [
     "simple",
-    "bodyCentered",
-    "faceCentered"
+    #"bodyCentered",
+    #"faceCentered"
 ]
 class simple:
     theta = [c * 0.01 for c in range(1, 28 + 1)]
@@ -69,11 +69,11 @@ class simple:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False
+    fillet = True
     fineness = 1
     parameters = Parameters(
-        minSize = 0.0005,
-        maxSize = 0.1,
+        minSize = 0.005,
+        maxSize = 0.05,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -87,8 +87,8 @@ class simple:
         checkChartBoundary = False
     )
     viscousLayers = ViscousLayers(
-        thickness = 0.001,
-        numberOfLayers = 3,
+        thickness = 0.005, # 0.01, 0.005 for 0.28, 0.01 for prism
+        numberOfLayers = 2,
         stretchFactor = 1.2,
         isFacesToIgnore = True,
         facesToIgnore = None,
@@ -106,8 +106,8 @@ class bodyCentered:
     fillet = False
     fineness = 1
     parameters = Parameters(
-        minSize = 0.0005,
-        maxSize = 0.1,
+        minSize = 0.005,
+        maxSize = 0.05,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -121,8 +121,8 @@ class bodyCentered:
         checkChartBoundary = False
     )
     viscousLayers = ViscousLayers(
-        thickness = 0.001,
-        numberOfLayers = 3,
+        thickness = 0.01,
+        numberOfLayers = 2,
         stretchFactor = 1.2,
         isFacesToIgnore = True,
         facesToIgnore = None,

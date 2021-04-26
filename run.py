@@ -24,7 +24,11 @@ def main():
     #global logger 
     #logger = applogger.Logger()
 
-    checkEnv()
+    check = checkEnv()
+
+    if check:
+        return
+
     tasks = createTasks()
 
     for task in tasks:
@@ -65,6 +69,8 @@ def main():
 
 
 def checkEnv():
+    missed = False
+    
     try:
         pythonVersion = "Python {}".format(sys.version.split(" ")[0])
         salomeVersion = salome_utils.salomeVersion()
@@ -72,9 +78,13 @@ def checkEnv():
 
     except Exception:
         logger.critical("Missed environment")
+        missed = True
 
     else:
-        logger.info(f"enviroment:\n\t{pythonVersion}\n\t{salomeVersion}\n\t{foamVersion}")
+        logger.info(f"environment:\n\t{pythonVersion}\n\t{salomeVersion}\n\t{foamVersion}")
+
+    finally:
+        return missed
 
 
 class Task:

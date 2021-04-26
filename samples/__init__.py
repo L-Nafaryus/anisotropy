@@ -100,7 +100,7 @@ def genMesh(stype, theta, fillet, direction, export):
             facesToIgnore.append(group)
 
     viscousLayers.facesToIgnore = facesToIgnore
-    viscousLayers.extrusionMethod = mesh_utils.smeshBuilder.NODE_OFFSET
+    viscousLayers.extrusionMethod = mesh_utils.smeshBuilder.SURF_OFFSET_SMOOTH
     
     mesh = mesh_utils.meshCreate(shape, groups, fineness, parameters, viscousLayers)
     mesh_utils.meshCompute(mesh)
