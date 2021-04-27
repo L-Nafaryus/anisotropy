@@ -1,6 +1,0 @@
-Task 0:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.01
-    mesh:	True
-    flow:	False
