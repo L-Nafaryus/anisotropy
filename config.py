@@ -72,8 +72,8 @@ class simple:
     fillet = True
     fineness = 1
     parameters = Parameters(
-        minSize = 0.005,
-        maxSize = 0.05,
+        minSize = 0.01,
+        maxSize = 0.5,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,

@@ -28,7 +28,7 @@ def runExecute(port: int, scriptpath: str, *args) -> int:
         scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))]
 
     logger.info("salome: {}".format(cmd[1 : 6]))
-    #logpath = os.path.join()
+    logpath = os.path.join("/".join(args[4].split("/")[:-1]), "salome.log")
 
     #p = subprocess.Popen(["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t", scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))],
     #    stderr = subprocess.STDOUT)
@@ -36,17 +36,18 @@ def runExecute(port: int, scriptpath: str, *args) -> int:
 
     with subprocess.Popen(cmd,
         stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE) as p:
+        stderr = subprocess.PIPE) as p, \
+        open(logpath, "wb") as logfile:
 
-        #for line in p.stdout:
+        for line in p.stdout:
         #    sys.stdout.buffer.write(line)
-        #    logfile.write(line)
+            logfile.write(line)
 
         out, err = p.communicate()
-        print(str(err, "utf-8"))
-        #logfile.write(err)
+        #print(str(err, "utf-8"))
+        logfile.write(err)
 
-        if err and p.returncode == 1:
+        if err:
             logger.error("salome:\n\t{}".format(str(err, "utf-8")))
     #if err:
     #    if p.returncode == 1:
