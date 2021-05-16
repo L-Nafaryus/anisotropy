@@ -14,17 +14,8 @@ $ git clone git@github.com:L-Nafaryus/anisotrope-cube.git
 $ cd anisotrope-cube
 ```
 
-* Generate all structures with configured parameters:
+* Run all:
 ```bash
-$ python run.py mesh
+$ python run.py
 ```
 
-* Run calculations:
-```bash
-$ python run.py calc
-``` 
-
-* All:
-```bash
-$ python run.py all
-```

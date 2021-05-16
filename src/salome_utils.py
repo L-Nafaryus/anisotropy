@@ -1,7 +1,7 @@
 #import salome
 import subprocess
 import logging
-import sys
+import sys, os
 import config
 from config import logger
 

@@ -1,504 +1,558 @@
 Task 0:
-    structure:	simple
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.01
+    mesh:	True
+    flow:	False
+Task 1:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.02
+    mesh:	True
+    flow:	False
+Task 2:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.03
+    mesh:	True
+    flow:	False
+Task 3:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.04
+    mesh:	True
+    flow:	False
+Task 4:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.05
+    mesh:	True
+    flow:	False
+Task 5:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.06
+    mesh:	True
+    flow:	False
+Task 6:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.07
+    mesh:	True
+    flow:	False
+Task 7:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.08
+    mesh:	True
+    flow:	False
+Task 8:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.09
+    mesh:	True
+    flow:	False
+Task 9:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.1
+    mesh:	True
+    flow:	False
+Task 10:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.11
+    mesh:	True
+    flow:	False
+Task 11:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.12
+    mesh:	True
+    flow:	False
+Task 12:
+    structure:	bodyCentered
+    direction:	[1, 0, 0]
+    theta:	0.13
+    mesh:	True
+    flow:	False
+Task 13:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.01
+    mesh:	True
+    flow:	False
+Task 14:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.02
+    mesh:	True
+    flow:	False
+Task 15:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.03
+    mesh:	True
+    flow:	False
+Task 16:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.04
+    mesh:	True
+    flow:	False
+Task 17:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.05
+    mesh:	True
+    flow:	False
+Task 18:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.06
+    mesh:	True
+    flow:	False
+Task 19:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.07
+    mesh:	True
+    flow:	False
+Task 20:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.08
+    mesh:	True
+    flow:	False
+Task 21:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.09
+    mesh:	True
+    flow:	False
+Task 22:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.1
+    mesh:	True
+    flow:	False
+Task 23:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.11
+    mesh:	True
+    flow:	False
+Task 24:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.12
+    mesh:	True
+    flow:	False
+Task 25:
+    structure:	bodyCentered
+    direction:	[0, 0, 1]
+    theta:	0.13
+    mesh:	True
+    flow:	False
+Task 26:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.01
+    mesh:	True
+    flow:	False
+Task 27:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.02
+    mesh:	True
+    flow:	False
+Task 28:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.03
+    mesh:	True
+    flow:	False
+Task 29:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.04
+    mesh:	True
+    flow:	False
+Task 30:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.05
+    mesh:	True
+    flow:	False
+Task 31:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.06
+    mesh:	True
+    flow:	False
+Task 32:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.07
+    mesh:	True
+    flow:	False
+Task 33:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.08
+    mesh:	True
+    flow:	False
+Task 34:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.09
+    mesh:	True
+    flow:	False
+Task 35:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.1
+    mesh:	True
+    flow:	False
+Task 36:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.11
+    mesh:	True
+    flow:	False
+Task 37:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.12
+    mesh:	True
+    flow:	False
+Task 38:
+    structure:	bodyCentered
+    direction:	[1, 1, 1]
+    theta:	0.13
+    mesh:	True
+    flow:	False
+Task 0:
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.01
     mesh:	True
     flow:	True
 Task 1:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.02
     mesh:	True
     flow:	True
 Task 2:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.03
     mesh:	True
     flow:	True
 Task 3:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.04
     mesh:	True
     flow:	True
 Task 4:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.05
     mesh:	True
     flow:	True
 Task 5:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.06
     mesh:	True
     flow:	True
 Task 6:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.07
     mesh:	True
     flow:	True
 Task 7:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.08
     mesh:	True
     flow:	True
 Task 8:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.09
     mesh:	True
     flow:	True
 Task 9:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.1
     mesh:	True
     flow:	True
 Task 10:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.11
     mesh:	True
     flow:	True
 Task 11:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.12
     mesh:	True
     flow:	True
 Task 12:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.13
     mesh:	True
     flow:	True
 Task 13:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.14
     mesh:	True
-    flow:	True
+    flow:	False
 Task 14:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.15
     mesh:	True
     flow:	True
 Task 15:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.16
     mesh:	True
     flow:	True
 Task 16:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.17
     mesh:	True
-    flow:	True
+    flow:	False
 Task 17:
-    structure:	simple
+    structure:	faceCentered
     direction:	[1, 0, 0]
     theta:	0.18
     mesh:	True
     flow:	True
 Task 18:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.19
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.01
     mesh:	True
     flow:	True
 Task 19:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.2
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.02
     mesh:	True
     flow:	True
 Task 20:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.21
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.03
     mesh:	True
     flow:	True
 Task 21:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.22
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.04
     mesh:	True
     flow:	True
 Task 22:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.23
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.05
     mesh:	True
     flow:	True
 Task 23:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.24
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.06
     mesh:	True
     flow:	True
 Task 24:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.25
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.07
     mesh:	True
     flow:	True
 Task 25:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.26
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.08
     mesh:	True
     flow:	True
 Task 26:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.27
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.09
     mesh:	True
     flow:	True
 Task 27:
-    structure:	simple
-    direction:	[1, 0, 0]
-    theta:	0.28
+    structure:	faceCentered
+    direction:	[0, 0, 1]
+    theta:	0.1
     mesh:	True
     flow:	True
 Task 28:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
-    theta:	0.01
+    theta:	0.11
     mesh:	True
     flow:	True
 Task 29:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
-    theta:	0.02
+    theta:	0.12
     mesh:	True
     flow:	True
 Task 30:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
-    theta:	0.03
+    theta:	0.13
     mesh:	True
-    flow:	True
+    flow:	False
 Task 31:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
-    theta:	0.04
+    theta:	0.14
     mesh:	True
-    flow:	True
+    flow:	False
 Task 32:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
-    theta:	0.05
+    theta:	0.15
     mesh:	True
     flow:	True
 Task 33:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.06
-    mesh:	True
-    flow:	False
-Task 34:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.07
-    mesh:	True
-    flow:	True
-Task 35:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.08
-    mesh:	True
-    flow:	True
-Task 36:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.09
-    mesh:	True
-    flow:	True
-Task 37:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.1
-    mesh:	True
-    flow:	True
-Task 38:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.11
-    mesh:	True
-    flow:	True
-Task 39:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.12
-    mesh:	True
-    flow:	True
-Task 40:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.13
-    mesh:	True
-    flow:	True
-Task 41:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.14
-    mesh:	True
-    flow:	True
-Task 42:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.15
-    mesh:	True
-    flow:	True
-Task 43:
-    structure:	simple
+    structure:	faceCentered
     direction:	[0, 0, 1]
     theta:	0.16
     mesh:	True
-    flow:	True
-Task 44:
-    structure:	simple
+    flow:	False
+Task 34:
+    structure:	faceCentered
     direction:	[0, 0, 1]
     theta:	0.17
     mesh:	True
-    flow:	True
-Task 45:
-    structure:	simple
+    flow:	False
+Task 35:
+    structure:	faceCentered
     direction:	[0, 0, 1]
     theta:	0.18
     mesh:	True
-    flow:	True
-Task 46:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.19
-    mesh:	True
-    flow:	True
-Task 47:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.2
-    mesh:	True
-    flow:	True
-Task 48:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.21
-    mesh:	True
-    flow:	True
-Task 49:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.22
-    mesh:	True
-    flow:	True
-Task 50:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.23
-    mesh:	True
-    flow:	True
-Task 51:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.24
-    mesh:	True
-    flow:	True
-Task 52:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.25
-    mesh:	True
-    flow:	True
-Task 53:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.26
-    mesh:	True
-    flow:	True
-Task 54:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.27
-    mesh:	True
-    flow:	True
-Task 55:
-    structure:	simple
-    direction:	[0, 0, 1]
-    theta:	0.28
-    mesh:	True
-    flow:	True
-Task 56:
-    structure:	simple
+    flow:	False
+Task 36:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.01
     mesh:	True
-    flow:	True
-Task 57:
-    structure:	simple
+    flow:	False
+Task 37:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.02
     mesh:	True
-    flow:	True
-Task 58:
-    structure:	simple
+    flow:	False
+Task 38:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.03
     mesh:	True
     flow:	True
-Task 59:
-    structure:	simple
+Task 39:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.04
     mesh:	True
-    flow:	True
-Task 60:
-    structure:	simple
+    flow:	False
+Task 40:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.05
     mesh:	True
     flow:	True
-Task 61:
-    structure:	simple
+Task 41:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.06
     mesh:	True
-    flow:	True
-Task 62:
-    structure:	simple
+    flow:	False
+Task 42:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.07
     mesh:	True
-    flow:	True
-Task 63:
-    structure:	simple
+    flow:	False
+Task 43:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.08
     mesh:	True
     flow:	True
-Task 64:
-    structure:	simple
+Task 44:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.09
     mesh:	True
-    flow:	True
-Task 65:
-    structure:	simple
+    flow:	False
+Task 45:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.1
     mesh:	True
     flow:	True
-Task 66:
-    structure:	simple
+Task 46:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.11
     mesh:	True
     flow:	True
-Task 67:
-    structure:	simple
+Task 47:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.12
     mesh:	True
     flow:	True
-Task 68:
-    structure:	simple
+Task 48:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.13
     mesh:	True
-    flow:	True
-Task 69:
-    structure:	simple
+    flow:	False
+Task 49:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.14
     mesh:	True
-    flow:	True
-Task 70:
-    structure:	simple
+    flow:	False
+Task 50:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.15
     mesh:	True
-    flow:	True
-Task 71:
-    structure:	simple
+    flow:	False
+Task 51:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.16
     mesh:	True
-    flow:	True
-Task 72:
-    structure:	simple
+    flow:	False
+Task 52:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.17
     mesh:	True
-    flow:	True
-Task 73:
-    structure:	simple
+    flow:	False
+Task 53:
+    structure:	faceCentered
     direction:	[1, 1, 1]
     theta:	0.18
     mesh:	True
-    flow:	True
-Task 74:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.19
-    mesh:	True
-    flow:	True
-Task 75:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.2
-    mesh:	True
-    flow:	True
-Task 76:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.21
-    mesh:	True
-    flow:	True
-Task 77:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.22
-    mesh:	True
-    flow:	True
-Task 78:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.23
-    mesh:	True
-    flow:	True
-Task 79:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.24
-    mesh:	True
-    flow:	True
-Task 80:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.25
-    mesh:	True
-    flow:	True
-Task 81:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.26
-    mesh:	True
-    flow:	True
-Task 82:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.27
-    mesh:	True
-    flow:	True
-Task 83:
-    structure:	simple
-    direction:	[1, 1, 1]
-    theta:	0.28
-    mesh:	True
-    flow:	True
+    flow:	False
