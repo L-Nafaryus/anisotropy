@@ -29,7 +29,8 @@ def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     C1, C2 = 0.8, 0.5 #0.8, 0.05
     theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = 0.2 - Cf * (radius - r0)
+    delta = 0.2
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
@@ -168,7 +169,8 @@ def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     C1, C2 = 0.8, 0.5 # 0.8, 0.05
     theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = 0.2 - Cf * (radius - r0)
+    delta = 0.2
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)

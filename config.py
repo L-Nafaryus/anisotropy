@@ -59,7 +59,7 @@ class ViscousLayers(Parameters):
 ##
 structures = [
     #"simple",
-    #"bodyCentered",
+    "bodyCentered",
     "faceCentered"
 ]
 
@@ -70,11 +70,11 @@ class simple:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False 
-    fineness = 1
+    fillet = True 
+    fineness = 3
     parameters = Parameters(
         minSize = 0.01,
-        maxSize = 0.5,
+        maxSize = 0.1,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -104,11 +104,11 @@ class bodyCentered:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False
-    fineness = 1
+    fillet = True 
+    fineness = 3
     parameters = Parameters(
         minSize = 0.005,
-        maxSize = 0.1,
+        maxSize = 0.05,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -138,8 +138,8 @@ class faceCentered:
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False
-    fineness = 1
+    fillet = True 
+    fineness = 3
     parameters = Parameters(
         minSize = 0.005,
         maxSize = 0.05,
