@@ -28,10 +28,11 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     yw = xl
     zh = height
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.3, 0.2 
     theta1, theta2 = 0.01, 0.18
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    delta = 0.02
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
@@ -178,10 +179,11 @@ def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     point.append((0 + xl, L + yw, L + zh))
     point.append((L / 3 + xl, L / 3 + yw, 4 * L / 3 + zh))
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.3, 0.2
     theta1, theta2 = 0.01, 0.18
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    delta = 0.02
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)

@@ -28,10 +28,11 @@ def faceCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     yw = xl
     zh = width
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.3, 0.2
     theta1, theta2 = 0.01, 0.13
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    delta = 0.012
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
@@ -176,10 +177,11 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     point.append((-width + xl, 0 + yw, 0 + zh))
     point.append((-2 * width / 3 + xl, -2 * width / 3 + yw, width / 3 + zh))
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.3, 0.2
     theta1, theta2 = 0.01, 0.13
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    delta = 0.012
+    filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)

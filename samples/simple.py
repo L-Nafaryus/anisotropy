@@ -26,10 +26,10 @@ def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     yw = xl
     zh = height
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.8, 0.5 #0.8, 0.05
     theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    filletradius = 0.2 - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
@@ -165,10 +165,10 @@ def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     point.append((2 * L / 3 + xl, 5 * L / 3 + yw, 2 * L / 3 + zh))
     point.append((L + xl, L + yw, L + zh))
 
-    C1, C2 = 0.8, 0.05
+    C1, C2 = 0.8, 0.5 # 0.8, 0.05
     theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    filletradius = Cf * (radius - r0)
+    filletradius = 0.2 - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
