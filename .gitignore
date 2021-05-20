@@ -1,6 +1,9 @@
 __pycache__
 build/
 logs/
+storage/
+*.gz
+*.xz
 *.fls
 *.aux
 *.bbl
