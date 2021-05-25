@@ -125,51 +125,51 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
 def meshCompute(mobj):
     """Compute the mesh."""
     status = mobj.Compute()
-    #msg = ""
-
-    #if status:
-    #    msg = "Computed"
-
-    #else:
-    #    msg = "Not computed"
-
-    #logger.info("""meshCompute:
-    #status:\t{}""".format(msg))
-
+    
     if status:
-        omniinfo = mobj.GetMeshInfo()
-        keys = [ str(k) for k in omniinfo.keys() ]
-        vals = [ v for v in omniinfo.values() ]
-        info = {}
-
-        for n in range(len(keys)):
-            info[keys[n]] = vals[n]
-
-        edges = info["Entity_Edge"]
+        logger.info("meshCompute: computed")
         
-        triangles = info["Entity_Triangle"]
-        faces = triangles
+        ###
+        #   Post computing
+        ##
+        if mobj.NbPyramids() > 0:
+            pyramidCriterion = smesh.GetCriterion(
+                SMESH.VOLUME,
+                SMESH.FT_ElemGeomType,
+                SMESH.FT_Undefined,
+                SMESH.Geom_PYRAMID
+            )
+            pyramidGroup = mobj.MakeGroupByCriterion("pyramids", pyramidCriterion)
+            pyramidVolumes = mobj.GetIDSource(pyramidGroup.GetIDs(), SMESH.VOLUME)
 
-        tetra = info["Entity_Tetra"]
-        prism = info["Entity_Penta"]
-        pyramid = info["Entity_Pyramid"]
-        volumes = tetra + prism + pyramid
-
-        elements = edges + faces + volumes
-
-        logger.info("""meshCompute:
-    Elements:\t{}
-        Edges:\t{}
-        Faces:\t{}
-            Triangles:\t{}
-        Volumes:\t{}
-            Tetrahedrons:\t{}
-            Prisms:\t{}
-            Pyramid:\t{}""".format(
-            elements, edges, faces, triangles, volumes, tetra, prism, pyramid))
-
+            mobj.SplitVolumesIntoTetra(pyramidVolumes, smesh.Hex_5Tet)
+            
+            mobj.RemoveGroup(pyramidGroup)
+            mobj.RenumberElements()
+        
     else:
         logger.warning("meshCompute: not computed")
+
+
+def meshStats(mobj):
+    """
+    Print mesh information.
+    """
+    stats = {
+        "Elements": mobj.NbElements(),
+        "Edges": mobj.NbEdges(),
+        "Faces": mobj.NbFaces(),
+        "Volumes": mobj.NbVolumes(),
+        "Tetrahedrons": mobj.NbTetras(),
+        "Prisms": mobj.NbPrisms(),
+        "Pyramids": mobj.NbPyramids()
+    }
+    info = "meshStats:\n"
+
+    for key in stats:
+        info += f"\t{key}:\t{stats[key]}\n"
+
+    logger.info(info)
 
 
 def meshExport(mobj, path):

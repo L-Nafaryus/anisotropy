@@ -161,9 +161,17 @@ def calculate(task):
         logger.critical(f"calculate: missed 'mesh.unv'")
         return
 
-    foam_utils.ideasUnvToFoam("mesh.unv")
+    _, returncode = foam_utils.ideasUnvToFoam("mesh.unv")
+
+    if returncode:
+        os.chdir(config.ROOT)
+
+        return returncode
     
     foam_utils.createPatch(dictfile = "system/createPatchDict.symetry")
+
+    foam_utils.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.type", "wall")
+    foam_utils.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.inGroups", "1 (wall)")
     
     foam_utils.checkMesh()
 

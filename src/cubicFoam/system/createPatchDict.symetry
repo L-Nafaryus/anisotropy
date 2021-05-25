@@ -20,6 +20,18 @@ pointSync   false;
 patches
 (
     {
+        name defaultFaces;
+        
+        patchInfo
+        {
+            type empty;
+        }
+
+        constructFrom patches;
+        patches (defaultFaces);
+    }
+    
+    {
         name inlet;
         
         patchInfo

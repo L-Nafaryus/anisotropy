@@ -61,8 +61,8 @@ def foamClean(case: str = None):
             shutil.rmtree(os.path.join(path, d))
 
 
-def ideasUnvToFoam(mesh: str, case: str = None):
-    application("ideasUnvToFoam", mesh, case = case, stderr = True)
+def ideasUnvToFoam(mesh: str, case: str = None) -> (str, int):
+    return application("ideasUnvToFoam", mesh, case = case, stderr = True)
 
 
 def createPatch(dictfile: str = None, case: str = None):

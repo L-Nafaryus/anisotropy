@@ -39,6 +39,10 @@ boundaryField
     wall
     {
         type            zeroGradient;
+    } 
+    defaultFaces
+    {
+        type zeroGradient;
     }
 }
 

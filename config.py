@@ -70,10 +70,10 @@ class simple:
         [1, 1, 1]
     ]
     fillet = True
-    fineness = 1
+    fineness = 3
     parameters = Parameters(
         minSize = 0.01,
-        maxSize = 0.5,
+        maxSize = 0.1,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -97,17 +97,17 @@ class simple:
 
 
 class bodyCentered:
-    theta = [c * 0.01 for c in range(1, 13 + 1)]
+    theta = [c * 0.01 for c in range(1, 18 + 1)]
     directions = [
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False
-    fineness = 1
+    fillet = True
+    fineness = 3
     parameters = Parameters(
         minSize = 0.005,
-        maxSize = 0.1,
+        maxSize = 0.05,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -131,17 +131,17 @@ class bodyCentered:
 
 
 class faceCentered:
-    theta = [c * 0.01 for c in range(1, 18 + 1)]
+    theta = [0.06, 0.13] #[c * 0.01 for c in range(1, 13 + 1)]
     directions = [
-        [1, 0, 0],
-        [0, 0, 1],
+        #[1, 0, 0],
+        #[0, 0, 1],
         [1, 1, 1]
     ]
-    fillet = False
+    fillet = True
     fineness = 1
     parameters = Parameters(
-        minSize = 0.0005,
-        maxSize = 0.1,
+        minSize = 0.005,
+        maxSize = 0.05,
         growthRate = 0.5,
         nbSegPerEdge = 0.5,
         nbSegPerRadius = 0.5,
@@ -156,7 +156,7 @@ class faceCentered:
     )
     viscousLayers = ViscousLayers(
         thickness = 0.001,
-        numberOfLayers = 3,
+        numberOfLayers = 2,
         stretchFactor = 1.2,
         isFacesToIgnore = True,
         facesToIgnore = None,

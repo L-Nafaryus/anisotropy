@@ -105,8 +105,9 @@ def genMesh(stype, theta, fillet, direction, export):
     mesh = mesh_utils.meshCreate(shape, groups, fineness, parameters, viscousLayers)
     mesh_utils.meshCompute(mesh)
 
+    mesh_utils.meshStats(mesh)
     mesh_utils.meshExport(mesh, export)
-
+    
     salome.salome_close()
 
 
