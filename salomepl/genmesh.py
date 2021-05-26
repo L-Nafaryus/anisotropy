@@ -1,25 +1,25 @@
 ###
 #   This file executes inside salome environment
+#
+#   salome starts at user home directory
 ##
-from collections import namedtuple
 import os, sys
-import logging
-from pyquaternion import Quaternion
 import math
 
 import salome
 
+# get project path from args
 sys.path.append(sys.argv[6])
 
 import config
 from config import logger
-#from src import applogger
-from simple import simpleCubic, simpleHexagonalPrism
-from faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism
-from bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
 
-from src import geometry_utils
-from src import mesh_utils
+from salomepl.simple import simpleCubic, simpleHexagonalPrism
+from salomepl.faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism
+from salomepl.bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
+
+from salomepl.geometry import getGeom 
+from salomepl.mesh import smeshBuilder, meshCreate, meshCompute, meshStats, meshExport
 
 
 def main():
@@ -30,10 +30,10 @@ def main():
     flowdirection = [int(coord) for coord in sys.argv[4]]
     export = str(sys.argv[5])
 
-    genMesh(stype, theta, fillet, flowdirection, export)
+    genmesh(stype, theta, fillet, flowdirection, export)
 
 
-def genMesh(stype, theta, fillet, direction, export):
+def genmesh(stype, theta, fillet, direction, export):
 
     logger.info("""genMesh: 
     structure type:\t{}
@@ -85,7 +85,7 @@ def genMesh(stype, theta, fillet, direction, export):
     ###
     #   Shape
     ##
-    geompy = geometry_utils.getGeom()
+    geompy = getGeom()
     shape, groups = structure(*params)
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
@@ -103,13 +103,13 @@ def genMesh(stype, theta, fillet, direction, export):
             facesToIgnore.append(group)
 
     viscousLayers.facesToIgnore = facesToIgnore
-    viscousLayers.extrusionMethod = mesh_utils.smeshBuilder.SURF_OFFSET_SMOOTH
+    viscousLayers.extrusionMethod = smeshBuilder.SURF_OFFSET_SMOOTH
     
-    mesh = mesh_utils.meshCreate(shape, groups, fineness, parameters, viscousLayers)
-    mesh_utils.meshCompute(mesh)
+    mesh = meshCreate(shape, groups, fineness, parameters, viscousLayers)
+    meshCompute(mesh)
 
-    mesh_utils.meshStats(mesh)
-    mesh_utils.meshExport(mesh, export)
+    meshStats(mesh)
+    meshExport(mesh, export)
     
     salome.salome_close()
 

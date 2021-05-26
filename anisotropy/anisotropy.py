@@ -1,18 +1,14 @@
 import os, sys
-from collections import namedtuple
 import time
-import logging
 from datetime import timedelta
-import multiprocessing
 import shutil
 
-import config
-from config import logger
-#from src import applogger
-from src import utils
-from src import salome_utils
-from src import foam_utils
+sys.path.append(os.path.abspath("../"))
 
+import config
+#from config import logger
+#logger = config.logger
+from utils import struct, checkEnv
 
 def main():
     if not os.path.exists(config.LOG):
@@ -20,9 +16,6 @@ def main():
 
     if not os.path.exists(config.BUILD):
         os.makedirs(config.BUILD)
-
-    #global logger 
-    #logger = applogger.Logger()
 
     check = checkEnv()
 
@@ -68,15 +61,7 @@ def main():
     logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
 
 
-
-class Task:
-    def __init__(self, **kwargs):
-        for (k, v) in kwargs.items():
-            setattr(self, k, v)
-
-
 def createTasks():
-    #Task = namedtuple("Task", ["structure", "theta", "fillet", "direction", "export"])
     tasks = []
     structures = [ getattr(config, s)() for s in config.structures ]
 
@@ -91,7 +76,7 @@ def createTasks():
                     "theta-{}".format(theta)
                 )
 
-                task = Task(
+                task = struct(
                     structure = name, 
                     theta = theta, 
                     fillet = structure.fillet, 
@@ -105,9 +90,10 @@ def createTasks():
 
     return tasks
 
+from salomepl.utils import runExecute
 
 def createMesh(task):
-    scriptpath = os.path.join(config.ROOT, "samples/__init__.py")
+    scriptpath = os.path.join(config.ROOT, "salome/genmesh.py")
     port = 2810
     stime = time.monotonic()
 
@@ -119,21 +105,23 @@ def createMesh(task):
         os.path.join(task.export, "mesh.unv"),
         config.ROOT
     )
-    returncode = salome_utils.runExecute(port, scriptpath, *args)
+    returncode = runExecute(port, scriptpath, *args)
     
     etime = time.monotonic()
     logger.info("createMesh: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
 
+from openfoam import openfoam
+
 def calculate(task):
     foamCase = [ "0", "constant", "system" ]
 
     os.chdir(task.export)
-    foam_utils.foamClean()
+    openfoam.foamClean()
 
     for d in foamCase:
         shutil.copytree(
-            os.path.join(config.ROOT, "src/cubicFoam", d), 
+            os.path.join(config.ROOT, "openfoam/template", d), 
             os.path.join(task.export, d)
         )
     
@@ -143,34 +131,36 @@ def calculate(task):
         logger.critical(f"calculate: missed 'mesh.unv'")
         return
 
-    _, returncode = foam_utils.ideasUnvToFoam("mesh.unv")
+    _, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
     if returncode:
         os.chdir(config.ROOT)
 
         return returncode
     
-    foam_utils.createPatch(dictfile = "system/createPatchDict.symetry")
+    openfoam.createPatch(dictfile = "system/createPatchDict.symetry")
 
-    foam_utils.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.type", "wall")
-    foam_utils.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.inGroups", "1 (wall)")
+    openfoam.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.type", "wall")
+    openfoam.foamDictionary("constant/polyMesh/boundary", "entry0.defaultFaces.inGroups", "1 (wall)")
     
-    foam_utils.checkMesh()
+    openfoam.checkMesh()
 
     scale = (1e-5, 1e-5, 1e-5)
-    foam_utils.transformPoints(scale)
+    openfoam.transformPoints(scale)
     
-    foam_utils.decomposePar()
+    openfoam.decomposePar()
 
-    foam_utils.renumberMesh()
+    openfoam.renumberMesh()
     
-    foam_utils.potentialFoam()
+    openfoam.potentialFoam()
     
     for n in range(os.cpu_count()):
-        foam_utils.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.type", "pressureInletVelocity")
-        foam_utils.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.value", "uniform (0 0 0)")
+        openfoam.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.type", "pressureInletVelocity")
+        openfoam.foamDictionary(f"processor{n}/0/U", "boundaryField.inlet.value", "uniform (0 0 0)")
     
-    returncode = foam_utils.simpleFoam()
+    returncode, out = openfoam.simpleFoam()
+    if out:
+        logger.info(out)
 
     os.chdir(config.ROOT)
     
@@ -178,6 +168,7 @@ def calculate(task):
     logger.info("calculate: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
     return returncode
+
 
 
 def postprocessing(tasks):

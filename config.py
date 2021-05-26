@@ -1,6 +1,7 @@
 import os, sys
-from src import applogger
+from anisotropy.utils import Logger, struct
 
+PROJECT = "anisotropy"
 ###
 #   Paths
 ##
@@ -14,65 +15,27 @@ BUILD = os.path.join(ROOT, "build")
 #   Logger
 ##
 global logger
-logger = applogger.Logger()
-
-###
-#   Utilities
-##
-class Parameters:
-    """
-    [
-        "minSize",
-        "maxSize",
-        "growthRate",
-        "nbSegPerEdge",
-        "nbSegPerRadius",
-        "chordalErrorEnabled",
-        "chordalError",
-        "secondOrder",
-        "optimize",
-        "quadAllowed",
-        "useSurfaceCurvature",
-        "fuseEdges",
-        "checkChartBoundary"
-    ]
-    """
-    def __init__(self, **kwargs):
-        for (k, v) in kwargs.items():
-            setattr(self, k, v)
-
-class ViscousLayers(Parameters):
-    """
-    [
-        "thickness",
-        "numberOfLayers",
-        "stretchFactor",
-        "isFacesToIgnore",
-        "facesToIgnore",
-        "extrusionMethod"
-    ]
-    """
-    pass
+logger = Logger(PROJECT, os.path.join(LOG, f"{ PROJECT }.log"))
 
 ###
 #   Project variables
 ##
 structures = [
-    #"simple",
-    "bodyCentered",
-    "faceCentered"
+    "simple",
+    #"bodyCentered",
+    #"faceCentered"
 ]
 
-class simple:
-    theta = [c * 0.01 for c in range(1, 28 + 1)]
+simple = struct(
+    theta = [0.01, 0.02], #[c * 0.01 for c in range(1, 28 + 1)],
     directions = [
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
-    ]
-    fillet = True
-    fineness = 3
-    parameters = Parameters(
+    ],
+    fillet = True,
+    fineness = 3,
+    parameters = struct(
         minSize = 0.01,
         maxSize = 0.1,
         growthRate = 0.5,
@@ -86,8 +49,8 @@ class simple:
         useSurfaceCurvature = True,
         fuseEdges = True,
         checkChartBoundary = False
-    )
-    viscousLayers = ViscousLayers(
+    ),
+    viscousLayers = struct(
         thickness = 0.005, # 0.01, 0.005 for 0.28, 0.01 for prism
         numberOfLayers = 2,
         stretchFactor = 1.2,
@@ -95,18 +58,18 @@ class simple:
         facesToIgnore = None,
         extrusionMethod = None
     )
+)
 
-
-class bodyCentered:
-    theta = [c * 0.01 for c in range(1, 18 + 1)]
+bodyCentered = struct(
+    theta = [c * 0.01 for c in range(1, 18 + 1)],
     directions = [
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
-    ]
-    fillet = True 
-    fineness = 3
-    parameters = Parameters(
+    ],
+    fillet = True, 
+    fineness = 3,
+    parameters = struct(
         minSize = 0.005,
         maxSize = 0.05,
         growthRate = 0.5,
@@ -120,8 +83,8 @@ class bodyCentered:
         useSurfaceCurvature = True,
         fuseEdges = True,
         checkChartBoundary = False
-    )
-    viscousLayers = ViscousLayers(
+    ),
+    viscousLayers = struct(
         thickness = 0.005,
         numberOfLayers = 2,
         stretchFactor = 1.2,
@@ -129,18 +92,18 @@ class bodyCentered:
         facesToIgnore = None,
         extrusionMethod = None
     )
+)
 
-
-class faceCentered:
-    theta = [0.06, 0.13] #[c * 0.01 for c in range(1, 13 + 1)]
+faceCentered = struct(
+    theta = [0.06, 0.13], #[c * 0.01 for c in range(1, 13 + 1)]
     directions = [
         #[1, 0, 0],
         #[0, 0, 1],
         [1, 1, 1]
-    ]
-    fillet = True 
-    fineness = 3
-    parameters = Parameters(
+    ],
+    fillet = True, 
+    fineness = 3,
+    parameters = struct(
         minSize = 0.005,
         maxSize = 0.05,
         growthRate = 0.5,
@@ -154,8 +117,8 @@ class faceCentered:
         useSurfaceCurvature = True,
         fuseEdges = True,
         checkChartBoundary = False
-    )
-    viscousLayers = ViscousLayers(
+    ),
+    viscousLayers = struct(
         thickness = 0.001, # Failing on 0.13-111
         numberOfLayers = 2,
         stretchFactor = 1.2,
@@ -163,3 +126,4 @@ class faceCentered:
         facesToIgnore = None,
         extrusionMethod = None
     )
+)

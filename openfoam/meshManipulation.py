@@ -1,3 +1,4 @@
+import re
 
 def createPatch(dictfile: str = None, case: str = None):
     args = ["-overwrite"]
@@ -16,6 +17,7 @@ def transformPoints(scale: tuple, case: str = None):
 
 def checkMesh(case: str = None):
     application("checkMesh", "-allGeometry", "-allTopology", case = case, stderr = True)
+    out = ""
 
     with open("checkMesh.log", "r") as io:
         warnings = []
@@ -24,7 +26,9 @@ def checkMesh(case: str = None):
                 warnings.append(line.replace("***", "").strip())
 
         if warnings:
-            logger.warning("checkMesh:\n\t{}".format("\n\t".join(warnings)))
+            out = "checkMesh:\n\t{}".format("\n\t".join(warnings))
+
+    return out
 
 
 def renumberMesh(case: str = None):

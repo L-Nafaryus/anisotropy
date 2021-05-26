@@ -1,9 +1,9 @@
 import GEOM
 from salome.geom import geomBuilder
+
 geompy = geomBuilder.New()
 
 import math
-import logging
 from pyquaternion import Quaternion
 import numpy as np
 
