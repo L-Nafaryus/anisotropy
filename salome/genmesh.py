@@ -1,3 +1,6 @@
+###
+#   This file executes inside salome environment
+##
 from collections import namedtuple
 import os, sys
 import logging

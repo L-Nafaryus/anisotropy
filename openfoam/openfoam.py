@@ -123,4 +123,3 @@ def simpleFoam(case: str = None):
 
     return returncode
 
-

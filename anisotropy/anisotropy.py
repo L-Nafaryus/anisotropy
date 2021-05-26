@@ -68,24 +68,6 @@ def main():
     logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
 
 
-def checkEnv():
-    missed = False
-    
-    try:
-        pythonVersion = "Python {}".format(sys.version.split(" ")[0])
-        salomeVersion = salome_utils.salomeVersion()
-        foamVersion = foam_utils.foamVersion()
-
-    except Exception:
-        logger.critical("Missed environment")
-        missed = True
-
-    else:
-        logger.info(f"environment:\n\t{pythonVersion}\n\t{salomeVersion}\n\t{foamVersion}")
-
-    finally:
-        return missed
-
 
 class Task:
     def __init__(self, **kwargs):
@@ -222,5 +204,4 @@ def postprocessing(tasks):
 ##
 if __name__ == "__main__":
     main()
-
 

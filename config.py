@@ -163,4 +163,3 @@ class faceCentered:
         facesToIgnore = None,
         extrusionMethod = None
     )
-

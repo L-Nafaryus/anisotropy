@@ -1,5 +1,5 @@
-import salome
-salome.salome_init()
+#import salome
+#salome.salome_init()
 
 import GEOM
 from salome.geom import geomBuilder
@@ -281,4 +281,3 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     groups.append(wall)
 
     return shape, groups
-

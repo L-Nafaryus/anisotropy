@@ -189,4 +189,3 @@ def meshExport(mobj, path):
     except:
         logger.error("""meshExport: Cannot export.""")
 
-

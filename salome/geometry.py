@@ -236,4 +236,3 @@ def boundaryCreate(gobj, dvec, grains):
 
     return boundary
 
-

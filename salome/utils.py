@@ -80,4 +80,3 @@ def remote(port, cmd):
         stderr = subprocess.PIPE)
 
     return p
-

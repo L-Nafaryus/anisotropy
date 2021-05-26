@@ -1,5 +1,5 @@
-import salome
-salome.salome_init()
+#import salome
+#salome.salome_init()
 
 import GEOM
 from salome.geom import geomBuilder
@@ -7,37 +7,33 @@ geompy = geomBuilder.New()
 
 from math import pi, sqrt
 
-def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
+def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     
     ###
     #   Parameters
     ##
-    L = 1.0
-    r0 = L * sqrt(3) / 4
+    r0 = 1.0
+    L = 2 * r0
 
     radius = r0 / (1 - theta)
     xn, yn, zn = 3, 3, 3 
     
-    length = 2 * r0
-    width = L / 2
-    diag = L * sqrt(2)
+    length = L * sqrt(2)
+    width = L * sqrt(2)
     height = L
 
-    point = []
-    xl = sqrt(diag ** 2 + diag ** 2) * 0.5
+    xl = sqrt(length ** 2 * 0.5)
     yw = xl
     zh = height
 
-    C1, C2 = 0.3, 0.2 
-    theta1, theta2 = 0.01, 0.18
+    C1, C2 = 0.8, 0.5 #0.8, 0.05
+    theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    delta = 0.02
+    delta = 0.2
     filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
-    spos1 = (0, 0, 0)
-    spos2 = (0, 0, 0)
 
     ###
     #   Bounding box
@@ -52,7 +48,7 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
 
         inletface = geompy.MakeFaceWires([sk.wire()], True)
         vecflow = geompy.GetNormal(inletface)
-        cubic = geompy.MakePrismVecH(inletface, vecflow, diag)
+        cubic = geompy.MakePrismVecH(inletface, vecflow, width)
 
     elif direction == [0, 0, 1]:
         sk = geompy.Sketcher3D()
@@ -64,7 +60,7 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
 
         inletface = geompy.MakeFaceWires([sk.wire()], True)
         vecflow = geompy.GetNormal(inletface)
-        cubic = geompy.MakePrismVecH(inletface, vecflow, zh)
+        cubic = geompy.MakePrismVecH(inletface, vecflow, height)
 
     else:
         raise Exception("The direction is not implemented")
@@ -91,20 +87,12 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
     oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
     oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
-    xy = geompy.MakeVectorDXDYDZ(1, 1, 0)
-    xmy = geompy.MakeVectorDXDYDZ(1, -1, 0)
 
-    grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos1), radius)
-    lattice1 = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
-    lattice1 = geompy.MakeMultiTranslation1D(lattice1, oz, L, zn)
-
-    #grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos2), radius)
-    #lattice2 = geompy.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
-    #lattice2 = geompy.MakeMultiTranslation1D(lattice2, oz, L, zn)
-    lattice2 = geompy.MakeTranslation(lattice1, 0.5 * L, 0.5 * L, 0.5 * L)
+    grain = geompy.MakeSphereR(radius)
+    lattice = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
+    lattice = geompy.MakeMultiTranslation1D(lattice, oz, L, zn)
     
-    grains = geompy.ExtractShapes(lattice1, geompy.ShapeType["SOLID"], True)
-    grains += geompy.ExtractShapes(lattice2, geompy.ShapeType["SOLID"], True)
+    grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
     grains = geompy.MakeFuseList(grains, False, False)
 
     grains = geompy.MakeScaleTransform(grains, oo, scale)
@@ -116,7 +104,7 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     #   Groups
     ##
     shape = geompy.MakeCutList(cubic, [grains])
-    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "bodyCenteredCubic")
+    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
 
     sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
     geompy.UnionIDs(sall,
@@ -151,44 +139,41 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     groups.append(wall)
 
     return shape, groups
+    
 
-
-def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
+def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     
     ###
     #   Parameters
     ##
-    L = 1.0
-    r0 = L * sqrt(3) / 4
+    r0 = 1.0
+    L = 2 * r0
 
     radius = r0 / (1 - theta)
     xn, yn, zn = 3, 3, 3 
     
-    length = 2 * r0
-    width = L / 2
-    diag = L * sqrt(2)
-    height = diag / 3
+    length = L * sqrt(2)
+    width = L * sqrt(2)
+    height = L
 
     point = []
-    xl, yw, zh = -L / 4, -L / 4, -L / 4
-    point.append((L / 3 + xl, L / 3 + yw, 4 * L / 3 + zh))
-    point.append((L + xl, 0 + yw, L + zh))
-    point.append((4 * L / 3 + xl, L / 3 + yw, L / 3 + zh))
-    point.append((L + xl, L + yw, 0 + zh))
-    point.append((L / 3 + xl, 4 * L / 3 + yw, L / 3 + zh))
-    point.append((0 + xl, L + yw, L + zh))
-    point.append((L / 3 + xl, L / 3 + yw, 4 * L / 3 + zh))
+    xl, yw, zh = -L - L / 6, -L - L / 6, -L / 6
+    point.append((L + xl, L + yw, L + zh))
+    point.append((5 * L / 3 + xl, 2 * L / 3 + yw, 2 * L / 3 + zh))
+    point.append((2 * L + xl, L + yw, 0 + zh))
+    point.append((5 * L / 3 + xl, 5 * L / 3 + yw, -L / 3 + zh))
+    point.append((L + xl, 2 * L + yw, 0 + zh))
+    point.append((2 * L / 3 + xl, 5 * L / 3 + yw, 2 * L / 3 + zh))
+    point.append((L + xl, L + yw, L + zh))
 
-    C1, C2 = 0.3, 0.2
-    theta1, theta2 = 0.01, 0.18
+    C1, C2 = 0.8, 0.5 # 0.8, 0.05
+    theta1, theta2 = 0.01, 0.28
     Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    delta = 0.02
+    delta = 0.2
     filletradius = delta - Cf * (radius - r0)
     
     scale = 100
     oo = geompy.MakeVertex(0, 0, 0)
-    spos1 = (0, 0, 0)
-    spos2 = (0, 0, 0)
 
     ###
     #   Bounding box
@@ -224,20 +209,12 @@ def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
     oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
     oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
-    xy = geompy.MakeVectorDXDYDZ(1, 1, 0)
-    xmy = geompy.MakeVectorDXDYDZ(1, -1, 0)
 
-    grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos1), radius)
-    lattice1 = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
-    lattice1 = geompy.MakeMultiTranslation1D(lattice1, oz, L, zn)
-
-    #grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos2), radius)
-    #lattice2 = geompy.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
-    #lattice2 = geompy.MakeMultiTranslation1D(lattice2, oz, L, zn)
-    lattice2 = geompy.MakeTranslation(lattice1, 0.5 * L, 0.5 * L, 0.5 * L)
+    grain = geompy.MakeSphereR(radius)
+    lattice = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
+    lattice = geompy.MakeMultiTranslation1D(lattice, oz, L, zn)
     
-    grains = geompy.ExtractShapes(lattice1, geompy.ShapeType["SOLID"], True)
-    grains += geompy.ExtractShapes(lattice2, geompy.ShapeType["SOLID"], True)
+    grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
     grains = geompy.MakeFuseList(grains, False, False)
 
     grains = geompy.MakeScaleTransform(grains, oo, scale)
@@ -249,7 +226,7 @@ def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     #   Groups
     ##
     shape = geompy.MakeCutList(hexagonPrism, [grains])
-    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "bodyCenteredCubic")
+    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
 
     sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
     geompy.UnionIDs(sall,
@@ -284,4 +261,3 @@ def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     groups.append(wall)
 
     return shape, groups
-
