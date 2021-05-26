@@ -133,6 +133,8 @@ def meshCompute(mobj):
         #   Post computing
         ##
         if mobj.NbPyramids() > 0:
+            logger.info(f"meshCompute: detected {mobj.NbPyramids()} pyramids: splitting volumes into tetrahedrons")
+            
             pyramidCriterion = smesh.GetCriterion(
                 SMESH.VOLUME,
                 SMESH.FT_ElemGeomType,
