@@ -3,38 +3,39 @@ import time
 from datetime import timedelta
 import shutil
 
-sys.path.append(os.path.abspath("../"))
+ROOT = "/".join(__file__.split("/")[:-2])
+sys.path.append(os.path.abspath(ROOT))
 
-from utils import struct, checkEnv
+from utils import struct
 import toml
 import logging
 
-CONFIG = os.path.abspath("../conf/config.toml")
+CONFIG = os.path.join(ROOT, "conf/config.toml")
 config = struct(toml.load(CONFIG))
 
-def main():
 
     #CONFIG = os.path.abspath("../conf/config.toml")
     #config = struct(toml.load(CONFIG))
     
-    LOG = os.path.abspath("../logs")
-    if not os.path.exists(LOG):
-        os.makedirs(LOG)
+LOG = os.path.join(ROOT, "logs")
+if not os.path.exists(LOG):
+    os.makedirs(LOG)
 
-    BUILD = os.path.abspath("../build")
-    if not os.path.exists(BUILD):
-        os.makedirs(BUILD)
+BUILD = os.path.join(ROOT, "build")
+if not os.path.exists(BUILD):
+    os.makedirs(BUILD)
 
-    logging.basicConfig(
-        level = logging.INFO,
-        format = config.logger.format,
-        handlers = [
-            logging.StreamHandler(),
-            logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
-        ]
-    )
-    logger = logging.getLogger(config.logger.name)
+logging.basicConfig(
+    level = logging.INFO,
+    format = config.logger.format,
+    handlers = [
+        logging.StreamHandler(),
+        logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
+    ]
+)
+logger = logging.getLogger(config.logger.name)
 
+def main():
     if checkEnv():
         return
 
@@ -64,7 +65,7 @@ def main():
         if not returncode:
             task.flow = True
 
-        with open(os.path.join(config.LOG, "tasks.log"), "a") as io:
+        with open(os.path.join(LOG, "tasks.log"), "a") as io:
             idx = tasks.index(task)
             io.write(f"""Task {idx}:
     structure:\t{task.structure}
@@ -74,7 +75,7 @@ def main():
     flow:\t{task.flow}\n""")
 
 
-    logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
+    #logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
 
 
 def createTasks():
@@ -89,7 +90,7 @@ def createTasks():
                         theta = theta, 
                         fillet = getattr(config, structure).geometry.fillet, 
                         direction = direction, 
-                        export = os.path.abspath(f"../build/{ structure }/direction-{ direction[0] }{ direction [1] }{ direction [2] }/theta-{ theta }"),
+                        export = os.path.join(ROOT, f"{ BUILD }/{ structure }/direction-{ direction[0] }{ direction [1] }{ direction [2] }/theta-{ theta }"),
                         mesh = False,
                         flow = False
                     )
@@ -98,10 +99,10 @@ def createTasks():
 
     return tasks
 
-from salomepl.utils import runExecute
+from salomepl.utils import runExecute, salomeVersion
 
 def createMesh(task):
-    scriptpath = os.path.abspath("../salomepl/genmesh.py")
+    scriptpath = os.path.join(ROOT, "salomepl/genmesh.py")
     port = 2810
     stime = time.monotonic()
 
@@ -111,7 +112,7 @@ def createMesh(task):
         int(task.fillet), 
         "".join([str(coord) for coord in task.direction]), 
         os.path.join(task.export, "mesh.unv"),
-        os.path.abspath("../")
+        ROOT
     )
     returncode = runExecute(port, scriptpath, *args)
     
@@ -119,7 +120,7 @@ def createMesh(task):
     logger.info("createMesh: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
 
-from openfoam import openfoam
+import openfoam
 
 def calculate(task):
     foamCase = [ "0", "constant", "system" ]
@@ -129,7 +130,7 @@ def calculate(task):
 
     for d in foamCase:
         shutil.copytree(
-            os.path.abspath("../openfoam/template", d), 
+            os.path.join(ROOT, "openfoam/template", d), 
             os.path.join(task.export, d)
         )
     
@@ -170,13 +171,30 @@ def calculate(task):
     if out:
         logger.info(out)
 
-    os.chdir(config.ROOT)
+    os.chdir(ROOT)
     
     etime = time.monotonic()
     logger.info("calculate: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
     return returncode
 
+def checkEnv():
+    missed = False
+    
+    try:
+        pythonVersion = "Python {}".format(sys.version.split(" ")[0])
+        salomeplVersion = salomeVersion()
+        openfoamVersion = openfoam.foamVersion()
+
+    except Exception as e:
+        logger.critical("Missed environment %s", e)
+        missed = True
+
+    else:
+        logger.info(f"environment:\n\t{pythonVersion}\n\t{salomeplVersion}\n\t{openfoamVersion}")
+
+    finally:
+        return missed
 
 
 def postprocessing(tasks):

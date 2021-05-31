@@ -1,16 +1,8 @@
 import os, sys
 import subprocess
 
-sys.path.append(os.path.abspath("../"))
-
 import logging
 logger = logging.getLogger()
-
-from openfoam.miscellaneous import *
-from openfoam.meshConversion import *
-from openfoam.meshManipulation import *
-from openfoam.parallelProcessing import *
-from openfoam.solvers import *
 
 def application(name: str, *args: str, case: str = None, stderr: bool = True, useMPI: bool = False) -> int:
     

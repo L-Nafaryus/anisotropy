@@ -1,3 +1,5 @@
+from .application import application
+
 import re
 
 def createPatch(dictfile: str = None, case: str = None):

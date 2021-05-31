@@ -1,3 +1,5 @@
+from .application import application
+
 import re 
 
 def potentialFoam(case: str = None):

@@ -3,13 +3,13 @@ from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
 import logging
-logger = logging.getLogger(config.logger.name)
+logger = logging.getLogger("anisotropy")
 
 def getSmesh():
     return smesh
 
 
-def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
+def meshCreate(shape, groups, parameters): #fineness, parameters, viscousLayers = None):
     """
     Creates a mesh from a geometry.
 
@@ -36,7 +36,7 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
         3: "Fine",
         4: "Very fine",
         5: "Custom"
-    }[fineness]
+    }[parameters.fineness]
 
     # Mesh
     mesh = smesh.Mesh(shape)
@@ -46,9 +46,9 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
     param = netgen.Parameters()
     param.SetMinSize(parameters.minSize)
     param.SetMaxSize(parameters.maxSize)
-    param.SetFineness(fineness)
+    param.SetFineness(parameters.fineness)
     
-    if fineness == 5:
+    if parameters.fineness == 5:
         param.SetGrowthRate(parameters.growthRate)
         param.SetNbSegPerEdge(parameters.nbSegPerEdge)
         param.SetNbSegPerRadius(parameters.nbSegPerRadius)
@@ -94,30 +94,30 @@ def meshCreate(shape, groups, fineness, parameters, viscousLayers = None):
     ###
     #   Viscous layers
     ##
-    if not viscousLayers is None:
-        vlayer = netgen.ViscousLayers(
-            viscousLayers.thickness,
-            viscousLayers.numberOfLayers,
-            viscousLayers.stretchFactor,
-            viscousLayers.facesToIgnore,
-            viscousLayers.isFacesToIgnore, 
-            viscousLayers.extrusionMethod
-        )
+    #if not viscousLayers is None:
+    vlayer = netgen.ViscousLayers(
+        parameters.thickness,
+        parameters.numberOfLayers,
+        parameters.stretchFactor,
+        parameters.facesToIgnore,
+        parameters.isFacesToIgnore, 
+        parameters.extrusionMethod
+    )
 
-        logger.info("""meshCreate:
-    viscous layers: 
-        thickness:\t{}
-        number:\t{}
-        stretch factor:\t{}""".format(
-            viscousLayers.thickness, 
-            viscousLayers.numberOfLayers, 
-            viscousLayers.stretchFactor))
+    logger.info("""meshCreate:
+viscous layers: 
+    thickness:\t{}
+    number:\t{}
+    stretch factor:\t{}""".format(
+        parameters.thickness, 
+        parameters.numberOfLayers, 
+        parameters.stretchFactor))
 
         
 
-    else:
-        logger.info("""meshCreate: 
-    viscous layers: disabled""")
+    #else:
+    #    logger.info("""meshCreate: 
+    #viscous layers: disabled""")
 
 
     return mesh
