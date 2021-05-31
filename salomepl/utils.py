@@ -2,8 +2,8 @@
 import subprocess
 import logging
 import sys, os
-import config
-from config import logger
+
+logger = logging.getLogger()
 
 def hasDesktop() -> bool:
     return salome.sg.hasDesktop()

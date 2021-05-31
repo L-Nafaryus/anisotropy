@@ -3,7 +3,8 @@ import subprocess
 
 sys.path.append(os.path.abspath("../"))
 
-from config import logger
+import logging
+logger = logging.getLogger()
 
 from openfoam.miscellaneous import *
 from openfoam.meshConversion import *

@@ -5,27 +5,43 @@ import shutil
 
 sys.path.append(os.path.abspath("../"))
 
-import config
-#from config import logger
-#logger = config.logger
 from utils import struct, checkEnv
+import toml
+import logging
+
+CONFIG = os.path.abspath("../conf/config.toml")
+config = struct(toml.load(CONFIG))
 
 def main():
-    if not os.path.exists(config.LOG):
-        os.makedirs(config.LOG)
 
-    if not os.path.exists(config.BUILD):
-        os.makedirs(config.BUILD)
+    #CONFIG = os.path.abspath("../conf/config.toml")
+    #config = struct(toml.load(CONFIG))
+    
+    LOG = os.path.abspath("../logs")
+    if not os.path.exists(LOG):
+        os.makedirs(LOG)
 
-    check = checkEnv()
+    BUILD = os.path.abspath("../build")
+    if not os.path.exists(BUILD):
+        os.makedirs(BUILD)
 
-    if check:
+    logging.basicConfig(
+        level = logging.INFO,
+        format = config.logger.format,
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
+        ]
+    )
+    logger = logging.getLogger(config.logger.name)
+
+    if checkEnv():
         return
 
     tasks = createTasks()
 
     for task in tasks:
-        logger.fancyline()
+        logger.info("-" * 80)
         logger.info(f"""main:
         task:\t{tasks.index(task) + 1} / {len(tasks)}
         cpu count:\t{os.cpu_count()}
@@ -63,37 +79,29 @@ def main():
 
 def createTasks():
     tasks = []
-    structures = [ getattr(config, s)() for s in config.structures ]
 
-    for structure in structures:
-        for direction in structure.directions:
-            for theta in structure.theta:
-                name = type(structure).__name__
-                export = os.path.join(
-                    config.BUILD, 
-                    name,
-                    "direction-{}{}{}".format(*direction),
-                    "theta-{}".format(theta)
-                )
+    for structure in config.base.__dict__.keys():
+        if getattr(config.base, structure):
+            for direction in getattr(config, structure).geometry.directions:
+                for theta in getattr(config, structure).theta:
+                    task = struct(
+                        structure = structure, 
+                        theta = theta, 
+                        fillet = getattr(config, structure).geometry.fillet, 
+                        direction = direction, 
+                        export = os.path.abspath(f"../build/{ structure }/direction-{ direction[0] }{ direction [1] }{ direction [2] }/theta-{ theta }"),
+                        mesh = False,
+                        flow = False
+                    )
 
-                task = struct(
-                    structure = name, 
-                    theta = theta, 
-                    fillet = structure.fillet, 
-                    direction = direction, 
-                    export = export,
-                    mesh = False,
-                    flow = False
-                )
-
-                tasks.append(task)
+                    tasks.append(task)
 
     return tasks
 
 from salomepl.utils import runExecute
 
 def createMesh(task):
-    scriptpath = os.path.join(config.ROOT, "salome/genmesh.py")
+    scriptpath = os.path.abspath("../salomepl/genmesh.py")
     port = 2810
     stime = time.monotonic()
 
@@ -103,7 +111,7 @@ def createMesh(task):
         int(task.fillet), 
         "".join([str(coord) for coord in task.direction]), 
         os.path.join(task.export, "mesh.unv"),
-        config.ROOT
+        os.path.abspath("../")
     )
     returncode = runExecute(port, scriptpath, *args)
     
@@ -121,7 +129,7 @@ def calculate(task):
 
     for d in foamCase:
         shutil.copytree(
-            os.path.join(config.ROOT, "openfoam/template", d), 
+            os.path.abspath("../openfoam/template", d), 
             os.path.join(task.export, d)
         )
     

@@ -11,8 +11,14 @@ import salome
 # get project path from args
 sys.path.append(sys.argv[6])
 
-import config
-from config import logger
+import toml
+import logging
+from anisotropy.utils import struct
+
+CONFIG = os.path.abspath("../conf/config.toml")
+config = struct(toml.load(CONFIG))
+
+logger = logging.getLogger(config.logger.name)
 
 from salomepl.simple import simpleCubic, simpleHexagonalPrism
 from salomepl.faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism

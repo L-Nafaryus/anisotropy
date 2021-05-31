@@ -5,9 +5,17 @@ import socket
 
 
 class struct:
-    def __init__(self, **kwargs):
-        for (k, v) in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0:
+            if type(args[0]) == dict:
+                for (k, v) in args[0].items():
+                    if type(v) == dict:
+                        setattr(self, k, struct(v))
+                    else:
+                        setattr(self, k, v)
+        else:
+            for (k, v) in kwargs.items():
+                setattr(self, k, v)
 
     def __str__(self):
         members = []

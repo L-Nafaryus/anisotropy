@@ -2,7 +2,8 @@ import SMESH
 from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
-from config import logger
+import logging
+logger = logging.getLogger(config.logger.name)
 
 def getSmesh():
     return smesh
