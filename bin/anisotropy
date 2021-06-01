@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+cd ${DIR}
+
+anisotropy-help()
+{
+    echo "Usage:"
+    echo "    anisotropy <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "    clean     Clean project directory via git (.gitignore)."
+    echo "    init      Activate environment and install dependencies."
+    echo "    run       Start calculations and etc."
+    echo "    help      Show help for commands."
+    echo ""
+    echo "Options:"
+    echo "    -c, --config <path-to-file>   Use custom configuration file."
+}
+
+case $1 in
+    clean)
+        git clean -fdx
+        ;;
+
+    init)
+        python -m venv env
+        source env/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+        deactivate
+        ;;
+
+    run)
+        source ${OPENFOAM}
+        source env/bin/activate
+        python ${DIR}/anisotropy/anisotropy.py
+        deactivate
+        ;;
+
+    help)
+        anisotropy-help
+        exit 1
+        ;;
+
+    *)
+        echo "Unknown command."
+        anisotropy-help
+        exit 1
+        ;;
+esac
