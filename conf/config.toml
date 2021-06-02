@@ -1,3 +1,9 @@
+###
+#   Default config for anisotropy
+#
+#   theta = [min, max, step]
+##
+
 [logger]
 name = "anisotropy"
 format = "%(levelname)s: %(message)s"
@@ -7,8 +13,11 @@ simple = true
 bodyCentered = true
 faceCentered = true
 
-[simple]
-theta = [0.01, 0.28]
+###
+#   Simple
+##
+[simple.parameters]
+theta = [0.01, 0.28, 0.01]
 
 [simple.geometry]
 directions = [
@@ -34,13 +43,16 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = 0.005
+thickness = [0.005, 0.005]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true
 
-[bodyCentered]
-theta = [0.01, 0.18]
+###
+#   Body-centered
+##
+[bodyCentered.parameters]
+theta = [0.01, 0.18, 0.01]
 
 [bodyCentered.geometry]
 directions = [
@@ -66,13 +78,16 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = 0.005
+thickness = [0.005, 0.005]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true
 
-[faceCentered]
-theta = [0.01, 0.13]
+###
+#   Face-centered
+##
+[faceCentered.parameters]
+theta = [0.01, 0.13, 0.01]
 
 [faceCentered.geometry]
 directions = [
@@ -98,7 +113,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = 0.001
+thickness = [0.001, 0.001]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true

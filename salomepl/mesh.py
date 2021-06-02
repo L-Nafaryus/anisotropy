@@ -153,6 +153,8 @@ def meshCompute(mobj):
     else:
         logger.warning("meshCompute: not computed")
 
+    return not status
+
 
 def meshStats(mobj):
     """

@@ -13,10 +13,6 @@ import logging
 CONFIG = os.path.join(ROOT, "conf/config.toml")
 config = struct(toml.load(CONFIG))
 
-
-    #CONFIG = os.path.abspath("../conf/config.toml")
-    #config = struct(toml.load(CONFIG))
-    
 LOG = os.path.join(ROOT, "logs")
 if not os.path.exists(LOG):
     os.makedirs(LOG)
@@ -35,109 +31,128 @@ logging.basicConfig(
 )
 logger = logging.getLogger(config.logger.name)
 
+
 def main():
     if checkEnv():
         return
 
     tasks = createTasks()
 
-    for task in tasks:
+    for n, case in enumerate(tasks):
         logger.info("-" * 80)
         logger.info(f"""main:
-        task:\t{tasks.index(task) + 1} / {len(tasks)}
-        cpu count:\t{os.cpu_count()}
-        structure:\t{task.structure}
-        direction:\t{task.direction}
-        theta:\t{task.theta}
-        fillet:\t{task.fillet}
-        export:\t{task.export}""")
+        task:\t{ n + 1 } / { len(tasks) }
+        cpu count:\t{ os.cpu_count() }
+        case:\t{ case }""")
+        
+        ###
+        #   Compute mesh
+        ##
+        computeMesh(case)
+        
+        task = struct(toml.load(os.path.join(case, "task.toml")))
+        
+        if not task.status.mesh:
+            logger.critical("mesh not computed: Skipping flow computation")
+            continue
 
-        if not os.path.exists(task.export):
-            os.makedirs(task.export)
-       
-        createMesh(task)
-
-        if os.path.exists(os.path.join(task.export, "mesh.unv")):
-            task.mesh = True
-
-        returncode = calculate(task)
-
-        if not returncode:
-            task.flow = True
-
-        with open(os.path.join(LOG, "tasks.log"), "a") as io:
-            idx = tasks.index(task)
-            io.write(f"""Task {idx}:
-    structure:\t{task.structure}
-    direction:\t{task.direction}
-    theta:\t{task.theta}
-    mesh:\t{task.mesh}
-    flow:\t{task.flow}\n""")
-
-
-    #logger.info(f"Warnings: {logger.warnings}\tErrors: {logger.errors}")
-
+        ###
+        #   Compute flow
+        ##
+        computeFlow(case)
+    
 
 def createTasks():
     tasks = []
 
     for structure in config.base.__dict__.keys():
+        ###
+        #   Special values
+        ##
+        _theta = getattr(config, structure).parameters.theta
+        getattr(config, structure).parameters.theta = [ n * _theta[2] for n in range(int(_theta[0] / _theta[2]), int(_theta[1] / _theta[2]) + 1) ]
+
+        _thickness = getattr(config, structure).mesh.thickness
+        _count = len(getattr(config, structure).parameters.theta)
+        getattr(config, structure).mesh.thickness = [ _thickness[0] + n * (_thickness[1] - _thickness[0]) / (_count - 1) for n in range(0, _count) ]
+
+    ###
+    #   structure type / flow direction / coefficient theta
+    ##
+    for structure in config.base.__dict__.keys():
         if getattr(config.base, structure):
             for direction in getattr(config, structure).geometry.directions:
-                for theta in getattr(config, structure).theta:
-                    task = struct(
-                        structure = structure, 
-                        theta = theta, 
-                        fillet = getattr(config, structure).geometry.fillet, 
-                        direction = direction, 
-                        export = os.path.join(ROOT, f"{ BUILD }/{ structure }/direction-{ direction[0] }{ direction [1] }{ direction [2] }/theta-{ theta }"),
-                        mesh = False,
-                        flow = False
+                for n, theta in enumerate(getattr(config, structure).parameters.theta):
+                    case = os.path.join(
+                        f"{ BUILD }",
+                        f"{ structure }",
+                        f"direction-{ direction[0] }{ direction [1] }{ direction [2] }", 
+                        f"theta-{ theta }"
                     )
 
-                    tasks.append(task)
+                    if not os.path.exists(case):
+                        os.makedirs(case)
+
+                    task = {
+                        "logger": config.logger.__dict__,
+                        "structure": structure,
+                        "status": {
+                            "mesh": False,
+                            "flow": False
+                        },
+                        "parameters": {
+                            "theta": theta
+                        },
+                        "geometry": {
+                            "direction": direction,
+                            "fillet": getattr(config, structure).geometry.fillet
+                        },
+                        "mesh": getattr(config, structure).mesh.__dict__ 
+                    }
+
+                    #task["mesh"]["thickness"] = task["mesh"]["thickness"][int(n)]
+       
+                    with open(os.path.join(case, "task.toml"), "w") as io:
+                        toml.dump(task, io)
+
+                    
+                    tasks.append(case)
 
     return tasks
 
+
 from salomepl.utils import runExecute, salomeVersion
 
-def createMesh(task):
+def computeMesh(case):
     scriptpath = os.path.join(ROOT, "salomepl/genmesh.py")
     port = 2810
     stime = time.monotonic()
 
-    args = (
-        task.structure, 
-        task.theta, 
-        int(task.fillet), 
-        "".join([str(coord) for coord in task.direction]), 
-        os.path.join(task.export, "mesh.unv"),
-        ROOT
-    )
-    returncode = runExecute(port, scriptpath, *args)
+    returncode = runExecute(port, scriptpath, ROOT, case)
     
     etime = time.monotonic()
-    logger.info("createMesh: elapsed time: {}".format(timedelta(seconds = etime - stime)))
+    logger.info("computeMesh: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
 
 import openfoam
 
-def calculate(task):
+def computeFlow(case):
     foamCase = [ "0", "constant", "system" ]
 
-    os.chdir(task.export)
+    os.chdir(case)
+    task = struct(toml.load(os.path.join(case, "task.toml")))
     openfoam.foamClean()
 
     for d in foamCase:
         shutil.copytree(
             os.path.join(ROOT, "openfoam/template", d), 
-            os.path.join(task.export, d)
+            os.path.join(case, d)
         )
     
     stime = time.monotonic()
 
     if not os.path.exists("mesh.unv"):
-        logger.critical(f"calculate: missed 'mesh.unv'")
+        logger.critical(f"computeFlow: missed 'mesh.unv'")
         return
 
     _, returncode = openfoam.ideasUnvToFoam("mesh.unv")
@@ -171,10 +186,23 @@ def calculate(task):
     if out:
         logger.info(out)
 
+    if returncode == 0:
+        task.status.flow = True
+
+        with open(os.path.join(case, "task.toml"), "w") as io:
+            toml.dump({
+                "structure": task.structure,
+                "logger": task.logger.__dict__,
+                "status": task.status.__dict__,
+                "parameters": task.parameters.__dict__,
+                "geometry": task.geometry.__dict__,
+                "mesh": task.mesh.__dict__
+            }, io)
+
     os.chdir(ROOT)
     
     etime = time.monotonic()
-    logger.info("calculate: elapsed time: {}".format(timedelta(seconds = etime - stime)))
+    logger.info("computeFlow: elapsed time: {}".format(timedelta(seconds = etime - stime)))
 
     return returncode
 

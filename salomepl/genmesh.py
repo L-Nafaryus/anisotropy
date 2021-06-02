@@ -2,6 +2,8 @@
 #   This file executes inside salome environment
 #
 #   salome starts at user home directory
+#
+#   sys.argv = [ .., ROOT, case ]
 ##
 import os, sys
 import math
@@ -9,7 +11,9 @@ import math
 import salome
 
 # get project path from args
-ROOT = sys.argv[6]
+ROOT = sys.argv[1]
+CASE = sys.argv[2]
+
 sys.path.append(ROOT)
 # site-packages from virtual env
 sys.path.append(os.path.join(ROOT, "env/lib/python3.9/site-packages"))
@@ -18,7 +22,7 @@ import toml
 import logging
 from anisotropy.utils import struct
 
-CONFIG = os.path.join(ROOT, "conf/config.toml")
+CONFIG = os.path.join(CASE, "task.toml")
 config = struct(toml.load(CONFIG))
 
 LOG = os.path.join(ROOT, "logs")
@@ -41,25 +45,13 @@ from salomepl.geometry import getGeom
 from salomepl.mesh import smeshBuilder, meshCreate, meshCompute, meshStats, meshExport
 
 
-def main():
+def genmesh():
 
-    stype = str(sys.argv[1])
-    theta = float(sys.argv[2])
-    fillet = int(sys.argv[3])
-    flowdirection = [int(coord) for coord in sys.argv[4]]
-    export = str(sys.argv[5])
-
-    genmesh(stype, theta, fillet, flowdirection, export)
-
-
-def genmesh(stype, theta, fillet, direction, export):
-
-    logger.info("""genMesh: 
-    structure type:\t{}
-    coefficient:\t{}
-    fillet:\t{}
-    flow direction:\t{}
-    export path:\t{}""".format(stype, theta, fillet, direction, export))
+    logger.info(f"""genmesh: 
+    structure type:\t{ config.structure }
+    coefficient:\t{ config.parameters.theta }
+    fillet:\t{ config.geometry.fillet }
+    flow direction:\t{ config.geometry.direction }""")
 
     salome.salome_init()
     
@@ -67,14 +59,14 @@ def genmesh(stype, theta, fillet, direction, export):
     #   Shape
     ##
     geompy = getGeom()
-    structure = globals().get(stype)
-    shape, groups = structure(theta, fillet, direction)
+    structure = globals().get(config.structure)
+    shape, groups = structure(config.parameters.theta, config.geometry.fillet, config.geometry.direction)
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
-    logger.info("""shape:
-    edges length:\t{}
-    surface area:\t{}
-    volume:\t{}""".format(length, surfaceArea, volume))
+    logger.info(f"""shape:
+    edges length:\t{ length }
+    surface area:\t{ surfaceArea }
+    volume:\t{ volume }""")
     
     ###
     #   Mesh
@@ -84,20 +76,33 @@ def genmesh(stype, theta, fillet, direction, export):
         if group.GetName() in ["inlet", "outlet"]:
             facesToIgnore.append(group)
 
-    meshParameters = getattr(config, stype).mesh
+    meshParameters = config.mesh
     meshParameters.facesToIgnore = facesToIgnore
     meshParameters.extrusionMethod = smeshBuilder.SURF_OFFSET_SMOOTH
     
-    mesh = meshCreate(shape, groups, meshParameters) #fineness, parameters, viscousLayers)
-    meshCompute(mesh)
+    mesh = meshCreate(shape, groups, meshParameters)
+    returncode = meshCompute(mesh)
+
+    if returncode == 0:
+        config.status.mesh = True
+
+        with open(CONFIG, "w") as io:
+            toml.dump({
+                "structure": config.structure,
+                "logger": config.logger.__dict__,
+                "status": config.status.__dict__,
+                "parameters": config.parameters.__dict__,
+                "geometry": config.geometry.__dict__,
+                "mesh": config.mesh.__dict__
+            }, io)
 
     meshStats(mesh)
-    meshExport(mesh, export)
+    meshExport(mesh, os.path.join(CASE, "mesh.unv"))
     
     salome.salome_close()
 
 
 if __name__ == "__main__":
-    main()
+    genmesh()
 
     
