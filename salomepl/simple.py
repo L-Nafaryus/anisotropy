@@ -62,9 +62,7 @@ def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
         vecflow = geompy.GetNormal(inletface)
         cubic = geompy.MakePrismVecH(inletface, vecflow, height)
 
-    else:
-        raise Exception("The direction is not implemented")
-    
+        
     inletface = geompy.MakeScaleTransform(inletface, oo, scale)
     cubic = geompy.MakeScaleTransform(cubic, oo, scale)
 
@@ -261,3 +259,15 @@ def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
     groups.append(wall)
 
     return shape, groups
+
+
+def simple(theta, fillet, direction):
+    if direction in [[1, 0, 0], [0, 0, 1]]:
+        return simpleCubic(theta, fillet, direction)
+
+    elif direction == [1, 1, 1]:
+        return simpleHexagonalPrism(theta, fillet, direction)
+
+    else:
+        raise Exception("This direction is not implemented")
+

@@ -66,8 +66,6 @@ def bodyCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
         vecflow = geompy.GetNormal(inletface)
         cubic = geompy.MakePrismVecH(inletface, vecflow, zh)
 
-    else:
-        raise Exception("The direction is not implemented")
     
     inletface = geompy.MakeScaleTransform(inletface, oo, scale)
     cubic = geompy.MakeScaleTransform(cubic, oo, scale)
@@ -284,3 +282,15 @@ def bodyCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     groups.append(wall)
 
     return shape, groups
+
+
+def bodyCentered(theta, fillet, direction):
+    if direction in [[1, 0, 0], [0, 0, 1]]:
+        return bodyCenteredCubic(theta, fillet, direction)
+
+    elif direction == [1, 1, 1]:
+        return bodyCenteredHexagonalPrism(theta, fillet, direction)
+
+    else:
+        raise Exception("This direction is not implemented")
+

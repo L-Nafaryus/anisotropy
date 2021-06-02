@@ -66,8 +66,6 @@ def faceCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
         vecflow = geompy.GetNormal(inletface)
         cubic = geompy.MakePrismVecH(inletface, vecflow, 2 * zh)
 
-    else:
-        raise Exception("The direction is not implemented")
     
     inletface = geompy.MakeScaleTransform(inletface, oo, scale)
     cubic = geompy.MakeScaleTransform(cubic, oo, scale)
@@ -281,3 +279,15 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     groups.append(wall)
 
     return shape, groups
+
+
+def faceCentered(theta, fillet, direction):
+    if direction in [[1, 0, 0], [0, 0, 1]]:
+        return faceCenteredCubic(theta, fillet, direction)
+
+    elif direction == [1, 1, 1]:
+        return faceCenteredHexagonalPrism(theta, fillet, direction)
+
+    else:
+        raise Exception("This direction is not implemented")
+

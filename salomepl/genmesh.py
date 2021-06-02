@@ -33,9 +33,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(config.logger.name)
 
-from salomepl.simple import simpleCubic, simpleHexagonalPrism
-from salomepl.faceCentered import faceCenteredCubic, faceCenteredHexagonalPrism
-from salomepl.bodyCentered import bodyCenteredCubic, bodyCenteredHexagonalPrism
+from salomepl.simple import simple 
+from salomepl.faceCentered import faceCentered 
+from salomepl.bodyCentered import bodyCentered 
 
 from salomepl.geometry import getGeom 
 from salomepl.mesh import smeshBuilder, meshCreate, meshCompute, meshStats, meshExport
@@ -61,54 +61,14 @@ def genmesh(stype, theta, fillet, direction, export):
     flow direction:\t{}
     export path:\t{}""".format(stype, theta, fillet, direction, export))
 
-    params = (theta, fillet, direction)
-
     salome.salome_init()
     
-    ###
-    #   Structure and mesh configurations
-    ##
-    if stype == "simple":
-        if direction in [[1, 0, 0], [0, 0, 1]]:
-            structure = simpleCubic
-
-        elif direction == [1, 1, 1]:
-            structure = simpleHexagonalPrism
-
-        #fineness = config.simple.fineness
-        #parameters = config.simple.parameters
-        #viscousLayers = config.simple.viscousLayers
-        meshParameters = config.simple.mesh
-
-    elif stype == "faceCentered":
-        if direction in [[1, 0, 0], [0, 0, 1]]:
-            structure = faceCenteredCubic
-
-        elif direction == [1, 1, 1]:
-            structure = faceCenteredHexagonalPrism
-
-        #fineness = config.faceCentered.fineness
-        #parameters = config.faceCentered.parameters
-        #viscousLayers = config.faceCentered.viscousLayers
-        meshParameters = config.faceCentered.mesh
-
-    elif stype == "bodyCentered":
-        if direction in [[1, 0, 0], [0, 0, 1]]:
-            structure = bodyCenteredCubic
-
-        elif direction == [1, 1, 1]:
-            structure = bodyCenteredHexagonalPrism
-    
-        #fineness = config.bodyCentered.fineness
-        #parameters = config.bodyCentered.parameters
-        #viscousLayers = config.bodyCentered.viscousLayers
-        meshParameters = config.bodyCentered.mesh
-
     ###
     #   Shape
     ##
     geompy = getGeom()
-    shape, groups = structure(*params)
+    structure = globals().get(stype)
+    shape, groups = structure(theta, fillet, direction)
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
     logger.info("""shape:
@@ -124,6 +84,7 @@ def genmesh(stype, theta, fillet, direction, export):
         if group.GetName() in ["inlet", "outlet"]:
             facesToIgnore.append(group)
 
+    meshParameters = getattr(config, stype).mesh
     meshParameters.facesToIgnore = facesToIgnore
     meshParameters.extrusionMethod = smeshBuilder.SURF_OFFSET_SMOOTH
     
