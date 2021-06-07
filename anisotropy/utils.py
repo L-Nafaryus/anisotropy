@@ -11,11 +11,19 @@ class struct:
                 for (k, v) in args[0].items():
                     if type(v) == dict:
                         setattr(self, k, struct(v))
+                    
                     else:
                         setattr(self, k, v)
         else:
-            for (k, v) in kwargs.items():
-                setattr(self, k, v)
+            self.__dict__.update(kwargs)
+
+    def __iter__(self):
+        for k in self.__dict__:
+            if type(getattr(self, k)) == struct:
+                yield k, dict(getattr(self, k))
+
+            else:
+                yield k, getattr(self, k)
 
     def __str__(self):
         members = []

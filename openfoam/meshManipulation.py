@@ -11,13 +11,13 @@ def createPatch(dictfile: str = None, case: str = None):
     application("createPatch", *args, case = case, stderr = True)
 
 
-def transformPoints(scale: tuple, case: str = None):
-    scale_ = "{}".format(scale).replace(",", "")
+def transformPoints(scale, case: str = None):
+    _scale = f"({ scale[0] } { scale[1] } { scale[2] })"
 
-    application("transformPoints", "-scale", scale_, case = case, stderr = True)
+    application("transformPoints", "-scale", _scale, case = case, stderr = True)
 
 
-def checkMesh(case: str = None):
+def checkMesh(case: str = None) -> str:
     application("checkMesh", "-allGeometry", "-allTopology", case = case, stderr = True)
     out = ""
 

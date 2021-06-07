@@ -28,7 +28,8 @@ def runExecute(port: int, scriptpath: str, *args) -> int:
         scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))]
 
     logger.info("salome: {}".format(cmd[1 : 6]))
-    logpath = os.path.join("/".join(args[0].split("/")[:-1]), "salome.log")
+    case = args[1]
+    logpath = os.path.join(case, "salome.log")
 
     #p = subprocess.Popen(["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t", scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))],
     #    stderr = subprocess.STDOUT)

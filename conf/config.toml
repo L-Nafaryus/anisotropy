@@ -43,7 +43,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = [0.005, 0.005]
+thickness = [0.01, 0.005]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true
@@ -78,7 +78,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = [0.005, 0.005]
+thickness = [0.005, 0.001]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true
@@ -113,8 +113,50 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-thickness = [0.001, 0.001]
+thickness = [0.001, 0.0005]
 numberOfLayers = 2
 stretchFactor = 1.2
 isFacesToIgnore = true
+
+###
+#   Flow
+##
+[flow]
+scale = [1e-5, 1e-5, 1e-5]
+
+[flow.constant]
+nu = 1e-6
+
+[flow.approx.pressure.boundaryField]
+inlet.type = "fixedValue"
+inlet.value = 1e-3
+outlet.type = "fixedValue"
+outlet.value = 0
+
+[flow.approx.velocity.boundaryField]
+inlet.type = "fixedValue"
+inlet.value = [
+    [ 6e-5,  6e-5,   0.0 ],
+    [ 0.0,     0.0,      6e-5 ],
+    [ 6e-5,  6e-5,   6e-5 ]
+]
+outlet.type = "zeroGradient"
+outlet.value = "None"
+
+[flow.main.pressure.boundaryField]
+inlet.type = "fixedValue"
+inlet.value = 1e-3
+outlet.type = "fixedValue"
+outlet.value = 0
+
+[flow.main.velocity.boundaryField]
+inlet.type = "pressureInletVelocity"
+inlet.value = [
+    [ 0, 0, 0 ],
+    [ 0, 0, 0 ],
+    [ 0, 0, 0 ]
+]
+outlet.type = "zeroGradient"
+outlet.value = "None"
+
 

@@ -4,7 +4,7 @@ from .meshManipulation import createPatch, transformPoints, checkMesh, renumberM
 from .miscellaneous import foamDictionary
 from .parallelProcessing import decomposePar
 from .solvers import potentialFoam, simpleFoam
-from .utils import foamVersion, foamClean
+from .utils import foamVersion, foamClean, uniform
 
 __all__ = [
     # meshConversion
@@ -28,5 +28,6 @@ __all__ = [
 
     # utils
     "foamVersion",
-    "foamClean"
+    "foamClean",
+    "uniform"
 ]

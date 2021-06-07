@@ -87,14 +87,7 @@ def genmesh():
         config.status.mesh = True
 
         with open(CONFIG, "w") as io:
-            toml.dump({
-                "structure": config.structure,
-                "logger": config.logger.__dict__,
-                "status": config.status.__dict__,
-                "parameters": config.parameters.__dict__,
-                "geometry": config.geometry.__dict__,
-                "mesh": config.mesh.__dict__
-            }, io)
+            toml.dump(dict(config), io)
 
     meshStats(mesh)
     meshExport(mesh, os.path.join(CASE, "mesh.unv"))

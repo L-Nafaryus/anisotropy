@@ -15,6 +15,8 @@ anisotropy-help()
     echo ""
     echo "Options:"
     echo "    -c, --config <path-to-file>   Use custom configuration file."
+    echo "    -s, --safe                    Safe mode (skip successfuly computed mesh/flow)"
+    echo "    -a, --all                     All mode (overwrites everything)"
 }
 
 case $1 in
@@ -33,7 +35,7 @@ case $1 in
     run)
         source ${OPENFOAM}
         source env/bin/activate
-        python ${DIR}/anisotropy/anisotropy.py
+        python ${DIR}/anisotropy/anisotropy.py ${@:2}
         deactivate
         ;;
 
