@@ -80,8 +80,8 @@ def genmesh():
     meshParameters.facesToIgnore = facesToIgnore
     meshParameters.extrusionMethod = smeshBuilder.SURF_OFFSET_SMOOTH
     
-    mesh = meshCreate(shape, groups, meshParameters)
-    returncode = meshCompute(mesh)
+    mesh = meshCreate(shape, meshParameters)
+    returncode = meshCompute(mesh, groups)
 
     if returncode == 0:
         config.status.mesh = True

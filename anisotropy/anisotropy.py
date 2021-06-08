@@ -1,6 +1,6 @@
 import os, sys
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 import shutil
 
 ROOT = "/".join(__file__.split("/")[:-2])
@@ -62,11 +62,14 @@ def main():
     queue = createQueue()
 
     for n, case in enumerate(queue):
+        date = datetime.now()
         logger.info("-" * 80)
         logger.info(f"""main:
         task:\t{ n + 1 } / { len(queue) }
         cpu count:\t{ os.cpu_count() }
-        case:\t{ case }""")
+        case:\t{ case }
+        date:\t{ date.date() }
+        time:\t{ date.time() }""")
         
         ###
         #   Compute mesh
@@ -84,7 +87,7 @@ def main():
         task = struct(toml.load(taskPath))
         
         if not task.status.mesh:
-            logger.critical("mesh not computed: Skipping flow computation")
+            logger.critical("mesh not computed: skip flow computation")
             continue
 
         ###
@@ -128,7 +131,7 @@ def createQueue():
                     case = os.path.join(
                         f"{ BUILD }",
                         f"{ structure }",
-                        f"direction-{ direction[0] }{ direction [1] }{ direction [2] }", 
+                        "direction-{}{}{}".format(*direction), 
                         f"theta-{ theta }"
                     )
 
@@ -228,7 +231,7 @@ def computeFlow(case):
     _, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
     if returncode:
-        os.chdir(config.ROOT)
+        os.chdir(ROOT)
 
         return returncode
     
@@ -324,6 +327,14 @@ def computeFlow(case):
         task.status.flow = True
         task.statistics.flowTime = elapsed
 
+        postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
+
+        with open(postProcessing, "r") as io:
+            lastLine = io.readlines()[-1]
+            flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
+            
+            task.statistics.flowRate = flowRate
+
         with open(os.path.join(case, "task.toml"), "w") as io:
             toml.dump(dict(task), io)
 
@@ -351,24 +362,9 @@ def checkEnv():
         return missed
 
 
-def postprocessing(tasks):
+def postprocessing(queue):
 
-    surfaceFieldValue = {}
-    porosity = {}
-
-    for task in tasks:
-        direction = "direction-{}{}{}".format(task.direction[0], task.direction[1], task.direction[2]) 
-        path = os.path.join(BUILD, task.structure, "postProcessing", direction)
-        surfaceFieldValuePath = os.path.join(task.export, "postProcessing", "")
-
-        if not os.path.exists(path):
-            os.makedirs(path)
-            
-        surfaceFieldValues = [ line.strip().split() for line in open(surfaceFieldValuePath, "r").readlines() ]
-
-        with open(os.path.join(path, "porosity.dat")) as io:
-            io.write("{}\t{}".format(task.coeff, surfaceFieldValues[-1][1]))
-
+    pass
 
 ###
 #   Main entry

@@ -9,7 +9,7 @@ def getSmesh():
     return smesh
 
 
-def meshCreate(shape, groups, parameters): #fineness, parameters, viscousLayers = None):
+def meshCreate(shape, parameters): #fineness, parameters, viscousLayers = None):
     """
     Creates a mesh from a geometry.
 
@@ -86,15 +86,8 @@ def meshCreate(shape, groups, parameters): #fineness, parameters, viscousLayers 
 
     
     ###
-    #   Groups
-    ##
-    for group in groups:
-        mesh.GroupOnGeom(group, "{}_".format(group.GetName()), SMESH.FACE)
-
-    ###
     #   Viscous layers
     ##
-    #if not viscousLayers is None:
     vlayer = netgen.ViscousLayers(
         parameters.thickness,
         parameters.numberOfLayers,
@@ -113,17 +106,10 @@ viscous layers:
         parameters.numberOfLayers, 
         parameters.stretchFactor))
 
-        
-
-    #else:
-    #    logger.info("""meshCreate: 
-    #viscous layers: disabled""")
-
-
     return mesh
 
 
-def meshCompute(mobj):
+def meshCompute(mobj, groups):
     """Compute the mesh."""
     status = mobj.Compute()
     
@@ -149,7 +135,13 @@ def meshCompute(mobj):
             
             mobj.RemoveGroup(pyramidGroup)
             mobj.RenumberElements()
-        
+
+        ###
+        #   Groups
+        ##
+        for group in groups:
+            mobj.GroupOnGeom(group, f"{ group.GetName() }_", SMESH.FACE)
+
     else:
         logger.warning("meshCompute: not computed")
 

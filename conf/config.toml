@@ -1,7 +1,9 @@
 ###
 #   Default config for anisotropy
 #
-#   theta = [min, max, step]
+#   Special values:
+#       theta = [min, max, step]
+#       thickness = [min, max]
 ##
 
 [logger]
@@ -10,7 +12,7 @@ format = "%(levelname)s: %(message)s"
 
 [base]
 simple = true
-bodyCentered = true
+bodyCentered = false
 faceCentered = true
 
 ###
@@ -63,7 +65,7 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
-fineness = 3
+fineness = 2
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5
@@ -98,7 +100,7 @@ directions = [
 fillet = true
 
 [faceCentered.mesh]
-fineness = 3
+fineness = 2
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5
@@ -136,9 +138,9 @@ outlet.value = 0
 [flow.approx.velocity.boundaryField]
 inlet.type = "fixedValue"
 inlet.value = [
-    [ 6e-5,  6e-5,   0.0 ],
-    [ 0.0,     0.0,      6e-5 ],
-    [ 6e-5,  6e-5,   6e-5 ]
+    [ 6e-5, 6e-5,   0.0 ],
+    [ 0.0,  0.0,    6e-5 ],
+    [ 6e-5, 6e-5,   6e-5 ]
 ]
 outlet.type = "zeroGradient"
 outlet.value = "None"
