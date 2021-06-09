@@ -12,7 +12,7 @@ format = "%(levelname)s: %(message)s"
 
 [base]
 simple = true
-bodyCentered = false
+bodyCentered = true 
 faceCentered = true
 
 ###
@@ -30,7 +30,7 @@ directions = [
 fillet = true
 
 [simple.mesh]
-fineness = 3
+fineness = 1
 minSize = 0.01
 maxSize = 0.1
 growthRate = 0.5
@@ -65,7 +65,7 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
-fineness = 2
+fineness = 1
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5
@@ -100,7 +100,7 @@ directions = [
 fillet = true
 
 [faceCentered.mesh]
-fineness = 2
+fineness = 1
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5

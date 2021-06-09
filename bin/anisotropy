@@ -11,6 +11,7 @@ anisotropy-help()
     echo "    clean     Clean project directory via git (.gitignore)."
     echo "    init      Activate environment and install dependencies."
     echo "    run       Start calculations and etc."
+    echo "    kill      Kill current process by pid"
     echo "    help      Show help for commands."
     echo ""
     echo "Options:"
@@ -35,8 +36,17 @@ case $1 in
     run)
         source ${OPENFOAM}
         source env/bin/activate
+
+        mkdir ${DIR}/build && echo $$ >${DIR}/build/anisotropy.pid
+
         python ${DIR}/anisotropy/anisotropy.py ${@:2}
         deactivate
+        ;;
+
+    kill)
+        pid="${DIR}/build/anisotropy.pid"
+        kill -9 $(cat $pid)
+        rm $pid
         ;;
 
     help)
