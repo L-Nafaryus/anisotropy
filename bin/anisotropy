@@ -37,16 +37,18 @@ case $1 in
         source ${OPENFOAM}
         source env/bin/activate
 
-        mkdir ${DIR}/build && echo $$ >${DIR}/build/anisotropy.pid
+        mkdir "${DIR}/build"
+        echo $$ >"${DIR}/build/anisotropy.pid"
 
-        python ${DIR}/anisotropy/anisotropy.py ${@:2}
+        python "${DIR}/anisotropy/anisotropy.py" ${@:2}
         deactivate
+
+        rm "${DIR}/build/anisotropy.pid"
         ;;
 
     kill)
-        pid="${DIR}/build/anisotropy.pid"
-        kill -9 $(cat $pid)
-        rm $pid
+        pkill -TERM -P $(cat "${DIR}/build/anisotropy.pid")
+        rm "${DIR}/build/anisotropy.pid"
         ;;
 
     help)

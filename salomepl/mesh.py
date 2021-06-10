@@ -88,23 +88,28 @@ def meshCreate(shape, parameters): #fineness, parameters, viscousLayers = None):
     ###
     #   Viscous layers
     ##
-    vlayer = netgen.ViscousLayers(
-        parameters.thickness,
-        parameters.numberOfLayers,
-        parameters.stretchFactor,
-        parameters.facesToIgnore,
-        parameters.isFacesToIgnore, 
-        parameters.extrusionMethod
-    )
+    if parameters.viscousLayers:
+        vlayer = netgen.ViscousLayers(
+            parameters.thickness,
+            parameters.numberOfLayers,
+            parameters.stretchFactor,
+            parameters.facesToIgnore,
+            parameters.isFacesToIgnore, 
+            parameters.extrusionMethod
+        )
 
-    logger.info("""meshCreate:
-viscous layers: 
-    thickness:\t{}
-    number:\t{}
-    stretch factor:\t{}""".format(
-        parameters.thickness, 
-        parameters.numberOfLayers, 
-        parameters.stretchFactor))
+        logger.info("""meshCreate:
+    viscous layers: 
+        thickness:\t{}
+        number:\t{}
+        stretch factor:\t{}""".format(
+            parameters.thickness, 
+            parameters.numberOfLayers, 
+            parameters.stretchFactor))
+
+    else:
+        logger.info("""meshCreate:
+    viscous layers: false""")
 
     return mesh
 

@@ -11,7 +11,7 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = true
+simple = true 
 bodyCentered = true 
 faceCentered = true
 
@@ -30,7 +30,7 @@ directions = [
 fillet = true
 
 [simple.mesh]
-fineness = 1
+fineness = 2
 minSize = 0.01
 maxSize = 0.1
 growthRate = 0.5
@@ -45,6 +45,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
+viscousLayers = false
 thickness = [0.01, 0.005]
 numberOfLayers = 2
 stretchFactor = 1.2
@@ -65,7 +66,7 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
-fineness = 1
+fineness = 2
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5
@@ -80,6 +81,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
+viscousLayers = false
 thickness = [0.005, 0.001]
 numberOfLayers = 2
 stretchFactor = 1.2
@@ -100,7 +102,7 @@ directions = [
 fillet = true
 
 [faceCentered.mesh]
-fineness = 1
+fineness = 2
 minSize = 0.005
 maxSize = 0.05
 growthRate = 0.5
@@ -115,6 +117,7 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
+viscousLayers = false
 thickness = [0.001, 0.0005]
 numberOfLayers = 2
 stretchFactor = 1.2
