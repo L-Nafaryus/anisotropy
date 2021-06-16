@@ -11,8 +11,8 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = false 
-bodyCentered = false 
+simple = true 
+bodyCentered = true 
 faceCentered = true
 
 ###
@@ -66,6 +66,10 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
+# fineness = 3
+# minSize = 0.05
+# maxSize = 0.5
+# localSize = 0.01
 fineness = 2
 minSize = 0.005
 maxSize = 0.05
@@ -81,6 +85,9 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
+# viscousLayers = true
+# thickness = [0.005, 0.0005]
+# numberOfLayers = 1
 viscousLayers = false
 thickness = [0.005, 0.001]
 numberOfLayers = 2
