@@ -105,8 +105,10 @@ def faceCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     grains = geompy.MakeFuseList(grains, False, False)
 
     grains = geompy.MakeScaleTransform(grains, oo, scale)
+    grainsOrigin = None
 
     if fillet:
+        grainsOrigin = grains
         grains = geompy.MakeFilletAll(grains, filletradius * scale)
 
     ###
@@ -114,10 +116,28 @@ def faceCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     ##
     shape = geompy.MakeCutList(cubic, [grains])
     shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "faceCenteredCubic")
+    stripsShape = None
+
+    if fillet:
+        shapeOrigin = geompy.MakeCutList(cubic, [grainsOrigin])
+        shapeOrigin = geompy.MakeScaleTransform(shapeOrigin, oo, 1 / scale)
+
+        shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
+        shapeOriginShell = geompy.ExtractShapes(shapeOrigin, geompy.ShapeType["SHELL"], True)
+
+        stripsShape = geompy.MakeCutList(shapeShell[0], shapeOriginShell)
+        
 
     sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
     geompy.UnionIDs(sall,
         geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
+
+    strips = None
+    if fillet:
+        strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
+        geompy.UnionList(strips, geompy.SubShapeAll(
+            geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
+
 
     inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
     inletshape = geompy.MakeCutList(inletface, [grains])
@@ -144,6 +164,10 @@ def faceCenteredCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
     groups.append(inlet)
     groups.append(outlet)
     groups.extend(symetry)
+
+    if fillet:
+        groups.append(strips)
+
     wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
     groups.append(wall)
 
@@ -236,8 +260,10 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     grains = geompy.MakeFuseList(grains, False, False)
 
     grains = geompy.MakeScaleTransform(grains, oo, scale)
+    grainsOrigin = None
 
     if fillet:
+        grainsOrigin = grains
         grains = geompy.MakeFilletAll(grains, filletradius * scale)
 
     ###
@@ -245,10 +271,28 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     ##
     shape = geompy.MakeCutList(hexagonPrism, [grains])
     shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "faceCenteredCubic")
+    stripsShape = None
+
+    if fillet:
+        shapeOrigin = geompy.MakeCutList(hexagonPrism, [grainsOrigin])
+        shapeOrigin = geompy.MakeScaleTransform(shapeOrigin, oo, 1 / scale)
+
+        shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
+        shapeOriginShell = geompy.ExtractShapes(shapeOrigin, geompy.ShapeType["SHELL"], True)
+
+        stripsShape = geompy.MakeCutList(shapeShell[0], shapeOriginShell)
+        
 
     sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
     geompy.UnionIDs(sall,
         geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
+
+    strips = None
+    if fillet:
+        strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
+        geompy.UnionList(strips, geompy.SubShapeAll(
+            geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
+
 
     inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
     inletshape = geompy.MakeCutList(inletface, [grains])
@@ -275,6 +319,10 @@ def faceCenteredHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 
     groups.append(inlet)
     groups.append(outlet)
     groups.extend(symetry)
+
+    if fillet:
+        groups.append(strips)
+
     wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
     groups.append(wall)
 
