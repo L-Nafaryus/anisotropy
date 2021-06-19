@@ -27,11 +27,11 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = true
+fillet = false
 
 [simple.mesh]
-fineness = 2
-minSize = 0.01
+fineness = 3
+minSize = 0.05
 maxSize = 0.1
 growthRate = 0.5
 nbSegPerEdge = 0.5
@@ -45,9 +45,11 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-viscousLayers = false
+localSizeOnShape.strips = 0.01
+
+viscousLayers = true
 thickness = [0.01, 0.005]
-numberOfLayers = 2
+numberOfLayers = 1
 stretchFactor = 1.2
 isFacesToIgnore = true
 
@@ -55,7 +57,8 @@ isFacesToIgnore = true
 #   Body-centered
 ##
 [bodyCentered.parameters]
-theta = [0.01, 0.18, 0.01]
+# TODO: 0.18 
+theta = [0.01, 0.17, 0.01]
 
 [bodyCentered.geometry]
 directions = [
@@ -63,16 +66,12 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = true
+fillet = false
 
 [bodyCentered.mesh]
-# fineness = 3
-# minSize = 0.05
-# maxSize = 0.5
-# localSize = 0.01
-fineness = 2
-minSize = 0.005
-maxSize = 0.05
+fineness = 3
+minSize = 0.05
+maxSize = 0.5
 growthRate = 0.5
 nbSegPerEdge = 0.5
 nbSegPerRadius = 0.5
@@ -85,12 +84,11 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-# viscousLayers = true
-# thickness = [0.005, 0.0005]
-# numberOfLayers = 1
-viscousLayers = false
-thickness = [0.005, 0.001]
-numberOfLayers = 2
+localSizeOnShape.strips = 0.01
+
+viscousLayers = true
+thickness = [0.005, 0.0005]
+numberOfLayers = 1
 stretchFactor = 1.2
 isFacesToIgnore = true
 
@@ -106,12 +104,12 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = true
+fillet = false
 
 [faceCentered.mesh]
-fineness = 2
-minSize = 0.005
-maxSize = 0.05
+fineness = 3
+minSize = 0.01
+maxSize = 0.5
 growthRate = 0.5
 nbSegPerEdge = 0.5
 nbSegPerRadius = 0.5
@@ -124,9 +122,11 @@ useSurfaceCurvature = true
 fuseEdges = true
 checkChartBoundary = false
 
-viscousLayers = false
+localSizeOnShape.strips = 0.01
+
+viscousLayers = true
 thickness = [0.001, 0.0005]
-numberOfLayers = 2
+numberOfLayers = 1
 stretchFactor = 1.2
 isFacesToIgnore = true
 

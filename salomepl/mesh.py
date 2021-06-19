@@ -9,7 +9,7 @@ def getSmesh():
     return smesh
 
 
-def meshCreate(shape, parameters): #fineness, parameters, viscousLayers = None):
+def meshCreate(shape, parameters, groups): #fineness, parameters, viscousLayers = None):
     """
     Creates a mesh from a geometry.
 
@@ -85,6 +85,15 @@ def meshCreate(shape, parameters): #fineness, parameters, viscousLayers = None):
         True if param.GetOptimize() else False))
 
     
+    ###
+    #   Local sizes
+    ##
+    for group in groups:
+        localSize = parameters.localSizeOnShape.__dict__.get(group)
+        
+        if localSize:
+            param.SetLocalSizeOnShape(group, localSize)
+
     ###
     #   Viscous layers
     ##
