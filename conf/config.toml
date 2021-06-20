@@ -27,7 +27,7 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = false
+fillet = true
 
 [simple.mesh]
 fineness = 3
@@ -66,7 +66,7 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = false
+fillet = true
 
 [bodyCentered.mesh]
 fineness = 3
@@ -104,7 +104,7 @@ directions = [
     [0, 0, 1],
     [1, 1, 1]
 ]
-fillet = false
+fillet = true
 
 [faceCentered.mesh]
 fineness = 3

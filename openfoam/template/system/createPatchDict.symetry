@@ -148,6 +148,21 @@ patches
         constructFrom patches;
         patches (symetry5_);
     }
+
+    {
+        name strips;
+
+        patchInfo
+        {
+            type wall;
+            inGroups (wall);
+        }
+
+        constructFrom patches;
+        patches (strips_);
+    }
+
+
 );
 
 // ************************************************************************* //
