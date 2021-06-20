@@ -40,6 +40,11 @@ boundaryField
     {
         type            zeroGradient;
     } 
+    strips
+    {
+        type            zeroGradient;
+    } 
+
     defaultFaces
     {
         type zeroGradient;

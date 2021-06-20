@@ -12,7 +12,7 @@ format = "%(levelname)s: %(message)s"
 
 [base]
 simple = true 
-bodyCentered = true 
+bodyCentered = false 
 faceCentered = true
 
 ###

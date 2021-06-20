@@ -235,7 +235,7 @@ def computeFlow(case):
 
         return returncode
     
-    openfoam.createPatch(dictfile = "system/createPatchDict.symetry")
+    openfoam.createPatch(dictfile = "system/createPatchDict")
 
     openfoam.foamDictionary(
         "constant/polyMesh/boundary", 
