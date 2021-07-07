@@ -11,9 +11,9 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = true 
-bodyCentered = false 
-faceCentered = true
+simple = false 
+bodyCentered = true 
+faceCentered = false 
 
 ###
 #   Simple
@@ -47,7 +47,7 @@ checkChartBoundary = false
 
 localSizeOnShape.strips = 0.01
 
-viscousLayers = true
+viscousLayers = false 
 thickness = [0.01, 0.005]
 numberOfLayers = 1
 stretchFactor = 1.2
@@ -86,7 +86,7 @@ checkChartBoundary = false
 
 localSizeOnShape.strips = 0.01
 
-viscousLayers = true
+viscousLayers = false 
 thickness = [0.005, 0.0005]
 numberOfLayers = 1
 stretchFactor = 1.2
@@ -124,7 +124,7 @@ checkChartBoundary = false
 
 localSizeOnShape.strips = 0.01
 
-viscousLayers = true
+viscousLayers = false 
 thickness = [0.001, 0.0005]
 numberOfLayers = 1
 stretchFactor = 1.2
