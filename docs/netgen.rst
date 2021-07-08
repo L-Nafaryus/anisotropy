@@ -54,6 +54,12 @@ Mesh generation
 ``Local sizes``
     allows to define size of elements on and around specified geometrical objects. To define the local size it is necessary to select a geometrical objects in the object browser or in the viewer, and to click a button corresponding to the type of the geometrical objects: **On Vertex**, **On Edge** etc.
 
+``Viscous Layers``
+    additional hypothesis can be used together with NETGEN 3D. This hypothesis allows creation of layers of highly stretched prisms near mesh boundary, which is beneficial for high quality viscous computations. The prisms constructed on the quadrangular mesh faces are actually the hexahedrons.
+
+``Quadrangle Preference``
+    This additional hypothesis can be used together with Netgen 2D algorithm. It allows Netgen 2D to build quad-dominant meshes.
+
 
 **NETGEN 2D simple parameters** and **NETGEN 3D simple parameters** allow defining the size of elements for each dimension.
 
