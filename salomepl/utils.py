@@ -20,11 +20,11 @@ def startServer(port):
     return p
 
 def salomeVersion() -> str:
-    return "Salome 9.6.0"
+    return "Salome 9.7.0 MPI"
 
 def runExecute(port: int, scriptpath: str, *args) -> int:
 
-    cmd = ["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t",
+    cmd = ["salome-9.7.0-mpi", "start", "--shutdown-servers=1", "--port", str(port), "-t",
         scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))]
 
     logger.info("salome: {}".format(cmd[1 : 6]))

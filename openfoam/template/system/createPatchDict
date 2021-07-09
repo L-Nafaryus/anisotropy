@@ -41,7 +41,7 @@ patches
         }
 
         constructFrom patches;
-        patches (inlet_);
+        patches (smesh_inlet);
     }
 
     {
@@ -55,7 +55,7 @@ patches
         }
 
         constructFrom patches;   
-        patches (outlet_);
+        patches (smesh_outlet);
     }
     
     {
@@ -68,7 +68,7 @@ patches
         }
 
         constructFrom patches;
-        patches (wall_);
+        patches (smesh_wall);
     }
 
     {
@@ -81,7 +81,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry0_);
+        patches (smesh_symetry0);
     }
 
     {
@@ -94,7 +94,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry1_);
+        patches (smesh_symetry1);
     }
 
     {
@@ -107,7 +107,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry2_);
+        patches (smesh_symetry2);
     }
 
     {
@@ -120,7 +120,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry3_);
+        patches (smesh_symetry3);
     }
 
     {
@@ -133,7 +133,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry4_);
+        patches (smesh_symetry4);
     }
 
     {
@@ -146,7 +146,7 @@ patches
         }
 
         constructFrom patches;
-        patches (symetry5_);
+        patches (smesh_symetry5);
     }
 
     {
@@ -159,7 +159,7 @@ patches
         }
 
         constructFrom patches;
-        patches (strips_);
+        patches (smesh_strips);
     }
 
 

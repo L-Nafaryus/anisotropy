@@ -112,7 +112,7 @@ def createQueue():
 
     for structure in config.base.__dict__.keys():
         
-        theta = getattr(config, structure).parameters.theta
+        theta = getattr(config, structure).geometry.theta
         parameters_theta[structure] = [ n * theta[2] for n in range(int(theta[0] / theta[2]), int(theta[1] / theta[2]) + 1) ]
 
         thickness = getattr(config, structure).mesh.thickness
@@ -156,10 +156,8 @@ def createQueue():
                             "meshTime": 0,
                             "flowTime": 0
                         },
-                        "parameters": {
-                            "theta": theta
-                        },
                         "geometry": {
+                            "theta": theta,
                             "direction": direction,
                             "fillet": getattr(config, structure).geometry.fillet
                         },

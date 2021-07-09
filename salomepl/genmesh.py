@@ -22,34 +22,64 @@ import toml
 import logging
 from anisotropy.utils import struct
 
-CONFIG = os.path.join(CASE, "task.toml")
-config = struct(toml.load(CONFIG))
-
-LOG = os.path.join(ROOT, "logs")
-
-logging.basicConfig(
-    level = logging.INFO,
-    format = config.logger.format,
-    handlers = [
-        logging.StreamHandler(),
-        logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
-    ]
-)
-logger = logging.getLogger(config.logger.name)
-
 from salomepl.simple import simple 
 from salomepl.faceCentered import faceCentered 
 from salomepl.bodyCentered import bodyCentered 
 
 from salomepl.geometry import getGeom 
-from salomepl.mesh import smeshBuilder, meshCreate, meshCompute, meshStats, meshExport
+from salomepl.mesh import Mesh, Fineness, ExtrusionMethod 
+
+def defaultParameters(**configParameters):
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = Fineness.Custom.value
+    growthRate = 0.7
+    nbSegPerEdge = 0.3
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = True
+    chordalError = 0.25
+    
+    secondOrder = False
+    optimize = True
+    quadAllowed = False
+    useSurfaceCurvature = True
+    fuseEdges = True
+    checkChartBoundary = False
+
+    viscousLayers = False
+    thickness = 0.005
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = True 
+    facesToIgnore = ["inlet", "outlet"]
+    faces = []
+    extrusionMethod = ExtrusionMethod.SURF_OFFSET_SMOOTH
+
+    p = locals()
+    del p["configParameters"]
+
+    if configParameters:
+        for k, v in p.items():
+            if configParameters.get(k) is not None:
+                p[k] = configParameters[k]
+            
+                # Overwrite special values
+                if k == "fineness":
+                    p["fineness"] = Fineness.__dict__[p["fineness"]].value
+                
+                if k == "extrusionMethod":
+                    p["extrusionMethod"] = ExtrusionMethod.__dict__[p["extrusionMethod"]] 
+
+    return p
 
 
-def genmesh():
-
+def genmesh(config):
+    
     logger.info(f"""genmesh: 
     structure type:\t{ config.structure }
-    coefficient:\t{ config.parameters.theta }
+    coefficient:\t{ config.geometry.theta }
     fillet:\t{ config.geometry.fillet }
     flow direction:\t{ config.geometry.direction }""")
 
@@ -60,7 +90,7 @@ def genmesh():
     ##
     geompy = getGeom()
     structure = globals().get(config.structure)
-    shape, groups = structure(config.parameters.theta, config.geometry.fillet, config.geometry.direction)
+    shape, groups = structure(config.geometry.theta, config.geometry.fillet, config.geometry.direction)
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
     logger.info(f"""shape:
@@ -71,31 +101,87 @@ def genmesh():
     ###
     #   Mesh
     ##
-    facesToIgnore = []
+    config = dict(config)
+
+    mconfig = defaultParameters(**config["mesh"])
+
+    lengths = [ geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shape, geompy.ShapeType["EDGE"]) ]
+    meanSize = sum(lengths) / len(lengths)
+    mconfig["maxSize"] = meanSize
+    mconfig["minSize"] = meanSize * 1e-1
+    mconfig["chordalError"] = mconfig["maxSize"] / 2
+
+    faces = []
     for group in groups:
-        if group.GetName() in ["inlet", "outlet"]:
-            facesToIgnore.append(group)
+        if group.GetName() in mconfig["facesToIgnore"]:
+            faces.append(group)
 
-    meshParameters = config.mesh
-    meshParameters.facesToIgnore = facesToIgnore
-    meshParameters.extrusionMethod = smeshBuilder.SURF_OFFSET_SMOOTH
+    mconfig["faces"] = faces
+
+    mesh = Mesh(shape)
+    mesh.Tetrahedron(**mconfig)
+
+    if mconfig["viscousLayers"]:
+        mesh.ViscousLayers(**mconfig)
     
-    mesh = meshCreate(shape, meshParameters, groups)
-    returncode = meshCompute(mesh, groups)
+    config["mesh"].update(mconfig)
+    smconfigs = config["mesh"]["submesh"]
 
-    if returncode == 0:
-        config.status.mesh = True
+    for name in smconfigs.keys():
+        for group in groups:
+            if group.GetName() == name:
+                subshape = group
+        
+        smconfig = defaultParameters(**smconfigs[name])
+        smconfig["maxSize"] = meanSize * 1e-1
+        smconfig["minSize"] = meanSize * 1e-3
+        smconfig["chordalError"] = smconfig["minSize"] * 1e+1
+        
+        mesh.Triangle(subshape, **smconfig)
+        config["mesh"]["submesh"][name].update(smconfig)
 
-        with open(CONFIG, "w") as io:
-            toml.dump(dict(config), io)
 
-    meshStats(mesh)
-    meshExport(mesh, os.path.join(CASE, "mesh.unv"))
-    
+    returncode, errors = mesh.compute()
+
+    if not returncode:
+        config["status"]["mesh"] = True
+        
+    else:
+        logger.error(errors)
+
+    with open(CONFIG, "w") as io:
+        toml.dump(config, io)
+
+    mesh.removePyramids()
+    mesh.assignGroups()
+
+    mesh.exportUNV(os.path.join(CASE, "mesh.unv"))
+
+    stats = ""
+    for k, v in mesh.stats().items():
+        stats += f"{ k }:\t\t{ v }\n"
+
+    logger.info(f"mesh stats:\n{ stats[ :-1] }")
+
     salome.salome_close()
 
 
 if __name__ == "__main__":
-    genmesh()
+    CONFIG = os.path.join(CASE, "task.toml")
+    config = struct(toml.load(CONFIG))
+
+    LOG = os.path.join(ROOT, "logs")
+
+    logging.basicConfig(
+        level = logging.INFO,
+        format = config.logger.format,
+        handlers = [
+            logging.StreamHandler(),
+            logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
+        ]
+    )
+    logger = logging.getLogger(config.logger.name)
+
+    genmesh(config)
 
     

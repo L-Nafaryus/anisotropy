@@ -11,17 +11,15 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = false 
+simple = true 
 bodyCentered = true 
-faceCentered = false 
+faceCentered = true 
 
 ###
 #   Simple
 ##
-[simple.parameters]
-theta = [0.01, 0.28, 0.01]
-
 [simple.geometry]
+theta = [0.01, 0.28, 0.01]
 directions = [
     [1, 0, 0],
     [0, 0, 1],
@@ -30,37 +28,20 @@ directions = [
 fillet = true
 
 [simple.mesh]
-fineness = 3
-minSize = 0.05
-maxSize = 0.1
-growthRate = 0.5
-nbSegPerEdge = 0.5
-nbSegPerRadius = 0.5
-chordalErrorEnabled = false
-chordalError = -1
-secondOrder = false
-optimize = true
-quadAllowed = false
-useSurfaceCurvature = true
-fuseEdges = true
-checkChartBoundary = false
-
-localSizeOnShape.strips = 0.01
-
-viscousLayers = false 
+viscousLayers = true 
 thickness = [0.01, 0.005]
-numberOfLayers = 1
-stretchFactor = 1.2
-isFacesToIgnore = true
+
+[simple.mesh.submesh.strips]
+growthRate = 0.2
+nbSegPerEdge = 2
+nbSegPerRadius = 3
 
 ###
 #   Body-centered
 ##
-[bodyCentered.parameters]
 # TODO: 0.18 
-theta = [0.01, 0.17, 0.01]
-
 [bodyCentered.geometry]
+theta = [0.01, 0.17, 0.01]
 directions = [
     [1, 0, 0],
     [0, 0, 1],
@@ -69,36 +50,19 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
-fineness = 3
-minSize = 0.05
-maxSize = 0.5
-growthRate = 0.5
-nbSegPerEdge = 0.5
-nbSegPerRadius = 0.5
-chordalErrorEnabled = false
-chordalError = -1
-secondOrder = false
-optimize = true
-quadAllowed = false
-useSurfaceCurvature = true
-fuseEdges = true
-checkChartBoundary = false
-
-localSizeOnShape.strips = 0.01
-
 viscousLayers = false 
 thickness = [0.005, 0.0005]
-numberOfLayers = 1
-stretchFactor = 1.2
-isFacesToIgnore = true
+
+[bodyCentered.mesh.submesh.strips]
+growthRate = 0.2
+nbSegPerEdge = 2
+nbSegPerRadius = 3
 
 ###
 #   Face-centered
 ##
-[faceCentered.parameters]
-theta = [0.01, 0.13, 0.01]
-
 [faceCentered.geometry]
+theta = [0.01, 0.13, 0.01]
 directions = [
     [1, 0, 0],
     [0, 0, 1],
@@ -107,28 +71,13 @@ directions = [
 fillet = true
 
 [faceCentered.mesh]
-fineness = 3
-minSize = 0.01
-maxSize = 0.5
-growthRate = 0.5
-nbSegPerEdge = 0.5
-nbSegPerRadius = 0.5
-chordalErrorEnabled = false
-chordalError = -1
-secondOrder = false
-optimize = true
-quadAllowed = false
-useSurfaceCurvature = true
-fuseEdges = true
-checkChartBoundary = false
-
-localSizeOnShape.strips = 0.01
-
 viscousLayers = false 
 thickness = [0.001, 0.0005]
-numberOfLayers = 1
-stretchFactor = 1.2
-isFacesToIgnore = true
+
+[faceCentered.mesh.submesh.strips]
+growthRate = 0.2
+nbSegPerEdge = 2
+nbSegPerRadius = 3
 
 ###
 #   Flow

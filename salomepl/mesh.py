@@ -2,201 +2,151 @@ import SMESH
 from salome.smesh import smeshBuilder
 smesh = smeshBuilder.New()
 
-import logging
-logger = logging.getLogger("anisotropy")
+import enum
+
+class Fineness(enum.Enum):
+    VeryCoarse = 0
+    Coarse = 1
+    Moderate = 2
+    Fine = 3
+    VeryFine = 4
+    Custom = 5
+
+class ExtrusionMethod(object):
+    SURF_OFFSET_SMOOTH = smeshBuilder.SURF_OFFSET_SMOOTH
+    FACE_OFFSET = smeshBuilder.FACE_OFFSET
+    NODE_OFFSET = smeshBuilder.NODE_OFFSET
 
 def getSmesh():
     return smesh
 
+def updateParams(old, new: dict):
+    old.SetMaxSize(new.get("maxSize") if new.get("maxSize") else old.GetMaxSize())
+    old.SetMinSize(new.get("minSize") if new.get("minSize") else old.GetMinSize())
 
-def meshCreate(shape, parameters, groups): #fineness, parameters, viscousLayers = None):
-    """
-    Creates a mesh from a geometry.
+    old.SetFineness(new.get("fineness") if new.get("fineness") else old.GetFineness())
+    old.SetGrowthRate(new.get("growthRate") if new.get("growthRate") else old.GetGrowthRate())
+    old.SetNbSegPerEdge(new.get("nbSegPerEdge") if new.get("nbSegPerEdge") else old.GetNbSegPerEdge())
+    old.SetNbSegPerRadius(new.get("nbSegPerRadius") if new.get("nbSegPerRadius") else old.GetNbSegPerRadius())
 
-    Parameters:
-        fineness (int): Fineness of mesh.
+    old.SetChordalErrorEnabled(new.get("chordalErrorEnabled") if new.get("chordalErrorEnabled") else old.GetChordalErrorEnabled())
+    old.SetChordalError(new.get("chordalError") if new.get("chordalError") else old.GetChordalError())
 
-            0 - Very coarse,
-            1 - Coarse,
-            2 - Moderate,
-            3 - Fine,
-            4 - Very fine.
+    old.SetSecondOrder(new.get("secondOrder") if new.get("secondOrder") else old.GetSecondOrder())
+    old.SetOptimize(new.get("optimize") if new.get("optimize") else old.GetOptimize())
+    old.SetQuadAllowed(new.get("quadAllowed") if new.get("quadAllowed") else old.GetQuadAllowed())
+    old.SetUseSurfaceCurvature(new.get("useSurfaceCurvature") if new.get("useSurfaceCurvature") else old.GetUseSurfaceCurvature())
+    old.SetFuseEdges(new.get("fuseEdges") if new.get("fuseEdges") else old.GetFuseEdges())
+    old.SetCheckChartBoundary(new.get("checkChartBoundary") if new.get("checkChartBoundary") else old.GetCheckChartBoundary())
 
-    Returns:
-        Configured instance of class <SMESH.SMESH_Mesh>, containig the parameters and boundary groups.
 
-    """
-    ###
-    #   Netgen
-    ##
-    Fineness = {
-        0: "Very coarse",
-        1: "Coarse",
-        2: "Moderate",
-        3: "Fine",
-        4: "Very fine",
-        5: "Custom"
-    }[parameters.fineness]
+class Mesh(object):
+    def __init__(self, shape, name = ""):
+        self.name = name if name else shape.GetName()
+        self.mesh = smesh.Mesh(shape, self.name)
+        self.geom = shape
+        self.algo = None
+        self.params = None
+        self.viscousLayers = None
 
-    # Mesh
-    mesh = smesh.Mesh(shape)
-    netgen = mesh.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
-
-    # Parameters
-    param = netgen.Parameters()
-    param.SetMinSize(parameters.minSize)
-    param.SetMaxSize(parameters.maxSize)
-    param.SetFineness(parameters.fineness)
+        self.submeshes = []
     
-    if parameters.fineness == 5:
-        param.SetGrowthRate(parameters.growthRate)
-        param.SetNbSegPerEdge(parameters.nbSegPerEdge)
-        param.SetNbSegPerRadius(parameters.nbSegPerRadius)
-    
-    
-    param.SetChordalErrorEnabled(parameters.chordalErrorEnabled)
-    param.SetChordalError(parameters.chordalError)
+    def Tetrahedron(self, **kwargs):
+        self.algo = self.mesh.Tetrahedron(algo = smeshBuilder.NETGEN_1D2D3D)
+        self.params = self.algo.Parameters()
 
-    param.SetSecondOrder(parameters.secondOrder)
-    param.SetOptimize(parameters.optimize)
-    param.SetQuadAllowed(parameters.quadAllowed)
-    
-    param.SetUseSurfaceCurvature(parameters.useSurfaceCurvature)
-    param.SetFuseEdges(parameters.fuseEdges)
-    param.SetCheckChartBoundary(parameters.checkChartBoundary)
-    
-        
-    logger.info("""meshCreate:
-    fineness:\t{}
-    min size:\t{}
-    max size:\t{}
-    growth rate:\t{}
-    nb segs per edge:\t{}
-    nb segs per radius:\t{}
-    limit size by surface curvature:\t{}
-    quad-dominated:\t{}
-    second order:\t{}
-    optimize:\t{}""".format(
-        Fineness, param.GetMinSize(), param.GetMaxSize(), 
-        param.GetGrowthRate(), param.GetNbSegPerEdge(), param.GetNbSegPerRadius(), 
-        True if param.GetUseSurfaceCurvature() else False, 
-        True if param.GetQuadAllowed() else False, 
-        True if param.GetSecondOrder() else False, 
-        True if param.GetOptimize() else False))
+        self.params = updateParams(self.params, kwargs)
 
-    
-    ###
-    #   Local sizes
-    ##
-    for group in groups:
-        localSize = parameters.localSizeOnShape.__dict__.get(group)
-        
-        if localSize:
-            param.SetLocalSizeOnShape(group, localSize)
+    def ViscousLayers(self,
+            thickness = 1, 
+            numberOfLayers = 1, 
+            stretchFactor = 0,
+            faces = [], 
+            isFacesToIgnore = True, 
+            extrMethod = ExtrusionMethod.SURF_OFFSET_SMOOTH, 
+            **kwargs
+        ):
 
-    ###
-    #   Viscous layers
-    ##
-    if parameters.viscousLayers:
-        vlayer = netgen.ViscousLayers(
-            parameters.thickness,
-            parameters.numberOfLayers,
-            parameters.stretchFactor,
-            parameters.facesToIgnore,
-            parameters.isFacesToIgnore, 
-            parameters.extrusionMethod
+        self.viscousLayers = self.algo.ViscousLayers(
+            thickness,
+            numberOfLayers,
+            stretchFactor,
+            faces,
+            isFacesToIgnore,
+            extrMethod
         )
 
-        logger.info("""meshCreate:
-    viscous layers: 
-        thickness:\t{}
-        number:\t{}
-        stretch factor:\t{}""".format(
-            parameters.thickness, 
-            parameters.numberOfLayers, 
-            parameters.stretchFactor))
+    def Triangle(self, subshape, **kwargs):
+        submesh = Submesh(self.mesh, subshape)
+        submesh.algo = self.mesh.Triangle(algo = smeshBuilder.NETGEN_1D2D, geom = subshape)
+        submesh.mesh = submesh.algo.subm
+        submesh.params = submesh.algo.Parameters()
 
-    else:
-        logger.info("""meshCreate:
-    viscous layers: false""")
+        submesh.params = updateParams(submesh.params, kwargs)
 
-    return mesh
-
-
-def meshCompute(mobj, groups):
-    """Compute the mesh."""
-    status = mobj.Compute()
+        self.submeshes.append(submesh)
     
-    if status:
-        logger.info("meshCompute: computed")
-        
-        ###
-        #   Post computing
-        ##
-        if mobj.NbPyramids() > 0:
-            logger.info(f"meshCompute: detected {mobj.NbPyramids()} pyramids: splitting volumes into tetrahedrons")
-            
+    def assignGroups(self, withPrefix = True):
+        prefix = "smesh_" if withPrefix else ""
+
+        for group in self.mesh.geompyD.GetGroups(self.geom):
+            if group.GetName():
+                self.mesh.GroupOnGeom(group, f"{ prefix }{ group.GetName() }", SMESH.FACE)
+
+    def compute(self):
+        isDone = self.mesh.Compute()
+        returncode = int(not isDone)
+        errors = self.mesh.GetComputeErrors()
+
+        return returncode, errors
+
+    def stats(self):
+        return {
+            "elements":     self.mesh.NbElements(),
+            "edges":        self.mesh.NbEdges(),
+            "faces":        self.mesh.NbFaces(),
+            "volumes":      self.mesh.NbVolumes(),
+            "tetrahedrons": self.mesh.NbTetras(),
+            "prisms":       self.mesh.NbPrisms(),
+            "pyramids":     self.mesh.NbPyramids()
+        }
+
+    def exportUNV(self, path):
+        returncode = 0
+        error = ""
+
+        try:
+            self.mesh.ExportUNV(path)
+
+        except Exception as e:
+            error = e.details.text
+            returncode = 1
+
+        return returncode, error
+
+    def removePyramids(self):
+        if self.mesh.NbPyramids() > 0:
             pyramidCriterion = smesh.GetCriterion(
                 SMESH.VOLUME,
                 SMESH.FT_ElemGeomType,
                 SMESH.FT_Undefined,
                 SMESH.Geom_PYRAMID
             )
-            pyramidGroup = mobj.MakeGroupByCriterion("pyramids", pyramidCriterion)
-            pyramidVolumes = mobj.GetIDSource(pyramidGroup.GetIDs(), SMESH.VOLUME)
+            pyramidGroup = self.mesh.MakeGroupByCriterion("pyramids", pyramidCriterion)
+            pyramidVolumes = self.mesh.GetIDSource(pyramidGroup.GetIDs(), SMESH.VOLUME)
 
-            mobj.SplitVolumesIntoTetra(pyramidVolumes, smesh.Hex_5Tet)
+            self.mesh.SplitVolumesIntoTetra(pyramidVolumes, smesh.Hex_5Tet)
             
-            mobj.RemoveGroup(pyramidGroup)
-            mobj.RenumberElements()
-
-        ###
-        #   Groups
-        ##
-        for group in groups:
-            mobj.GroupOnGeom(group, f"{ group.GetName() }_", SMESH.FACE)
-
-    else:
-        logger.warning("meshCompute: not computed")
-
-    return not status
+            self.mesh.RemoveGroup(pyramidGroup)
+            self.mesh.RenumberElements()
 
 
-def meshStats(mobj):
-    """
-    Print mesh information.
-    """
-    stats = {
-        "Elements": mobj.NbElements(),
-        "Edges": mobj.NbEdges(),
-        "Faces": mobj.NbFaces(),
-        "Volumes": mobj.NbVolumes(),
-        "Tetrahedrons": mobj.NbTetras(),
-        "Prisms": mobj.NbPrisms(),
-        "Pyramids": mobj.NbPyramids()
-    }
-    info = "meshStats:\n"
 
-    for key in stats:
-        info += f"\t{key}:\t{stats[key]}\n"
-
-    logger.info(info)
-
-
-def meshExport(mobj, path):
-    """
-    Export the mesh in a file in UNV format.
-
-    Parameters:
-        path (string): full path to the expected directory.
-    """
-
-    try:
-        mobj.ExportUNV(path)
-
-        logger.info("""meshExport:
-    format:\t{}""".format("unv"))
-
-    except:
-        logger.error("""meshExport: Cannot export.""")
+class Submesh(object):
+    def __init__(self, father, subshape, name = ""):
+        self.name = name if name else subshape.GetName()
+        self.mesh = None
+        self.geom = subshape
+        self.algo = None
+        self.params = None
 
