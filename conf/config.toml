@@ -11,8 +11,8 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = true 
-bodyCentered = true 
+simple = false 
+bodyCentered = false 
 faceCentered = true 
 
 ###
@@ -50,7 +50,7 @@ directions = [
 fillet = true
 
 [bodyCentered.mesh]
-viscousLayers = false 
+viscousLayers = true 
 thickness = [0.005, 0.0005]
 
 [bodyCentered.mesh.submesh.strips]
@@ -71,7 +71,7 @@ directions = [
 fillet = true
 
 [faceCentered.mesh]
-viscousLayers = false 
+viscousLayers = true 
 thickness = [0.001, 0.0005]
 
 [faceCentered.mesh.submesh.strips]
