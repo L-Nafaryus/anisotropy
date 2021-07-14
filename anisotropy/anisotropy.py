@@ -6,10 +6,11 @@ import shutil
 ROOT = "/".join(__file__.split("/")[:-2])
 sys.path.append(os.path.abspath(ROOT))
 
-from utils import struct
+from anisotropy.utils import struct
 import toml
 import logging
 
+__version__ = "1.1"
 ###
 #   Shell args
 ##
@@ -50,6 +51,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(config.logger.name)
 
+
+class Anisotropy(object):
+    def __init__(self):
+        #self.db = self.setupDB()
+        pass
+
+    @staticmethod
+    def version():
+        versions = {
+            "anisotropy": __version__,
+            "Python": sys.version.split(" ")[0],
+            "Salome": "[missed]",
+            "OpenFOAM": "[missed]"
+        }
+
+        try:
+            salomeplVersion = salomeVersion()
+            openfoamVersion = openfoam.foamVersion()
+
+        except Exception:
+            pass
+
+        return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
+
+    @staticmethod
+    def setupDB():
+        db.init(env["db_path"])
+
+        if not os.path.exists(env["db_path"]):
+            db.create_tables([Structures, Mesh])
+
+        return db
 ###
 #   Main
 ##
