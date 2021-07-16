@@ -41,21 +41,50 @@ BUILD = os.path.join(ROOT, "build")
 if not os.path.exists(BUILD):
     os.makedirs(BUILD)
 
+##################################################################################
+import os
+import toml
+from models import db, Structure, Mesh
+
+env = { "ROOT": os.path.abspath(".") }
+env.update({
+    "BUILD": os.path.join(env["ROOT"], "build"),
+    "LOG": os.path.join(env["ROOT"], "logs"),
+    "CONFIG": os.path.join(env["ROOT"], "conf/config.toml")
+})
+env["db_path"] = os.path.join(env["BUILD"], "anisotropy.db")
+
+
+if os.path.exists(env["CONFIG"]):
+    config = toml.load(env["CONFIG"])
+
+    for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
+        if config.get(restricted):
+            config.pop(restricted)
+
+    env.update(config)
+
+
+logger_env = env.get("logger", {})
 logging.basicConfig(
     level = logging.INFO,
-    format = config.logger.format,
+    format = logger_env.get("format", "%(levelname)s: %(message)s"),
     handlers = [
         logging.StreamHandler(),
-        logging.FileHandler(f"{ LOG }/{ config.logger.name }.log")
+        logging.FileHandler(
+            os.path.join(env["LOG"]), logger_env.get("name", "anisotropy")
+        )
     ]
 )
-logger = logging.getLogger(config.logger.name)
+logger = logging.getLogger(logger_env.get("name", "anisotropy"))
 
 
 class Anisotropy(object):
     def __init__(self):
-        #self.db = self.setupDB()
-        pass
+        self.db = self._setupDB()
+        self.structures = self._expandConfigParams(env["structures"])
+
+        self._updateDB()
 
     @staticmethod
     def version():
@@ -76,13 +105,114 @@ class Anisotropy(object):
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
     @staticmethod
-    def setupDB():
+    def _setupDB():
         db.init(env["db_path"])
 
         if not os.path.exists(env["db_path"]):
-            db.create_tables([Structures, Mesh])
+            db.create_tables([Structure, Mesh])
 
         return db
+
+    @staticmethod
+    def _expandConfigParams(params):
+        structures = deepcopy(params)
+
+        for structure in structures:
+            theta = structure["geometry"]["theta"]
+            start, end = int(theta[0] / theta[2]), int(theta[1] / theta[2]) + 1
+            structure["geometry"]["theta"] = list(
+                map(lambda n: n * theta[2], range(start, end))
+            )
+
+            thickness = structure["mesh"]["thickness"]
+            count = len(structure["geometry"]["theta"])
+            structure["mesh"]["thickness"] = list(
+                map(lambda n: thickness[0] + n * (thickness[1] - thickness[0]) / (count - 1), range(0, count))
+            )
+
+        return structures
+
+    @staticmethod
+    def _setupQueue(params):
+        structures = deepcopy(params)
+        queue = []
+
+        for structure in structures:
+            for direction in structure["geometry"]["directions"]:
+                for theta in structure["geometry"]["theta"]:
+                    prequeue = deepcopy(structure)
+                    del prequeue["geometry"]["directions"]
+
+                    prequeue["geometry"]["direction"] = direction
+                    prequeue["geometry"]["theta"] = theta
+
+                    prequeue["path"] = os.path.join(
+                        env["BUILD"],
+                        structure["name"],
+                        "direction-{}{}{}".format(*direction),
+                        "theta-{}".format(theta)
+                    )
+
+                    queue.append(prequeue)
+
+        return queue
+
+    def updateDB(self):
+        queue = self._setupQueue(self.structures)
+
+        for structure in queue:
+            s = Structure.update(
+                name = structure["name"],
+                path = structure["path"],
+                **structure["geometry"]
+            )
+
+            Mesh.update(
+                structure = s,
+                **structure["mesh"]
+            )
+
+    def computeGeometryParams(self):
+        from math import sqrt
+        structures =  list(Structure.select().dicts())
+        
+        for s in structures:
+            if s["name"] == "simple":
+                s["L"] = 2 * s["r0"]
+                s["radius"] = s["r0"] / (1 - s["theta"])
+                s["length"] = s["L"] * sqrt(2)
+                s["width"] = s["L"] * sqrt(2)
+                s["height"] = s["L"]
+
+                C1, C2 = 0.8, 0.5 #0.8, 0.05
+                theta1, theta2 = 0.01, 0.28
+                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (s["theta"] - theta1)
+                delta = 0.2
+                s["fillets"] = delta - Cf * (s["radius"] - s["r0"])
+
+            elif s["name"] == "faceCentered":
+                pass
+
+            elif s["name"] == "bodyCentered":
+                pass
+
+
+    def computeMesh(self):
+        pass
+
+    def computeFlow(self):
+        pass
+    
+    def _queue(self):
+        pass
+
+    def computeAll(self):
+        pass
+
+
+###################################################################################
+
+
 ###
 #   Main
 ##
