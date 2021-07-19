@@ -3,81 +3,68 @@ import subprocess
 import logging
 import sys, os
 
-logger = logging.getLogger()
-
 def hasDesktop() -> bool:
     return salome.sg.hasDesktop()
 
-def startServer(port):
 
-    logger.info("Starting SALOME on port {} ...".format(port))
+class SalomeNotFound(Exception):
+    pass
 
-    p = subprocess.Popen(["salome", "start", "--port", str(port), "-t"],
-        #shell = False,
+
+def version() -> str:
+    if os.environ.get("SALOME_PATH"):
+        cmd = os.path.join(os.environ["SALOME_PATH"], "salome")
+
+    else:
+        raise(SalomeNotFound("Can't find salome executable."))
+
+    proc = subprocess.Popen(
+        [ cmd, "--version" ], 
+        stdout = subprocess.PIPE, 
+        stderr = subprocess.PIPE
+    )
+
+    out, err = proc.communicate()
+
+    return str(out, "utf-8").strip().split(" ")[-1]
+
+
+def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args) -> int:
+
+    if os.environ.get("SALOME_PATH"):
+        cmd = os.path.join(os.environ["SALOME_PATH"], salome)
+
+    else:
+        raise(SalomeNotFound("Can't find salome executable."))
+
+    if not logpath:
+        logpath = "/tmp/salome.log"
+
+    fmtargs = "args:{}".format(", ".join([ str(arg) for arg in args ]))
+    cmdargs = [
+        "start", "-t", 
+        "--shutdown-servers=1", 
+        "--port", str(port), 
+        scriptpath, 
+        root,
+        logpath,
+        fmtargs
+    ]
+
+    with subprocess.Popen(
+        [ cmd, cmdargs ],
         stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE)
+        stderr = subprocess.PIPE
+    ) as proc, open(logpath, "wb") as logfile:
 
-    return p
-
-def salomeVersion() -> str:
-    return "Salome 9.7.0 MPI"
-
-def runExecute(port: int, scriptpath: str, *args) -> int:
-
-    cmd = ["salome-9.7.0-mpi", "start", "--shutdown-servers=1", "--port", str(port), "-t",
-        scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))]
-
-    logger.info("salome: {}".format(cmd[1 : 6]))
-    case = args[1]
-    logpath = os.path.join(case, "salome.log")
-
-    #p = subprocess.Popen(["salome", "start", "--shutdown-servers=1", "--port", str(port), "-t", scriptpath, "args:{}".format(", ".join([str(arg) for arg in args]))],
-    #    stderr = subprocess.STDOUT)
-    #_, err = p.communicate()
-
-    with subprocess.Popen(cmd,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE) as p, \
-        open(logpath, "wb") as logfile:
-
-        for line in p.stdout:
-        #    sys.stdout.buffer.write(line)
+        logfile = open(logpath, "wb")
+        for line in proc.stdout:
             logfile.write(line)
 
         out, err = p.communicate()
-        #print(str(err, "utf-8"))
-        logfile.write(err)
 
         if err:
-            logger.error("salome:\n\t{}".format(str(err, "utf-8")))
-    #if err:
-    #    if p.returncode == 1:
-    #        logger.error(err)
+            logfile.write(err)
 
-     #   else:
-     #       logger.warning(err)
+    return out, err, proc.returncode
 
-    return p.returncode
-
-def killServer(port):
-
-    logger.info("Terminating SALOME on port {} ...".format(port))
-
-    p = subprocess.Popen(["salome", "kill", str(port)],
-        #shell = True,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE)
-
-    return p
-
-def remote(port, cmd):
-
-    logger.info("Executing command in the SALOME on port {} ...".format(port))
-    
-    # cmd = "python -m"; = "python -c"
-    p = subprocess.Popen(["salome", "remote", "-p", str(port), "--", str(cmd)],
-        #shell = True,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE)
-
-    return p

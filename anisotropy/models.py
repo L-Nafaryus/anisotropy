@@ -1,8 +1,10 @@
 from peewee import *
 
+db = SqliteDatabase(None)
+
 class BaseModel(Model):
     class Meta:
-        database = db
+        database = db 
 
 class Structure(BaseModel):
     name = TextField()
@@ -12,10 +14,8 @@ class Structure(BaseModel):
     r0 = FloatField()
     L = FloatField()
     radius = FloatField()
-    length = FloatField()
-    width = FloatField()
-    height = FloatField()
     
+    fillet = BooleanField()
     fillets = FloatField()
     path = TextField()
 

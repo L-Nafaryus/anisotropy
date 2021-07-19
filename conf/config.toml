@@ -15,109 +15,66 @@ simple = false
 bodyCentered = false 
 faceCentered = true 
 
-###
-#   Simple
-##
-[simple.geometry]
-theta = [0.01, 0.28, 0.01]
-directions = [
-    [1, 0, 0],
-    [0, 0, 1],
-    [1, 1, 1]
-]
-fillet = true
+[[structures]]
+    name = "simple"
 
-[simple.mesh]
-viscousLayers = true 
-thickness = [0.01, 0.005]
+    [structures.geometry]
+    theta = [0.01, 0.28, 0.01]
+    directions = [
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+    fillet = true
 
-[simple.mesh.submesh.strips]
-growthRate = 0.2
-nbSegPerEdge = 2
-nbSegPerRadius = 3
+    [structures.mesh]
+    viscousLayers = true 
+    thickness = [0.01, 0.005]
 
-###
-#   Body-centered
-##
-# TODO: 0.18 
-[bodyCentered.geometry]
-theta = [0.01, 0.17, 0.01]
-directions = [
-    [1, 0, 0],
-    [0, 0, 1],
-    [1, 1, 1]
-]
-fillet = true
+    [structures.submesh.strips]
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
 
-[bodyCentered.mesh]
-viscousLayers = true 
-thickness = [0.005, 0.0005]
+[[structures]]
+    name = "bodyCentered"
 
-[bodyCentered.mesh.submesh.strips]
-growthRate = 0.2
-nbSegPerEdge = 2
-nbSegPerRadius = 3
+    [structures.geometry]
+    theta = [0.01, 0.17, 0.01]
+    directions = [
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+    fillet = true
 
-###
-#   Face-centered
-##
-[faceCentered.geometry]
-theta = [0.01, 0.13, 0.01]
-directions = [
-    [1, 0, 0],
-    [0, 0, 1],
-    [1, 1, 1]
-]
-fillet = true
+    [structures.mesh]
+    viscousLayers = true 
+    thickness = [0.005, 0.0005]
 
-[faceCentered.mesh]
-viscousLayers = true 
-thickness = [0.001, 0.0005]
+    [structures.submesh.strips]
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
 
-[faceCentered.mesh.submesh.strips]
-growthRate = 0.2
-nbSegPerEdge = 2
-nbSegPerRadius = 3
+[[structures]]
+    name = "faceCentered"
 
-###
-#   Flow
-##
-[flow]
-scale = [1e-5, 1e-5, 1e-5]
+    [structures.geometry]
+    theta = [0.01, 0.13, 0.01]
+    directions = [
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+    fillet = true
 
-[flow.constant]
-nu = 1e-6
+    [structures.mesh]
+    viscousLayers = true 
+    thickness = [0.001, 0.0005]
 
-[flow.approx.pressure.boundaryField]
-inlet.type = "fixedValue"
-inlet.value = 1e-3
-outlet.type = "fixedValue"
-outlet.value = 0
-
-[flow.approx.velocity.boundaryField]
-inlet.type = "fixedValue"
-inlet.value = [
-    [ 6e-5, 6e-5,   0.0 ],
-    [ 0.0,  0.0,    6e-5 ],
-    [ 6e-5, 6e-5,   6e-5 ]
-]
-outlet.type = "zeroGradient"
-outlet.value = "None"
-
-[flow.main.pressure.boundaryField]
-inlet.type = "fixedValue"
-inlet.value = 1e-3
-outlet.type = "fixedValue"
-outlet.value = 0
-
-[flow.main.velocity.boundaryField]
-inlet.type = "pressureInletVelocity"
-inlet.value = [
-    [ 0, 0, 0 ],
-    [ 0, 0, 0 ],
-    [ 0, 0, 0 ]
-]
-outlet.type = "zeroGradient"
-outlet.value = "None"
-
+    [structures.submesh.strips]
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
 

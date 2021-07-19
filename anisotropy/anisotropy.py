@@ -3,10 +3,10 @@ import time
 from datetime import timedelta, datetime
 import shutil
 
-ROOT = "/".join(__file__.split("/")[:-2])
-sys.path.append(os.path.abspath(ROOT))
+#ROOT = "/".join(__file__.split("/")[:-2])
+#sys.path.append(os.path.abspath(ROOT))
 
-from anisotropy.utils import struct
+#from anisotropy.utils import struct
 import toml
 import logging
 
@@ -14,37 +14,39 @@ __version__ = "1.1"
 ###
 #   Shell args
 ##
-configPath = "conf/config.toml"
-mode = "safe"
+#configPath = "conf/config.toml"
+#mode = "safe"
 
-for n, arg in enumerate(sys.argv):
-    if arg == "-c" or arg == "--config":
-        configPath = sys.args[n + 1]
+#for n, arg in enumerate(sys.argv):
+#    if arg == "-c" or arg == "--config":
+#        configPath = sys.args[n + 1]
 
-    if arg == "-s" or arg == "--safe":
-        mode = "safe"
+#    if arg == "-s" or arg == "--safe":
+#        mode = "safe"
 
-    elif arg == "-a" or arg == "--all":
-        mode = "all"
+#    elif arg == "-a" or arg == "--all":
+#        mode = "all"
 
 ###
 #   Load configuration and tools
 ##
-CONFIG = os.path.join(ROOT, configPath)
-config = struct(toml.load(CONFIG))
+#CONFIG = os.path.join(ROOT, configPath)
+#config = struct(toml.load(CONFIG))
 
-LOG = os.path.join(ROOT, "logs")
-if not os.path.exists(LOG):
-    os.makedirs(LOG)
+#LOG = os.path.join(ROOT, "logs")
+#if not os.path.exists(LOG):
+#    os.makedirs(LOG)
 
-BUILD = os.path.join(ROOT, "build")
-if not os.path.exists(BUILD):
-    os.makedirs(BUILD)
+#BUILD = os.path.join(ROOT, "build")
+#if not os.path.exists(BUILD):
+#    os.makedirs(BUILD)
 
 ##################################################################################
 import os
 import toml
-from models import db, Structure, Mesh
+from copy import deepcopy
+from anisotropy.models import db, Structure, Mesh
+import salomepl
 
 env = { "ROOT": os.path.abspath(".") }
 env.update({
@@ -54,6 +56,10 @@ env.update({
 })
 env["db_path"] = os.path.join(env["BUILD"], "anisotropy.db")
 
+_defaultConfig = os.path.join(env["ROOT"], "anisotropy/default.toml")
+
+if os.path.exists(_defaultConfig):
+    env.update(toml.load(_defaultConfig))
 
 if os.path.exists(env["CONFIG"]):
     config = toml.load(env["CONFIG"])
@@ -72,11 +78,22 @@ logging.basicConfig(
     handlers = [
         logging.StreamHandler(),
         logging.FileHandler(
-            os.path.join(env["LOG"]), logger_env.get("name", "anisotropy")
+            os.path.join(env["LOG"], logger_env.get("name", "anisotropy"))
         )
     ]
 )
 logger = logging.getLogger(logger_env.get("name", "anisotropy"))
+
+
+def timer(func):
+    def inner(*args, **kwargs):
+        start = time.monotonic()
+        ret = func(*args, **kwargs)
+        elapsed = time.monotonic() - start
+
+        return ret, elapsed
+
+    return inner
 
 
 class Anisotropy(object):
@@ -84,7 +101,7 @@ class Anisotropy(object):
         self.db = self._setupDB()
         self.structures = self._expandConfigParams(env["structures"])
 
-        self._updateDB()
+        #self.updateDB()
 
     @staticmethod
     def version():
@@ -96,7 +113,7 @@ class Anisotropy(object):
         }
 
         try:
-            salomeplVersion = salomeVersion()
+            salomeplVersion = salomepl.version()
             openfoamVersion = openfoam.foamVersion()
 
         except Exception:
@@ -139,7 +156,7 @@ class Anisotropy(object):
 
         for structure in structures:
             for direction in structure["geometry"]["directions"]:
-                for theta in structure["geometry"]["theta"]:
+                for n, theta in enumerate(structure["geometry"]["theta"]):
                     prequeue = deepcopy(structure)
                     del prequeue["geometry"]["directions"]
 
@@ -153,6 +170,8 @@ class Anisotropy(object):
                         "theta-{}".format(theta)
                     )
 
+                    prequeue["mesh"]["thickness"] = structure["mesh"]["thickness"][n]
+
                     queue.append(prequeue)
 
         return queue
@@ -161,44 +180,86 @@ class Anisotropy(object):
         queue = self._setupQueue(self.structures)
 
         for structure in queue:
-            s = Structure.update(
+            s = Structure.create(
                 name = structure["name"],
                 path = structure["path"],
                 **structure["geometry"]
             )
 
-            Mesh.update(
+            Mesh.create(
                 structure = s,
                 **structure["mesh"]
             )
 
     def computeGeometryParams(self):
         from math import sqrt
-        structures =  list(Structure.select().dicts())
+
+        structures = self._setupQueue(self.structures)
         
         for s in structures:
-            if s["name"] == "simple":
-                s["L"] = 2 * s["r0"]
-                s["radius"] = s["r0"] / (1 - s["theta"])
-                s["length"] = s["L"] * sqrt(2)
-                s["width"] = s["L"] * sqrt(2)
-                s["height"] = s["L"]
+            theta = s["geometry"]["theta"]
 
-                C1, C2 = 0.8, 0.5 #0.8, 0.05
+            if s["name"] == "simple":
+                r0 = 1
+                L = 2 * r0
+                radius = r0 / (1 - theta)
+
+                C1, C2 = 0.8, 0.5 
                 theta1, theta2 = 0.01, 0.28
-                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (s["theta"] - theta1)
+                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
                 delta = 0.2
-                s["fillets"] = delta - Cf * (s["radius"] - s["r0"])
+                fillets = delta - Cf * (radius - r0)
 
             elif s["name"] == "faceCentered":
-                pass
+                L = 1.0
+                r0 = L * sqrt(2) / 4
+                radius = r0 / (1 - theta)
+
+                C1, C2 = 0.3, 0.2
+                theta1, theta2 = 0.01, 0.13
+                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
+                delta = 0.012
+                fillets = delta - Cf * (radius - r0)
 
             elif s["name"] == "bodyCentered":
-                pass
+                L = 1.0
+                r0 = L * sqrt(3) / 4
+                radius = r0 / (1 - theta)
+
+                C1, C2 = 0.3, 0.2 
+                theta1, theta2 = 0.01, 0.18
+                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
+                delta = 0.02
+                fillets = delta - Cf * (radius - r0)
+
+            buf = {} #deepcopy(s)
+            buf.update(
+                {"name": s["name"],
+                "path": s["path"]},
+                **s["geometry"]
+            )
+            buf.update({
+                "r0": r0,
+                "L": L,
+                "radius": radius,
+                "fillets": fillets
+            })
+            stable = Structure.create(**buf)
+            Mesh.create(
+                structure = stable,
+                **s["mesh"]
+            )
 
 
+    @timer
     def computeMesh(self):
-        pass
+        scriptpath = os.path.join(env["ROOT"], "salomepl/genmesh.py")
+        port = 2900
+
+        out, err, returncode = salomepl.runSalome(port, scriptpath, env["ROOT"], case)
+
+
+
 
     def computeFlow(self):
         pass
@@ -341,7 +402,7 @@ def createQueue():
     return queue
 
 
-from salomepl.utils import runExecute, salomeVersion
+#from salomepl.utils import runExecute, salomeVersion
 
 def computeMesh(case):
     scriptpath = os.path.join(ROOT, "salomepl/genmesh.py")
