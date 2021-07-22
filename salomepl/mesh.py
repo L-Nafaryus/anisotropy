@@ -66,23 +66,23 @@ def defaultParameters(**configParameters):
     return p
 
 def updateParams(old, new: dict):
-    old.SetMaxSize(new.get("maxSize") if new.get("maxSize") else old.GetMaxSize())
-    old.SetMinSize(new.get("minSize") if new.get("minSize") else old.GetMinSize())
+    old.SetMaxSize(new.get("maxSize", old.GetMaxSize()))
+    old.SetMinSize(new.get("minSize", old.GetMinSize()))
 
-    old.SetFineness(new.get("fineness") if new.get("fineness") else old.GetFineness())
-    old.SetGrowthRate(new.get("growthRate") if new.get("growthRate") else old.GetGrowthRate())
-    old.SetNbSegPerEdge(new.get("nbSegPerEdge") if new.get("nbSegPerEdge") else old.GetNbSegPerEdge())
-    old.SetNbSegPerRadius(new.get("nbSegPerRadius") if new.get("nbSegPerRadius") else old.GetNbSegPerRadius())
+    old.SetFineness(new.get("fineness", old.GetFineness()))
+    old.SetGrowthRate(new.get("growthRate", old.GetGrowthRate()))
+    old.SetNbSegPerEdge(new.get("nbSegPerEdge", old.GetNbSegPerEdge()))
+    old.SetNbSegPerRadius(new.get("nbSegPerRadius", old.GetNbSegPerRadius()))
 
-    old.SetChordalErrorEnabled(new.get("chordalErrorEnabled") if new.get("chordalErrorEnabled") else old.GetChordalErrorEnabled())
-    old.SetChordalError(new.get("chordalError") if new.get("chordalError") else old.GetChordalError())
+    old.SetChordalErrorEnabled(new.get("chordalErrorEnabled", old.GetChordalErrorEnabled()))
+    old.SetChordalError(new.get("chordalError", old.GetChordalError()))
 
-    old.SetSecondOrder(new.get("secondOrder") if new.get("secondOrder") else old.GetSecondOrder())
-    old.SetOptimize(new.get("optimize") if new.get("optimize") else old.GetOptimize())
-    old.SetQuadAllowed(new.get("quadAllowed") if new.get("quadAllowed") else old.GetQuadAllowed())
-    old.SetUseSurfaceCurvature(new.get("useSurfaceCurvature") if new.get("useSurfaceCurvature") else old.GetUseSurfaceCurvature())
-    old.SetFuseEdges(new.get("fuseEdges") if new.get("fuseEdges") else old.GetFuseEdges())
-    old.SetCheckChartBoundary(new.get("checkChartBoundary") if new.get("checkChartBoundary") else old.GetCheckChartBoundary())
+    old.SetSecondOrder(new.get("secondOrder", old.GetSecondOrder()))
+    old.SetOptimize(new.get("optimize", old.GetOptimize()))
+    old.SetQuadAllowed(new.get("quadAllowed", old.GetQuadAllowed()))
+    old.SetUseSurfaceCurvature(new.get("useSurfaceCurvature", old.GetUseSurfaceCurvature()))
+    old.SetFuseEdges(new.get("fuseEdges", old.GetFuseEdges()))
+    old.SetCheckChartBoundary(new.get("checkChartBoundary", old.GetCheckChartBoundary()))
 
 
 class Mesh(object):

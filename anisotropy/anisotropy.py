@@ -46,8 +46,12 @@ import os
 import toml
 from copy import deepcopy
 from anisotropy.models import db, Structure, Mesh
+from anisotropy.utils import struct
 import salomepl
 
+###
+#   Environment variables and config
+##
 env = { "ROOT": os.path.abspath(".") }
 env.update({
     "BUILD": os.path.join(env["ROOT"], "build"),
@@ -67,10 +71,13 @@ if os.path.exists(env["CONFIG"]):
     for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
         if config.get(restricted):
             config.pop(restricted)
+    
+    # TODO: dict replacing
+    #env.update(config)
 
-    env.update(config)
-
-
+###
+#   Logger
+##
 logger_env = env.get("logger", {})
 logging.basicConfig(
     level = logging.INFO,
@@ -99,9 +106,9 @@ def timer(func):
 class Anisotropy(object):
     def __init__(self):
         self.db = self._setupDB()
-        self.structures = self._expandConfigParams(env["structures"])
+        self.params = []
 
-        #self.updateDB()
+        self.evalParameters(env)
 
     @staticmethod
     def version():
@@ -130,126 +137,120 @@ class Anisotropy(object):
 
         return db
 
-    @staticmethod
-    def _expandConfigParams(params):
-        structures = deepcopy(params)
-
-        for structure in structures:
-            theta = structure["geometry"]["theta"]
-            start, end = int(theta[0] / theta[2]), int(theta[1] / theta[2]) + 1
-            structure["geometry"]["theta"] = list(
-                map(lambda n: n * theta[2], range(start, end))
-            )
-
-            thickness = structure["mesh"]["thickness"]
-            count = len(structure["geometry"]["theta"])
-            structure["mesh"]["thickness"] = list(
-                map(lambda n: thickness[0] + n * (thickness[1] - thickness[0]) / (count - 1), range(0, count))
-            )
-
-        return structures
-
-    @staticmethod
-    def _setupQueue(params):
-        structures = deepcopy(params)
-        queue = []
-
-        for structure in structures:
-            for direction in structure["geometry"]["directions"]:
-                for n, theta in enumerate(structure["geometry"]["theta"]):
-                    prequeue = deepcopy(structure)
-                    del prequeue["geometry"]["directions"]
-
-                    prequeue["geometry"]["direction"] = direction
-                    prequeue["geometry"]["theta"] = theta
-
-                    prequeue["path"] = os.path.join(
-                        env["BUILD"],
-                        structure["name"],
-                        "direction-{}{}{}".format(*direction),
-                        "theta-{}".format(theta)
-                    )
-
-                    prequeue["mesh"]["thickness"] = structure["mesh"]["thickness"][n]
-
-                    queue.append(prequeue)
-
-        return queue
-
-    def updateDB(self):
-        queue = self._setupQueue(self.structures)
-
-        for structure in queue:
-            s = Structure.create(
-                name = structure["name"],
-                path = structure["path"],
-                **structure["geometry"]
-            )
-
-            Mesh.create(
-                structure = s,
-                **structure["mesh"]
-            )
-
-    def computeGeometryParams(self):
+    def evalParameters(self, _env: dict):
         from math import sqrt
 
-        structures = self._setupQueue(self.structures)
-        
-        for s in structures:
-            theta = s["geometry"]["theta"]
+        structures = deepcopy(_env["structures"])
 
-            if s["name"] == "simple":
-                r0 = 1
-                L = 2 * r0
-                radius = r0 / (1 - theta)
-
-                C1, C2 = 0.8, 0.5 
-                theta1, theta2 = 0.01, 0.28
-                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-                delta = 0.2
-                fillets = delta - Cf * (radius - r0)
-
-            elif s["name"] == "faceCentered":
-                L = 1.0
-                r0 = L * sqrt(2) / 4
-                radius = r0 / (1 - theta)
-
-                C1, C2 = 0.3, 0.2
-                theta1, theta2 = 0.01, 0.13
-                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-                delta = 0.012
-                fillets = delta - Cf * (radius - r0)
-
-            elif s["name"] == "bodyCentered":
-                L = 1.0
-                r0 = L * sqrt(3) / 4
-                radius = r0 / (1 - theta)
-
-                C1, C2 = 0.3, 0.2 
-                theta1, theta2 = 0.01, 0.18
-                Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-                delta = 0.02
-                fillets = delta - Cf * (radius - r0)
-
-            buf = {} #deepcopy(s)
-            buf.update(
-                {"name": s["name"],
-                "path": s["path"]},
-                **s["geometry"]
-            )
-            buf.update({
-                "r0": r0,
-                "L": L,
-                "radius": radius,
-                "fillets": fillets
-            })
-            stable = Structure.create(**buf)
-            Mesh.create(
-                structure = stable,
-                **s["mesh"]
+        for structure in structures:
+            _theta = structure["geometry"]["theta"]
+            thetaMin = int(_theta[0] / _theta[2]) 
+            thetaMax = int(_theta[1] / _theta[2]) + 1
+            thetaList = list(
+                map(lambda n: n * _theta[2], range(thetaMin, thetaMax))
             )
 
+            _thickness = structure["mesh"]["thickness"]
+            count = len(thetaList)
+            thicknessList = list(
+                map(lambda n: _thickness[0] + n * (_thickness[1] - _thickness[0]) / (count - 1), range(0, count))
+            )
+
+            for direction in structure["geometry"]["directions"]:
+                for n, theta in enumerate(thetaList):
+                    if structure["name"] == "simple":
+                        r0 = 1
+                        L = 2 * r0
+                        radius = r0 / (1 - theta)
+
+                        C1, C2 = 0.8, 0.5 
+                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+                        delta = 0.2
+                        fillets = delta - Cf * (radius - r0)
+
+                    elif structure["name"] == "faceCentered":
+                        L = 1.0
+                        r0 = L * sqrt(2) / 4
+                        radius = r0 / (1 - theta)
+
+                        C1, C2 = 0.3, 0.2
+                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+                        delta = 0.012
+                        fillets = delta - Cf * (radius - r0)
+
+                    elif structure["name"] == "bodyCentered":
+                        L = 1.0
+                        r0 = L * sqrt(3) / 4
+                        radius = r0 / (1 - theta)
+
+                        C1, C2 = 0.3, 0.2 
+                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+                        delta = 0.02
+                        fillets = delta - Cf * (radius - r0)
+
+                    
+                    path = os.path.join(
+                        _env["BUILD"],
+                        structure["name"],
+                        f"direction-{ direction }",
+                        f"theta-{ theta }"
+                    )
+                    geometry = dict(
+                        theta = theta,
+                        direction = direction,
+                        r0 = r0,
+                        L = L,
+                        radius = radius,
+                        filletsEnabled = structure["geometry"]["filletsEnabled"],
+                        fillets = fillets
+
+                    )
+                    mesh = deepcopy(structure["mesh"])
+                    mesh.update(
+                        thickness = thicknessList[n]
+                    )
+                    self.params.append({
+                        "name": structure["name"],
+                        "path": path,
+                        "geometry": geometry,
+                        "mesh": mesh,
+                        "submesh": deepcopy(structure["submesh"])
+                    })
+
+
+    # SELECT * FROM structure LEFT OUTER JOIN mesh ON mesh.structure_id = structure.id WHERE name = "faceCentered" AND direction = "[1, 1, 1]" AND theta = 0.12;
+    def updateDB(self):
+        for entry in self.params:
+            query = (Structure
+                .select()
+                .where(
+                    Structure.name == entry["name"],
+                    Structure.direction == str(entry["geometry"]["direction"]),
+                    Structure.theta == entry["geometry"]["theta"]
+                )
+            )
+
+            s = deepcopy(entry["geometry"])
+            s.update(
+                name = entry["name"],
+                path = entry["path"]
+            )
+
+            m = deepcopy(entry["mesh"])
+            
+            if not query.exists():
+                with self.db.atomic():
+                    stab = Structure.create(**s)
+
+                    m.update(structure = stab)
+                    mtab = Mesh.create(**m)
+
+            else:
+                with self.db.atomic():
+                    stab = Structure.update(**s)
+
+                    m.update(structure = stab)
+                    mtab = Mesh.update(**m)
 
     @timer
     def computeMesh(self):
@@ -257,9 +258,6 @@ class Anisotropy(object):
         port = 2900
 
         out, err, returncode = salomepl.runSalome(port, scriptpath, env["ROOT"], case)
-
-
-
 
     def computeFlow(self):
         pass
