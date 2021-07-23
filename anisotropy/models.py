@@ -72,9 +72,9 @@ class Mesh(BaseModel):
     numberOfLayers = IntegerField(null = True)
     stretchFactor = FloatField(null = True)
     isFacesToIgnore = BooleanField(null = True)
-    #facesToIgnore = ["inlet", "outlet"]
+    facesToIgnore = ListField(null = True)
     #faces = []
-    #extrusionMethod = ExtrusionMethod.SURF_OFFSET_SMOOTH
+    extrusionMethod = TextField(null = True)
 
 
 class SubMesh(Mesh):

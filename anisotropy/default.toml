@@ -3,70 +3,212 @@ name = "anisotropy"
 format = "%(levelname)s: %(message)s"
 
 [base]
-simple = false 
-bodyCentered = false 
+simple = true 
+bodyCentered = true 
 faceCentered = true 
 
 [[structures]]
     name = "simple"
+    # auto # path: str
 
     [structures.geometry]
-    theta = [0.01, 0.28, 0.01]
-    directions = [
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.28, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
     ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
     filletsEnabled = true
+    # auto # fillets: float
 
     [structures.mesh]
-    viscousLayers = true 
-    thickness = [0.01, 0.005]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.7
+    nbSegPerEdge = 0.3
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.01, 0.005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
 
     [structures.submesh.strips]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
     growthRate = 0.2
     nbSegPerEdge = 2
     nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
 
 [[structures]]
     name = "bodyCentered"
+    # auto # path: str
 
     [structures.geometry]
-    theta = [0.01, 0.17, 0.01]
-    directions = [
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.17, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
     ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
     filletsEnabled = true
+    # auto # fillets: float
 
     [structures.mesh]
-    viscousLayers = true 
-    thickness = [0.005, 0.0005]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.7
+    nbSegPerEdge = 0.3
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.005, 0.0005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
 
     [structures.submesh.strips]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
     growthRate = 0.2
     nbSegPerEdge = 2
     nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
 
 [[structures]]
     name = "faceCentered"
+    # auto # path: str
 
     [structures.geometry]
-    theta = [0.01, 0.13, 0.01]
-    directions = [
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.18, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
         [1, 0, 0],
         [0, 0, 1],
         [1, 1, 1]
     ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
     filletsEnabled = true
+    # auto # fillets: float
 
     [structures.mesh]
-    viscousLayers = true 
-    thickness = [0.001, 0.0005]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.7
+    nbSegPerEdge = 0.3
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.001, 0.0005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
 
     [structures.submesh.strips]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
     growthRate = 0.2
     nbSegPerEdge = 2
     nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
 

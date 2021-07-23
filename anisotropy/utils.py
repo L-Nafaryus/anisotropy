@@ -42,6 +42,27 @@ class struct:
     def __repr__(self):
         return str(self)
 
+import copy
+
+def deepupdate(target, src):
+    for k, v in src.items():
+        #if type(v) == list:
+        #    if not k in target:
+        #        target[k] = copy.deepcopy(v)
+        #    else:
+        #        target[k].extend(v)
+        if type(v) == dict:
+            if not k in target:
+                target[k] = copy.deepcopy(v)
+            else:
+                deepupdate(target[k], v)
+        #elif type(v) == set:
+        #    if not k in target:
+        #        target[k] = v.copy()
+        #    else:
+        #        target[k].update(v.copy())
+        else:
+            target[k] = copy.copy(v)
 
 class Logger:
     def __init__(self, name, logpath):

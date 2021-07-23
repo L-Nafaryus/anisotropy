@@ -46,7 +46,7 @@ import os
 import toml
 from copy import deepcopy
 from anisotropy.models import db, Structure, Mesh
-from anisotropy.utils import struct
+from anisotropy.utils import struct, deepupdate
 import salomepl
 
 ###
@@ -72,8 +72,13 @@ if os.path.exists(env["CONFIG"]):
         if config.get(restricted):
             config.pop(restricted)
     
-    # TODO: dict replacing
-    #env.update(config)
+    for m, structure in enumerate(config["structures"]):
+        for n, estructure in enumerate(env["structures"]):
+            if estructure["name"] == structure["name"]:
+                deepupdate(env["structures"][n], config["structures"][m])
+
+    config.pop("structures")
+    deepupdate(env, config)
 
 ###
 #   Logger
@@ -242,14 +247,15 @@ class Anisotropy(object):
                 with self.db.atomic():
                     stab = Structure.create(**s)
 
-                    m.update(structure = stab)
+                    m.update(structure_id = stab)
                     mtab = Mesh.create(**m)
 
             else:
+                # TODO: not working update; incorrect update (all entries)
                 with self.db.atomic():
                     stab = Structure.update(**s)
 
-                    m.update(structure = stab)
+                    m.update(structure_id = stab)
                     mtab = Mesh.update(**m)
 
     @timer

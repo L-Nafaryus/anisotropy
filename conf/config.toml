@@ -1,15 +1,3 @@
-###
-#   Default config for anisotropy
-#
-#   Special values:
-#       theta = [min, max, step]
-#       thickness = [min, max]
-##
-
-[logger]
-name = "anisotropy"
-format = "%(levelname)s: %(message)s"
-
 [base]
 simple = false 
 bodyCentered = false 
@@ -20,12 +8,6 @@ faceCentered = true
 
     [structures.geometry]
     theta = [0.01, 0.28, 0.01]
-    directions = [
-        [1, 0, 0],
-        [0, 0, 1],
-        [1, 1, 1]
-    ]
-    fillet = true
 
     [structures.mesh]
     viscousLayers = true 
@@ -41,12 +23,6 @@ faceCentered = true
 
     [structures.geometry]
     theta = [0.01, 0.17, 0.01]
-    directions = [
-        [1, 0, 0],
-        [0, 0, 1],
-        [1, 1, 1]
-    ]
-    fillet = true
 
     [structures.mesh]
     viscousLayers = true 
@@ -62,12 +38,6 @@ faceCentered = true
 
     [structures.geometry]
     theta = [0.01, 0.13, 0.01]
-    directions = [
-        [1, 0, 0],
-        [0, 0, 1],
-        [1, 1, 1]
-    ]
-    fillet = true
 
     [structures.mesh]
     viscousLayers = true 
