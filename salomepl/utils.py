@@ -40,14 +40,14 @@ def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args)
     if not logpath:
         logpath = "/tmp/salome.log"
 
+    fullargs = list(args)
+    fullargs.extend([ root, logpath ])
     fmtargs = "args:{}".format(", ".join([ str(arg) for arg in args ]))
     cmdargs = [
-        "start", "-t", 
-        "--shutdown-servers=1", 
-        "--port", str(port), 
-        scriptpath, 
-        root,
-        logpath,
+        "start", "-t",
+        "--shutdown-servers=1",
+        "--port", str(port),
+        scriptpath,
         fmtargs
     ]
 

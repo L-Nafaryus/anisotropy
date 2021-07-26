@@ -15,32 +15,32 @@ class ListField(Field):
 
             except:
                 pass
-            
+
             finally:
-                pval.append(ch.strip())
+                pval.append(ch.strip().replace("'", ""))
 
         return pval
 
 db = SqliteDatabase(
-    None, 
+    None,
     pragmas = { "foreign_keys": 1 },
     field_types = { "list": "text" }
 )
 
 class BaseModel(Model):
     class Meta:
-        database = db 
+        database = db
 
 
 class Structure(BaseModel):
     name = TextField()
-    direction = TextField()
+    direction = ListField()
     theta = FloatField()
-    
+
     r0 = FloatField()
     L = FloatField()
     radius = FloatField()
-    
+
     filletsEnabled = BooleanField()
     fillets = FloatField()
     path = TextField()

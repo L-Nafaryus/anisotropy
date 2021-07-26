@@ -71,7 +71,7 @@ if os.path.exists(env["CONFIG"]):
     for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
         if config.get(restricted):
             config.pop(restricted)
-    
+
     for m, structure in enumerate(config["structures"]):
         for n, estructure in enumerate(env["structures"]):
             if estructure["name"] == structure["name"]:
@@ -110,10 +110,12 @@ def timer(func):
 
 class Anisotropy(object):
     def __init__(self):
-        self.db = self._setupDB()
+        self.env = env
+        self.db = None
         self.params = []
 
-        self.evalParameters(env)
+        #self.evalParameters(env)
+        self.setupDB()
 
     @staticmethod
     def version():
@@ -133,23 +135,21 @@ class Anisotropy(object):
 
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
-    @staticmethod
-    def _setupDB():
-        db.init(env["db_path"])
+    def setupDB(self):
+        self.db = db.init(self.env["db_path"])
 
-        if not os.path.exists(env["db_path"]):
-            db.create_tables([Structure, Mesh])
+        if not os.path.exists(self.env["db_path"]):
+            self.db.create_tables([Structure, Mesh])
 
-        return db
-
-    def evalParameters(self, _env: dict):
+    def evalEnvParameters(self):
+        """ 'Uncompress' and eval environment parameters """
         from math import sqrt
 
-        structures = deepcopy(_env["structures"])
+        structures = deepcopy(self.env["structures"])
 
         for structure in structures:
             _theta = structure["geometry"]["theta"]
-            thetaMin = int(_theta[0] / _theta[2]) 
+            thetaMin = int(_theta[0] / _theta[2])
             thetaMax = int(_theta[1] / _theta[2]) + 1
             thetaList = list(
                 map(lambda n: n * _theta[2], range(thetaMin, thetaMax))
@@ -168,7 +168,7 @@ class Anisotropy(object):
                         L = 2 * r0
                         radius = r0 / (1 - theta)
 
-                        C1, C2 = 0.8, 0.5 
+                        C1, C2 = 0.8, 0.5
                         Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
                         delta = 0.2
                         fillets = delta - Cf * (radius - r0)
@@ -188,14 +188,14 @@ class Anisotropy(object):
                         r0 = L * sqrt(3) / 4
                         radius = r0 / (1 - theta)
 
-                        C1, C2 = 0.3, 0.2 
+                        C1, C2 = 0.3, 0.2
                         Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
                         delta = 0.02
                         fillets = delta - Cf * (radius - r0)
 
-                    
+
                     path = os.path.join(
-                        _env["BUILD"],
+                        self.env["BUILD"],
                         structure["name"],
                         f"direction-{ direction }",
                         f"theta-{ theta }"
@@ -214,16 +214,25 @@ class Anisotropy(object):
                     mesh.update(
                         thickness = thicknessList[n]
                     )
-                    self.params.append({
-                        "name": structure["name"],
-                        "path": path,
-                        "geometry": geometry,
-                        "mesh": mesh,
-                        "submesh": deepcopy(structure["submesh"])
-                    })
+                    self.params.append(dict(
+                        name = structure["name"],
+                        path = path,
+                        geometry = geometry,
+                        mesh = mesh,
+                        submesh = deepcopy(structure["submesh"])
+                    ))
 
+
+    def getParams(structure, direction, theta):
+        for entry in self.params:
+            if entry["name"] == structure and
+                entry["geometry"]["direction"] == direction and
+                entry["geometry"]["theta"] == theta:
+                return entry
 
     # SELECT * FROM structure LEFT OUTER JOIN mesh ON mesh.structure_id = structure.id WHERE name = "faceCentered" AND direction = "[1, 1, 1]" AND theta = 0.12;
+    # Structure.select().join(Mesh, JOIN.LEFT_OUTER, on = (Mesh.structure_id == Structure.id)).where(Structure.name == "simple", Structure.direction == "[1, 0, 0]", Structure.theta == 0.13).dicts().get()
+    @timer
     def updateDB(self):
         for entry in self.params:
             query = (Structure
@@ -242,7 +251,7 @@ class Anisotropy(object):
             )
 
             m = deepcopy(entry["mesh"])
-            
+
             if not query.exists():
                 with self.db.atomic():
                     stab = Structure.create(**s)
@@ -251,12 +260,38 @@ class Anisotropy(object):
                     mtab = Mesh.create(**m)
 
             else:
-                # TODO: not working update; incorrect update (all entries)
                 with self.db.atomic():
-                    stab = Structure.update(**s)
+                    (Structure.update(**s)
+                        .where(
+                            Structure.name == entry["name"],
+                            Structure.direction == str(entry["geometry"]["direction"]),
+                            Structure.theta == entry["geometry"]["theta"]
+                        )
+                        .execute())
 
-                    m.update(structure_id = stab)
-                    mtab = Mesh.update(**m)
+                    (Mesh.update(**m)
+                        .where(
+                            Mesh.structure_id == query.get().id
+                        )
+                        .execute())
+
+    @timer
+    def updateFromDB(self):
+        squery = Structure.select().order_by(Structure.id)
+        mquery = Mesh.select().order_by(Mesh.structure_id)
+
+        for s, m in zip(squery.dicts(), mquery.dicts()):
+            name = s.pop("name")
+            path = s.pop("path")
+
+            self.params.append(dict(
+                name = name,
+                path = path,
+                geometry = s,
+                mesh = m
+            ))
+
+        self.params = sorted(self.params, key = lambda entry: f"{ entry['name'] } { entry['geometry']['direction'] } { entry['geometry']['theta'] }")
 
     @timer
     def computeMesh(self):
