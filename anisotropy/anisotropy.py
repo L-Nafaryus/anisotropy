@@ -225,8 +225,8 @@ class Anisotropy(object):
 
     def getParams(structure, direction, theta):
         for entry in self.params:
-            if entry["name"] == structure and
-                entry["geometry"]["direction"] == direction and
+            if entry["name"] == structure and \
+                entry["geometry"]["direction"] == direction and \
                 entry["geometry"]["theta"] == theta:
                 return entry
 
@@ -294,11 +294,11 @@ class Anisotropy(object):
         self.params = sorted(self.params, key = lambda entry: f"{ entry['name'] } { entry['geometry']['direction'] } { entry['geometry']['theta'] }")
 
     @timer
-    def computeMesh(self):
-        scriptpath = os.path.join(env["ROOT"], "salomepl/genmesh.py")
+    def computeMesh(self, name, direction, theta):
+        scriptpath = os.path.join(self.env["ROOT"], "anisotropy/genmesh.py")
         port = 2900
 
-        out, err, returncode = salomepl.runSalome(port, scriptpath, env["ROOT"], case)
+        out, err, returncode = salomepl.runSalome(port, scriptpath, env["ROOT"], name, direction, theta)
 
     def computeFlow(self):
         pass

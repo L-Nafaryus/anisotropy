@@ -1,9 +1,9 @@
 #import salome
 #salome.salome_init()
 
-import GEOM
-from salome.geom import geomBuilder
-geompy = geomBuilder.New()
+#import GEOM
+#from salome.geom import geomBuilder
+#geompy = geomBuilder.New()
 
 from math import pi, sqrt
 
@@ -284,6 +284,8 @@ def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
 
 
 def simple(theta, fillet, direction):
+    #from salomepl import getGeom
+
     if direction in [[1, 0, 0], [0, 0, 1]]:
         return simpleCubic(theta, fillet, direction)
 

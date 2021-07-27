@@ -5,9 +5,9 @@
 ##
 import os, sys
 import math
-
+import logging
 import salome
-
+import click
 
 @click.command()
 @click.argument("root")
@@ -29,18 +29,21 @@ def genmesh(root, name, direction, theta):
         os.path.join(root, "env/lib/python3.9/site-packages")
     ])
 
-    import logging
-    import click
-
-    from anisotropy import Anisotropy
-
-    from salomepl.simple import simple
-    from salomepl.faceCentered import faceCentered
-    from salomepl.bodyCentered import bodyCentered
+    from anisotropy import (
+        Anisotropy,
+        logger,
+        simple,
+        bodyCentered,
+        faceCentered
+    )
 
     from salomepl.geometry import getGeom
-    from salomepl.mesh import Mesh, Fineness, ExtrusionMethod, defaultParameters
-
+    from salomepl.mesh import (
+        Mesh, 
+        Fineness, 
+        ExtrusionMethod, 
+        defaultParameters
+    )
 
     ###
     #   Model
@@ -49,22 +52,6 @@ def genmesh(root, name, direction, theta):
     model.updateFromDB()
 
     p = model.getParams(name, direction, theta)
-
-
-    ###
-    #   Logger
-    ##
-    logging.basicConfig(
-        level = logging.INFO,
-        format = model.env["logger"]["format"],
-        handlers = [
-            logging.StreamHandler(),
-            logging.FileHandler(
-                os.path.join(model.env["LOG"], model.env["logger"]["name"])
-            )
-        ]
-    )
-    logger = logging.getLogger(model.env["logger"]["name"])
 
 
     ###
@@ -141,6 +128,7 @@ def genmesh(root, name, direction, theta):
         mesh.Triangle(subshape, **smp)
 
 
+    model.updateDB()
     returncode, errors = mesh.compute()
 
     if not returncode:
