@@ -7,291 +7,205 @@
 
 from math import pi, sqrt
 
-def simpleCubic(theta = 0.01, fillet = False, direction = [1, 0, 0]):
-    
-    ###
-    #   Parameters
-    ##
-    r0 = 1.0
-    L = 2 * r0
+class simple(object):
+    def __init__(self, direction, theta, r0, L, radius, filletsEnabled, fillets):
 
-    radius = r0 / (1 - theta)
-    xn, yn, zn = 3, 3, 3 
-    
-    length = L * sqrt(2)
-    width = L * sqrt(2)
-    height = L
+        self.direction = direction
+        self.theta = theta
+        self.r0 = r0
+        self.L = L
+        self.radius = radius
+        self.filletsEnabled = filletsEnabled
+        self.fillets = fillets
 
-    xl = sqrt(length ** 2 * 0.5)
-    yw = xl
-    zh = height
 
-    C1, C2 = 0.8, 0.5 #0.8, 0.05
-    theta1, theta2 = 0.01, 0.28
-    Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    delta = 0.2
-    filletradius = delta - Cf * (radius - r0)
-    
-    scale = 100
-    oo = geompy.MakeVertex(0, 0, 0)
+    def build(self):
 
-    ###
-    #   Bounding box
-    ##
-    if direction == [1, 0, 0]:
-        sk = geompy.Sketcher3D()
-        sk.addPointsAbsolute(xl, 0, 0)
-        sk.addPointsAbsolute(0, yw, 0)
-        sk.addPointsAbsolute(0, yw, zh)
-        sk.addPointsAbsolute(xl, 0, zh)
-        sk.addPointsAbsolute(xl, 0, 0)
+        ###
+        #   Pore Cell
+        ##
+        if self.direction in [[1, 0, 0], [0, 0, 1]]:
+            ###
+            #   Parameters
+            ##
+            xn, yn, zn = 3, 3, 3 
+            
+            length = self.L * sqrt(2)
+            width = self.L * sqrt(2)
+            height = self.L
 
-        inletface = geompy.MakeFaceWires([sk.wire()], True)
-        vecflow = geompy.GetNormal(inletface)
-        cubic = geompy.MakePrismVecH(inletface, vecflow, width)
+            xl = sqrt(length ** 2 * 0.5)
+            yw = xl
+            zh = height
 
-    elif direction == [0, 0, 1]:
-        sk = geompy.Sketcher3D()
-        sk.addPointsAbsolute(0, yw, 0)
-        sk.addPointsAbsolute(xl, 0, 0)
-        sk.addPointsAbsolute(2 * xl, yw, 0)
-        sk.addPointsAbsolute(xl, 2 * yw, 0)
-        sk.addPointsAbsolute(0, yw, 0)
+            scale = 100
+            oo = geompy.MakeVertex(0, 0, 0)
 
-        inletface = geompy.MakeFaceWires([sk.wire()], True)
-        vecflow = geompy.GetNormal(inletface)
-        cubic = geompy.MakePrismVecH(inletface, vecflow, height)
+            ###
+            #   Bounding box
+            ##
+            if self.direction == [1, 0, 0]:
+                sk = geompy.Sketcher3D()
+                sk.addPointsAbsolute(xl, 0, 0)
+                sk.addPointsAbsolute(0, yw, 0)
+                sk.addPointsAbsolute(0, yw, zh)
+                sk.addPointsAbsolute(xl, 0, zh)
+                sk.addPointsAbsolute(xl, 0, 0)
 
-        
-    inletface = geompy.MakeScaleTransform(inletface, oo, scale)
-    cubic = geompy.MakeScaleTransform(cubic, oo, scale)
+                inletface = geompy.MakeFaceWires([sk.wire()], True)
+                vecflow = geompy.GetNormal(inletface)
+                poreCell = geompy.MakePrismVecH(inletface, vecflow, width)
 
-    faces = geompy.ExtractShapes(cubic, geompy.ShapeType["FACE"], False)
-    symetryface = []
+            elif self.direction == [0, 0, 1]:
+                sk = geompy.Sketcher3D()
+                sk.addPointsAbsolute(0, yw, 0)
+                sk.addPointsAbsolute(xl, 0, 0)
+                sk.addPointsAbsolute(2 * xl, yw, 0)
+                sk.addPointsAbsolute(xl, 2 * yw, 0)
+                sk.addPointsAbsolute(0, yw, 0)
 
-    for face in faces:
-        norm = geompy.GetNormal(face)
-        angle = round(geompy.GetAngle(norm, vecflow), 0)
+                inletface = geompy.MakeFaceWires([sk.wire()], True)
+                vecflow = geompy.GetNormal(inletface)
+                poreCell = geompy.MakePrismVecH(inletface, vecflow, height)
 
-        if (angle == 0 or angle == 180) and not face == inletface:
-            outletface = face
-        
+                
+            inletface = geompy.MakeScaleTransform(inletface, oo, scale)
+            poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)
+
+            faces = geompy.ExtractShapes(poreCell, geompy.ShapeType["FACE"], False)
+            symetryface = []
+
+            for face in faces:
+                norm = geompy.GetNormal(face)
+                angle = round(geompy.GetAngle(norm, vecflow), 0)
+
+                if (angle == 0 or angle == 180) and not face == inletface:
+                    outletface = face
+                
+                else:
+                    symetryface.append(face)
+
+        elif self.direction == [1, 1, 1]:
+            ###
+            #   Parameters
+            ##
+            xn, yn, zn = 3, 3, 3 
+            
+            length = self.L * sqrt(2)
+            width = self.L * sqrt(2)
+            height = self.L
+
+            point = []
+            xl, yw, zh = -self.L - self.L / 6, -self.L - self.L / 6, -self.L / 6
+            point.append((L + xl, self.L + yw, self.L + zh))
+            point.append((5 * self.L / 3 + xl, 2 * self.L / 3 + yw, 2 * self.L / 3 + zh))
+            point.append((2 * self.L + xl, self.L + yw, 0 + zh))
+            point.append((5 * self.L / 3 + xl, 5 * self.L / 3 + yw, -self.L / 3 + zh))
+            point.append((L + xl, 2 * self.L + yw, 0 + zh))
+            point.append((2 * self.L / 3 + xl, 5 * self.L / 3 + yw, 2 * self.L / 3 + zh))
+            point.append((L + xl, self.L + yw, self.L + zh))
+
+            scale = 100
+            oo = geompy.MakeVertex(0, 0, 0)
+
+            ###
+            #   Bounding box
+            ## 
+            sk = geompy.Sketcher3D()
+
+            for p in point:
+                sk.addPointsAbsolute(*p)
+            
+            inletface = geompy.MakeFaceWires([sk.wire()], False)
+            vecflow = geompy.GetNormal(inletface)
+            poreCell = geompy.MakePrismVecH(inletface, vecflow, self.L * sqrt(3))
+
+            inletface = geompy.MakeScaleTransform(inletface, oo, scale)
+            poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)
+
+            faces = geompy.ExtractShapes(poreCell, geompy.ShapeType["FACE"], False)
+            symetryface = []
+
+            for face in faces:
+                norm = geompy.GetNormal(face)
+                angle = round(geompy.GetAngle(norm, vecflow), 0)
+
+                if (angle == 0 or angle == 180) and not face == inletface:
+                    outletface = face
+                
+                else:
+                    symetryface.append(face)
+
         else:
-            symetryface.append(face)
-    
-    ###
-    #   Grains
-    ##
-    ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
-    oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
-    oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
-
-    grain = geompy.MakeSphereR(radius)
-    lattice = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
-    lattice = geompy.MakeMultiTranslation1D(lattice, oz, L, zn)
-    
-    grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
-    grains = geompy.MakeFuseList(grains, False, False)
-
-    grains = geompy.MakeScaleTransform(grains, oo, scale)
-    grainsOrigin = None
-
-    if fillet:
-        grainsOrigin =  geompy.MakeScaleTransform(grains, oo, 1 / scale)
-        grains = geompy.MakeFilletAll(grains, filletradius * scale)
-
-    ###
-    #   Groups
-    ##
-    shape = geompy.MakeCutList(cubic, [grains])
-    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
-
-    sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
-    geompy.UnionIDs(sall,
-        geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
-
-    inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
-    inletshape = geompy.MakeCutList(inletface, [grains])
-    inletshape = geompy.MakeScaleTransform(inletshape, oo, 1 / scale)
-    geompy.UnionList(inlet, geompy.SubShapeAll(
-        geompy.GetInPlace(shape, inletshape, True), geompy.ShapeType["FACE"]))
-
-    outlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "outlet")
-    outletshape = geompy.MakeCutList(outletface, [grains])
-    outletshape = geompy.MakeScaleTransform(outletshape, oo, 1 / scale)
-    geompy.UnionList(outlet, geompy.SubShapeAll(
-        geompy.GetInPlace(shape, outletshape, True), geompy.ShapeType["FACE"]))
-    
-    symetry = []
-    for (n, face) in enumerate(symetryface):
-        name = "symetry" + str(n)
-        symetry.append(geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = name))
-        symetryshape = geompy.MakeCutList(face, [grains])
-        symetryshape = geompy.MakeScaleTransform(symetryshape, oo, 1 / scale)
-        geompy.UnionList(symetry[n], geompy.SubShapeAll(
-            geompy.GetInPlace(shape, symetryshape, True), geompy.ShapeType["FACE"]))
-    
-    groups = []
-    groups.append(inlet)
-    groups.append(outlet)
-    groups.extend(symetry)
-
-    if fillet:
-        strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
-        shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
-        stripsShape = geompy.MakeCutList(shapeShell[0], groups + [grainsOrigin])
-        geompy.UnionList(strips, geompy.SubShapeAll(
-            geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
-        groups.append(strips)
-
-    wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
-    groups.append(wall)
-
-    return shape, groups
-    
-
-def simpleHexagonalPrism(theta = 0.01, fillet = False, direction = [1, 1, 1]):
-    
-    ###
-    #   Parameters
-    ##
-    r0 = 1.0
-    L = 2 * r0
-
-    radius = r0 / (1 - theta)
-    xn, yn, zn = 3, 3, 3 
-    
-    length = L * sqrt(2)
-    width = L * sqrt(2)
-    height = L
-
-    point = []
-    xl, yw, zh = -L - L / 6, -L - L / 6, -L / 6
-    point.append((L + xl, L + yw, L + zh))
-    point.append((5 * L / 3 + xl, 2 * L / 3 + yw, 2 * L / 3 + zh))
-    point.append((2 * L + xl, L + yw, 0 + zh))
-    point.append((5 * L / 3 + xl, 5 * L / 3 + yw, -L / 3 + zh))
-    point.append((L + xl, 2 * L + yw, 0 + zh))
-    point.append((2 * L / 3 + xl, 5 * L / 3 + yw, 2 * L / 3 + zh))
-    point.append((L + xl, L + yw, L + zh))
-
-    C1, C2 = 0.8, 0.5 # 0.8, 0.05
-    theta1, theta2 = 0.01, 0.28
-    Cf = C1 + (C2 - C1) / (theta2 - theta1) * (theta - theta1)
-    delta = 0.2
-    filletradius = delta - Cf * (radius - r0)
-    
-    scale = 100
-    oo = geompy.MakeVertex(0, 0, 0)
-
-    ###
-    #   Bounding box
-    ## 
-    sk = geompy.Sketcher3D()
-
-    for p in point:
-        sk.addPointsAbsolute(*p)
-    
-    inletface = geompy.MakeFaceWires([sk.wire()], False)
-    vecflow = geompy.GetNormal(inletface)
-    hexagonPrism = geompy.MakePrismVecH(inletface, vecflow, L * sqrt(3))
-
-    inletface = geompy.MakeScaleTransform(inletface, oo, scale)
-    hexagonPrism = geompy.MakeScaleTransform(hexagonPrism, oo, scale)
-
-    faces = geompy.ExtractShapes(hexagonPrism, geompy.ShapeType["FACE"], False)
-    symetryface = []
-
-    for face in faces:
-        norm = geompy.GetNormal(face)
-        angle = round(geompy.GetAngle(norm, vecflow), 0)
-
-        if (angle == 0 or angle == 180) and not face == inletface:
-            outletface = face
+            raise Exception(f"Direction { self.direction } is not implemented")
         
-        else:
-            symetryface.append(face)
-    
-    ###
-    #   Grains
-    ##
-    ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
-    oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
-    oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
+        ###
+        #   Grains
+        ##
+        ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
+        oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
+        oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
-    grain = geompy.MakeSphereR(radius)
-    lattice = geompy.MakeMultiTranslation2D(grain, ox, L, xn, oy, L, yn)
-    lattice = geompy.MakeMultiTranslation1D(lattice, oz, L, zn)
-    
-    grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
-    grains = geompy.MakeFuseList(grains, False, False)
+        grain = geompy.MakeSphereR(self.radius)
+        lattice = geompy.MakeMultiTranslation2D(grain, ox, self.L, xn, oy, self.L, yn)
+        lattice = geompy.MakeMultiTranslation1D(lattice, oz, self.L, zn)
+        
+        grains = geompy.ExtractShapes(lattice, geompy.ShapeType["SOLID"], True)
+        grains = geompy.MakeFuseList(grains, False, False)
 
-    grains = geompy.MakeScaleTransform(grains, oo, scale)
-    grainsOrigin = None
+        grains = geompy.MakeScaleTransform(grains, oo, scale)
+        grainsOrigin = None
 
-    if fillet:
-        grainsOrigin =  geompy.MakeScaleTransform(grains, oo, 1 / scale)
-        grains = geompy.MakeFilletAll(grains, filletradius * scale)
+        if self.filletsEnabled:
+            grainsOrigin =  geompy.MakeScaleTransform(grains, oo, 1 / scale)
+            grains = geompy.MakeFilletAll(grains, self.fillets * scale)
 
-    ###
-    #   Groups
-    ##
-    shape = geompy.MakeCutList(hexagonPrism, [grains])
-    shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
+        ###
+        #   Groups
+        ##
+        shape = geompy.MakeCutList(poreCell, [grains])
+        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
 
-    sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
-    geompy.UnionIDs(sall,
-        geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
+        sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
+        geompy.UnionIDs(sall,
+            geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
 
-    inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
-    inletshape = geompy.MakeCutList(inletface, [grains])
-    inletshape = geompy.MakeScaleTransform(inletshape, oo, 1 / scale)
-    geompy.UnionList(inlet, geompy.SubShapeAll(
-        geompy.GetInPlace(shape, inletshape, True), geompy.ShapeType["FACE"]))
+        inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
+        inletshape = geompy.MakeCutList(inletface, [grains])
+        inletshape = geompy.MakeScaleTransform(inletshape, oo, 1 / scale)
+        geompy.UnionList(inlet, geompy.SubShapeAll(
+            geompy.GetInPlace(shape, inletshape, True), geompy.ShapeType["FACE"]))
 
-    outlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "outlet")
-    outletshape = geompy.MakeCutList(outletface, [grains])
-    outletshape = geompy.MakeScaleTransform(outletshape, oo, 1 / scale)
-    geompy.UnionList(outlet, geompy.SubShapeAll(
-        geompy.GetInPlace(shape, outletshape, True), geompy.ShapeType["FACE"]))
-    
-    symetry = []
-    for (n, face) in enumerate(symetryface):
-        name = "symetry" + str(n)
-        symetry.append(geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = name))
-        symetryshape = geompy.MakeCutList(face, [grains])
-        symetryshape = geompy.MakeScaleTransform(symetryshape, oo, 1 / scale)
-        geompy.UnionList(symetry[n], geompy.SubShapeAll(
-            geompy.GetInPlace(shape, symetryshape, True), geompy.ShapeType["FACE"]))
+        outlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "outlet")
+        outletshape = geompy.MakeCutList(outletface, [grains])
+        outletshape = geompy.MakeScaleTransform(outletshape, oo, 1 / scale)
+        geompy.UnionList(outlet, geompy.SubShapeAll(
+            geompy.GetInPlace(shape, outletshape, True), geompy.ShapeType["FACE"]))
+        
+        symetry = []
+        for (n, face) in enumerate(symetryface):
+            name = "symetry" + str(n)
+            symetry.append(geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = name))
+            symetryshape = geompy.MakeCutList(face, [grains])
+            symetryshape = geompy.MakeScaleTransform(symetryshape, oo, 1 / scale)
+            geompy.UnionList(symetry[n], geompy.SubShapeAll(
+                geompy.GetInPlace(shape, symetryshape, True), geompy.ShapeType["FACE"]))
 
-    groups = []
-    groups.append(inlet)
-    groups.append(outlet)
-    groups.extend(symetry)
-    
-    if fillet:
-        strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
-        shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
-        stripsShape = geompy.MakeCutList(shapeShell[0], groups + [grainsOrigin])
-        geompy.UnionList(strips, geompy.SubShapeAll(
-            geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
-        groups.append(strips)
+        groups = []
+        groups.append(inlet)
+        groups.append(outlet)
+        groups.extend(symetry)
+        
+        if self.filletsEnabled:
+            strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
+            shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
+            stripsShape = geompy.MakeCutList(shapeShell[0], groups + [grainsOrigin])
+            geompy.UnionList(strips, geompy.SubShapeAll(
+                geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
+            groups.append(strips)
 
-    wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
-    groups.append(wall)
+        wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
+        groups.append(wall)
 
-    return shape, groups
-
-
-def simple(theta, fillet, direction):
-    #from salomepl import getGeom
-
-    if direction in [[1, 0, 0], [0, 0, 1]]:
-        return simpleCubic(theta, fillet, direction)
-
-    elif direction == [1, 1, 1]:
-        return simpleHexagonalPrism(theta, fillet, direction)
-
-    else:
-        raise Exception("This direction is not implemented")
+        return shape, groups
 
