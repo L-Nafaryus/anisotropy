@@ -2,12 +2,6 @@ import os, sys
 import time
 from datetime import timedelta, datetime
 import shutil
-
-#ROOT = "/".join(__file__.split("/")[:-2])
-#sys.path.append(os.path.abspath(ROOT))
-
-#from anisotropy.utils import struct
-import toml
 import logging
 
 __version__ = "1.1"
@@ -135,12 +129,6 @@ class Anisotropy(object):
 
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
-    def setupDB(self):
-        self.db = db.init(self.env["db_path"])
-
-        if not os.path.exists(self.env["db_path"]):
-            self.db.create_tables([Structure, Mesh])
-
     def evalEnvParameters(self):
         """ 'Uncompress' and eval environment parameters """
         from math import sqrt
@@ -230,8 +218,19 @@ class Anisotropy(object):
                 entry["geometry"]["theta"] == theta:
                 return entry
 
-    # SELECT * FROM structure LEFT OUTER JOIN mesh ON mesh.structure_id = structure.id WHERE name = "faceCentered" AND direction = "[1, 1, 1]" AND theta = 0.12;
-    # Structure.select().join(Mesh, JOIN.LEFT_OUTER, on = (Mesh.structure_id == Structure.id)).where(Structure.name == "simple", Structure.direction == "[1, 0, 0]", Structure.theta == 0.13).dicts().get()
+
+    def setupDB(self):
+        self.db = db.init(self.env["db_path"])
+
+        if not os.path.exists(self.env["db_path"]):
+            self.db.create_tables([
+                Structure, 
+                Mesh,
+                SubMesh,
+                MeshResult
+            ])
+
+
     @timer
     def updateDB(self):
         for entry in self.params:
@@ -252,12 +251,22 @@ class Anisotropy(object):
 
             m = deepcopy(entry["mesh"])
 
+            sm = deepcopy(entry.get("submesh", {}))
+
+            mr = deepcopy(entry.get("meshResult", {}))
+
             if not query.exists():
                 with self.db.atomic():
                     stab = Structure.create(**s)
 
                     m.update(structure_id = stab)
                     mtab = Mesh.create(**m)
+
+                    sm.update(mesh_id = mtab)
+                    smtab = SubMesh.create(**sm)
+
+                    mr.update(mesh_id = mtab)
+                    mrtab = MeshResult.create(**mr)
 
             else:
                 with self.db.atomic():
@@ -275,10 +284,19 @@ class Anisotropy(object):
                         )
                         .execute())
 
+                    (SubMesh.update(**sm)
+                        .where(
+                            Submesh.mesh_id == None # TODO: ???
+                        )
+                        .execute())
+
+                    # TODO: for MeshResult
+
     @timer
     def updateFromDB(self):
         squery = Structure.select().order_by(Structure.id)
         mquery = Mesh.select().order_by(Mesh.structure_id)
+
 
         for s, m in zip(squery.dicts(), mquery.dicts()):
             name = s.pop("name")

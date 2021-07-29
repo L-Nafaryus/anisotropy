@@ -1,25 +1,21 @@
-#import salome
-#salome.salome_init()
-
-#import GEOM
-#from salome.geom import geomBuilder
-#geompy = geomBuilder.New()
-
 from math import pi, sqrt
 
 class simple(object):
-    def __init__(self, direction, theta, r0, L, radius, filletsEnabled, fillets):
+    def __init__(self, **kwargs):
 
-        self.direction = direction
-        self.theta = theta
-        self.r0 = r0
-        self.L = L
-        self.radius = radius
-        self.filletsEnabled = filletsEnabled
-        self.fillets = fillets
+        self.direction = kwargs.get("direction", [1, 0, 0])
+        self.theta = kwargs.get("theta", 0.01)
+        self.r0 = kwargs.get("r0", 1)
+        self.L = kwargs.get("L", 2 * self.r0)
+        self.radius = kwargs.get("radius", self.r0 / (1 - self.theta)) 
+        self.filletsEnabled = kwargs.get("filletsEnabled", False)
+        self.fillets = kwargs.get("fillets", 0)
 
 
     def build(self):
+        from salomepl import getGeom
+
+        geompy = getGeom()
 
         ###
         #   Pore Cell
@@ -164,7 +160,7 @@ class simple(object):
         #   Groups
         ##
         shape = geompy.MakeCutList(poreCell, [grains])
-        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simpleCubic")
+        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "simple")
 
         sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
         geompy.UnionIDs(sall,

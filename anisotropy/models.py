@@ -83,6 +83,17 @@ class SubMesh(Mesh):
 
 class MeshResult(BaseModel):
     mesh_id = ForeignKeyField(Mesh, backref = "meshresults")
+    
+    surfaceArea = FloatField(null = True)
+    volume = FloatField(null = True)
+
+    elements = FloatField(null = True)
+    edges = FloatField(null = True)
+    faces = FloatField(null = True)
+    volumes = FloatField(null = True)
+    tetrahedrons = FloatField(null = True)
+    prisms = FloatField(null = True)
+    pyramids = FloatField(null = True)
 
     calculationTime = TimeField(null = True)
 

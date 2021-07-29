@@ -72,12 +72,8 @@ def genmesh(root, name, direction, theta):
     #   Shape
     ##
     geompy = getGeom()
-    structure = globals().get(p["name"])
-    shape, groups = structure(
-        p["geometry"]["theta"],
-        p["geometry"]["fillets"],
-        p["geometry"]["direction"]
-    )
+    structure = locals().get(p["name"])
+    shape, groups = structure(**p["geometry"])
 
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
@@ -144,11 +140,17 @@ def genmesh(root, name, direction, theta):
 
     mesh.exportUNV(os.path.join(p["path"], "mesh.unv"))
 
-    stats = ""
-    for k, v in mesh.stats().items():
-        stats += f"{ k }:\t\t{ v }\n"
+    meshStats = mesh.stats()
+    p["meshResult"] = dict(
+        mesh_id = p["mesh"]["id"],
+        surfaceArea = surfaceArea,
+        volume = volume,
+        **meshStats
+    )
+    model.updateDB()
 
-    logger.info(f"mesh stats:\n{ stats[ :-1] }")
+    statstr = "\n".join(map(lambda k, v: f"{ k }:\t{ v }", meshStats))
+    logger.info(f"mesh stats:\n{ statsstr }")
 
     salome.salome_close()
 
