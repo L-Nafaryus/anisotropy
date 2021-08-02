@@ -39,9 +39,10 @@ __version__ = "1.1"
 import os
 import toml
 from copy import deepcopy
-from anisotropy.models import db, Structure, Mesh
+from anisotropy.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult
 from anisotropy.utils import struct, deepupdate
 import salomepl
+import openfoam
 
 ###
 #   Environment variables and config
@@ -59,20 +60,22 @@ _defaultConfig = os.path.join(env["ROOT"], "anisotropy/default.toml")
 if os.path.exists(_defaultConfig):
     env.update(toml.load(_defaultConfig))
 
-if os.path.exists(env["CONFIG"]):
-    config = toml.load(env["CONFIG"])
+#if os.path.exists(env["CONFIG"]):
+#    config = toml.load(env["CONFIG"])
 
-    for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
-        if config.get(restricted):
-            config.pop(restricted)
+#    for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
+#        if config.get(restricted):
+#            config.pop(restricted)
 
-    for m, structure in enumerate(config["structures"]):
-        for n, estructure in enumerate(env["structures"]):
-            if estructure["name"] == structure["name"]:
-                deepupdate(env["structures"][n], config["structures"][m])
+    # TODO: not working if custom config empty and etc
+#    for m, structure in enumerate(config["structures"]):
+#        for n, estructure in enumerate(env["structures"]):
+#            if estructure["name"] == structure["name"]:
+#                deepupdate(env["structures"][n], config["structures"][m])
 
-    config.pop("structures")
-    deepupdate(env, config)
+#    config.pop("structures")
+#    deepupdate(env, config)
+
 
 ###
 #   Logger
@@ -109,7 +112,7 @@ class Anisotropy(object):
         self.params = []
 
         #self.evalParameters(env)
-        self.setupDB()
+        #self.setupDB()
 
     @staticmethod
     def version():
@@ -121,8 +124,8 @@ class Anisotropy(object):
         }
 
         try:
-            salomeplVersion = salomepl.version()
-            openfoamVersion = openfoam.foamVersion()
+            versions["Salome"] = salomepl.utils.version()
+            versions["OpenFOAM"] = openfoam.version()
 
         except Exception:
             pass
@@ -131,6 +134,7 @@ class Anisotropy(object):
 
     def evalEnvParameters(self):
         """ 'Uncompress' and eval environment parameters """
+
         from math import sqrt
 
         structures = deepcopy(self.env["structures"])
@@ -211,7 +215,7 @@ class Anisotropy(object):
                     ))
 
 
-    def getParams(structure, direction, theta):
+    def getParams(structure: str, direction: list, theta: float):
         for entry in self.params:
             if entry["name"] == structure and \
                 entry["geometry"]["direction"] == direction and \
@@ -220,7 +224,8 @@ class Anisotropy(object):
 
 
     def setupDB(self):
-        self.db = db.init(self.env["db_path"])
+        self.db = db
+        self.db.init(self.env["db_path"])
 
         if not os.path.exists(self.env["db_path"]):
             self.db.create_tables([
@@ -236,6 +241,7 @@ class Anisotropy(object):
         for entry in self.params:
             query = (Structure
                 .select()
+                .join(Mesh, JOIN.INNER, on = (Mesh.structure_id == Structure.id))
                 .where(
                     Structure.name == entry["name"],
                     Structure.direction == str(entry["geometry"]["direction"]),
@@ -251,7 +257,7 @@ class Anisotropy(object):
 
             m = deepcopy(entry["mesh"])
 
-            sm = deepcopy(entry.get("submesh", {}))
+            sm = deepcopy(entry.get("submesh", []))
 
             mr = deepcopy(entry.get("meshResult", {}))
 
@@ -262,8 +268,8 @@ class Anisotropy(object):
                     m.update(structure_id = stab)
                     mtab = Mesh.create(**m)
 
-                    sm.update(mesh_id = mtab)
-                    smtab = SubMesh.create(**sm)
+                    for item in sm:
+                        smtab = SubMesh.create(**item, mesh_id = mtab)
 
                     mr.update(mesh_id = mtab)
                     mrtab = MeshResult.create(**mr)
@@ -284,13 +290,19 @@ class Anisotropy(object):
                         )
                         .execute())
 
-                    (SubMesh.update(**sm)
+                    for item in sm:
+                        (SubMesh.update(**item)
+                            .where(
+                                SubMesh.mesh_id == query.get().mesh_id,
+                                SubMesh.name == item["name"]
+                            )
+                            .execute())
+
+                    (MeshResult.update(**mr)
                         .where(
-                            Submesh.mesh_id == None # TODO: ???
-                        )
+                            MeshResult.mesh_id == query.get().mesh_id)
                         .execute())
 
-                    # TODO: for MeshResult
 
     @timer
     def updateFromDB(self):
@@ -316,7 +328,7 @@ class Anisotropy(object):
         scriptpath = os.path.join(self.env["ROOT"], "anisotropy/genmesh.py")
         port = 2900
 
-        out, err, returncode = salomepl.runSalome(port, scriptpath, env["ROOT"], name, direction, theta)
+        return salomepl.utils.runSalome(port, scriptpath, env["ROOT"], name, direction, theta)
 
     def computeFlow(self):
         pass
@@ -480,7 +492,6 @@ def computeMesh(case):
 
 
 
-import openfoam
 
 def computeFlow(case):
     ###

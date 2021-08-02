@@ -1,6 +1,6 @@
 from math import pi, sqrt
 
-class faceCentered(object):
+class FaceCentered(object):
     def __init__(self, **kwargs):
 
         self.direction = kwargs.get("direction", [1, 0, 0])
@@ -13,9 +13,9 @@ class faceCentered(object):
 
 
     def build(self):
-        from salomepl import getGeom
+        import salomepl
 
-        geompy = getGeom()
+        geompy = salomepl.geometry.getGeom()
 
         ###
         #   Pore Cell

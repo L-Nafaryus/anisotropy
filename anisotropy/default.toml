@@ -56,7 +56,8 @@ faceCentered = true
     # auto # faces: list
     extrusionMethod = "SURF_OFFSET_SMOOTH"
 
-    [structures.submesh.strips]
+    [[structures.submesh]]
+    name = "strips"
     maxSize = 0.5
     minSize = 0.05
 
@@ -124,7 +125,8 @@ faceCentered = true
     # auto # faces: list
     extrusionMethod = "SURF_OFFSET_SMOOTH"
 
-    [structures.submesh.strips]
+    [[structures.submesh]]
+    name = "strips"
     maxSize = 0.5
     minSize = 0.05
 
@@ -192,7 +194,8 @@ faceCentered = true
     # auto # faces: list
     extrusionMethod = "SURF_OFFSET_SMOOTH"
 
-    [structures.submesh.strips]
+    [[structures.submesh]]
+    name = "strips"
     maxSize = 0.5
     minSize = 0.05
 

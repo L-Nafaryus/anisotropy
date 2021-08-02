@@ -15,6 +15,10 @@ import click
 @click.argument("direction")
 @click.argument("theta", type = click.FLOAT)
 def genmesh(root, name, direction, theta):
+    print(root)
+    print(name)
+    print(direction)
+    print(theta)
     ###
     #   Args
     ##
@@ -37,13 +41,7 @@ def genmesh(root, name, direction, theta):
         faceCentered
     )
 
-    from salomepl.geometry import getGeom
-    from salomepl.mesh import (
-        Mesh, 
-        Fineness, 
-        ExtrusionMethod, 
-        defaultParameters
-    )
+    import salomepl
 
     ###
     #   Model
@@ -71,7 +69,7 @@ def genmesh(root, name, direction, theta):
     ###
     #   Shape
     ##
-    geompy = getGeom()
+    geompy = salomepl.geometry.getGeom()
     structure = locals().get(p["name"])
     shape, groups = structure(**p["geometry"])
 
@@ -104,7 +102,7 @@ def genmesh(root, name, direction, theta):
             faces.append(group)
 
 
-    mesh = Mesh(shape)
+    mesh = salomepl.mesh.Mesh(shape)
     mesh.Tetrahedron(**mp)
 
     if mp["viscousLayers"]:
@@ -112,16 +110,16 @@ def genmesh(root, name, direction, theta):
 
     smp = p["submesh"]
 
-    for name in smp.keys():
+    for submesh in smp:
         for group in groups:
-            if group.GetName() == name:
+            if submesh["name"] == group.GetName():
                 subshape = group
 
-        smp["maxSize"] = meanSize * 1e-1
-        smp["minSize"] = meanSize * 1e-3
-        smp["chordalError"] = smp["minSize"] * 1e+1
+                submesh["maxSize"] = meanSize * 1e-1
+                submesh["minSize"] = meanSize * 1e-3
+                submesh["chordalError"] = submesh["minSize"] * 1e+1
 
-        mesh.Triangle(subshape, **smp)
+                mesh.Triangle(subshape, **submesh)
 
 
     model.updateDB()
@@ -154,3 +152,4 @@ def genmesh(root, name, direction, theta):
 
     salome.salome_close()
 
+genmesh()

@@ -1,8 +1,8 @@
 import os
 import shutil
 
-def foamVersion() -> str:
-    return "OpenFOAM-{}".format(os.environ["WM_PROJECT_VERSION"])
+def version() -> str:
+    return os.environ["WM_PROJECT_VERSION"]
 
 
 def foamClean(case: str = None):

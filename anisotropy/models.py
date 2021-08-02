@@ -77,8 +77,27 @@ class Mesh(BaseModel):
     extrusionMethod = TextField(null = True)
 
 
-class SubMesh(Mesh):
+class SubMesh(BaseModel):
     mesh_id = ForeignKeyField(Mesh, backref = "submeshes")
+    name = TextField()
+
+    maxSize = FloatField(null = True) 
+    minSize = FloatField(null = True) 
+
+    fineness = IntegerField(null = True) 
+    growthRate = FloatField(null = True)
+    nbSegPerEdge = FloatField(null = True)
+    nbSegPerRadius = FloatField(null = True)
+    
+    chordalErrorEnabled = BooleanField(null = True)
+    chordalError = FloatField(null = True)
+    
+    secondOrder = BooleanField(null = True)
+    optimize = BooleanField(null = True)
+    quadAllowed = BooleanField(null = True)
+    useSurfaceCurvature = BooleanField(null = True)
+    fuseEdges = BooleanField(null = True)
+    checkChartBoundary = BooleanField(null = True)
 
 
 class MeshResult(BaseModel):

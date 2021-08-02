@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from anisotropy.anisotropy import (
+from anisotropy.core import (
     Anisotropy,
     logger
 )
 
-from anisotropy.simple import simple
-from anisotropy.bodyCentered import bodyCentered
-from anisotropy.faceCentered import faceCentered
+from anisotropy.simple import Simple
+from anisotropy.bodyCentered import BodyCentered
+from anisotropy.faceCentered import FaceCentered
+
 

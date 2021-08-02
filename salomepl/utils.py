@@ -32,7 +32,7 @@ def version() -> str:
 def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args) -> int:
 
     if os.environ.get("SALOME_PATH"):
-        cmd = os.path.join(os.environ["SALOME_PATH"], salome)
+        cmd = [ os.path.join(os.environ["SALOME_PATH"], "salome") ]
 
     else:
         raise(SalomeNotFound("Can't find salome executable."))
@@ -51,8 +51,10 @@ def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args)
         fmtargs
     ]
 
+    cmd.extend(cmdargs)
+
     with subprocess.Popen(
-        [ cmd, cmdargs ],
+        cmd,
         stdout = subprocess.PIPE,
         stderr = subprocess.PIPE
     ) as proc, open(logpath, "wb") as logfile:
@@ -61,7 +63,7 @@ def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args)
         for line in proc.stdout:
             logfile.write(line)
 
-        out, err = p.communicate()
+        out, err = proc.communicate()
 
         if err:
             logfile.write(err)

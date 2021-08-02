@@ -1,6 +1,15 @@
-import SMESH
-from salome.smesh import smeshBuilder
-smesh = smeshBuilder.New()
+try:
+    import SMESH
+    from salome.smesh import smeshBuilder
+
+except ImportError:
+    print("[Warning] Trying to get SALOME mesh modules outside SALOME environment. Modules won't be imported.")
+
+if globals().get("smeshBuilder"):
+    smesh = smeshBuilder.New()
+
+else:
+    smesh = None
 
 import enum
 
@@ -13,9 +22,10 @@ class Fineness(enum.Enum):
     Custom = 5
 
 class ExtrusionMethod(object):
-    SURF_OFFSET_SMOOTH = smeshBuilder.SURF_OFFSET_SMOOTH
-    FACE_OFFSET = smeshBuilder.FACE_OFFSET
-    NODE_OFFSET = smeshBuilder.NODE_OFFSET
+    pass
+    #SURF_OFFSET_SMOOTH = smeshBuilder.SURF_OFFSET_SMOOTH
+    #FACE_OFFSET = smeshBuilder.FACE_OFFSET
+    #NODE_OFFSET = smeshBuilder.NODE_OFFSET
 
 def getSmesh():
     return smesh
@@ -108,7 +118,7 @@ class Mesh(object):
             stretchFactor = 0,
             faces = [], 
             isFacesToIgnore = True, 
-            extrMethod = ExtrusionMethod.SURF_OFFSET_SMOOTH, 
+            extrMethod = None,#ExtrusionMethod.SURF_OFFSET_SMOOTH, 
             **kwargs
         ):
 
