@@ -138,6 +138,7 @@ class Anisotropy(object):
         from math import sqrt
 
         structures = deepcopy(self.env["structures"])
+        self.params = []
 
         for structure in structures:
             _theta = structure["geometry"]["theta"]
@@ -194,7 +195,7 @@ class Anisotropy(object):
                     )
                     geometry = dict(
                         theta = theta,
-                        direction = direction,
+                        direction = [ float(num) for num in direction ],
                         r0 = r0,
                         L = L,
                         radius = radius,
@@ -236,11 +237,109 @@ class Anisotropy(object):
             ])
 
 
+    def _updateStructure(self, src: dict, queryMain) -> int:
+        raw = deepcopy(src["geometry"])
+        raw.update(
+            name = src["name"],
+            path = src["path"]
+        )
+
+        with self.db.atomic():
+            if not queryMain.exists():
+                tabID = Structure.create(**raw)
+
+            else:
+                req = queryMain.dicts().get()
+                tabID = req["id"]
+
+                query = (
+                    Structure.update(**raw)
+                    .where(
+                        Structure.name == req["name"],
+                        Structure.direction == req["direction"],
+                        Structure.theta == req["theta"]
+                    )
+                )
+                query.execute()
+
+        return tabID
+
+    def _updateMesh(self, src: dict, queryMain, structureID) -> int:
+        raw = deepcopy(src)
+
+        with self.db.atomic():
+            if not queryMain.exists():
+                tabID = Mesh.create(
+                    structure_id = structureID,
+                    **raw
+                )
+
+            else:
+                req = queryMain.dicts().get()
+                tabID = req["mesh_id"]
+
+                query = (
+                    Mesh.update(**raw)
+                    .where(
+                        Mesh.structure_id == req["id"]
+                    )
+                )
+                query.execute()
+
+        return tabID
+
+    def _updateSubMesh(self, srcs: list, queryMain, meshID) -> None:
+        for src in srcs:
+            raw = deepcopy(src)
+
+            with self.db.atomic():
+                if not queryMain.exists():
+                    tabID = SubMesh.create(
+                        mesh_id = meshID,
+                        **raw
+                    )
+
+                else:
+                    req = queryMain.dicts().get()
+                    tabID = req["mesh_id"]
+
+                    query = (
+                        SubMesh.update(**raw)
+                        .where(
+                            SubMesh.mesh_id == req["mesh_id"]
+                            SubMesh.name == src["name"]
+                        )
+                    )
+                    query.execute()
+
+    def _updateMeshResult(self, src: dict, queryMain, meshID) -> None:
+        raw = deepcopy(src)
+
+        with self.db.atomic():
+            if not queryMain.exists():
+                tabID = MeshResult.create(
+                    mesh_id = meshID,
+                    **raw
+                )
+
+            else:
+                req = queryMain.dicts().get()
+                tabID = req["mesh_id"]
+
+                query = (
+                    Mesh.update(**raw)
+                    .where(
+                        Mesh.mesh_id == req["mesh_id"]
+                    )
+                )
+                query.execute()
+
     @timer
     def updateDB(self):
         for entry in self.params:
-            query = (Structure
-                .select()
+            query = (
+                Structure
+                .select(Structure, Mesh)
                 .join(Mesh, JOIN.INNER, on = (Mesh.structure_id == Structure.id))
                 .where(
                     Structure.name == entry["name"],
@@ -248,67 +347,19 @@ class Anisotropy(object):
                     Structure.theta == entry["geometry"]["theta"]
                 )
             )
-
-            s = deepcopy(entry["geometry"])
-            s.update(
-                name = entry["name"],
-                path = entry["path"]
-            )
-
-            m = deepcopy(entry["mesh"])
-
-            sm = deepcopy(entry.get("submesh", []))
-
-            mr = deepcopy(entry.get("meshResult", {}))
-
-            if not query.exists():
-                with self.db.atomic():
-                    stab = Structure.create(**s)
-
-                    m.update(structure_id = stab)
-                    mtab = Mesh.create(**m)
-
-                    for item in sm:
-                        smtab = SubMesh.create(**item, mesh_id = mtab)
-
-                    mr.update(mesh_id = mtab)
-                    mrtab = MeshResult.create(**mr)
-
-            else:
-                with self.db.atomic():
-                    (Structure.update(**s)
-                        .where(
-                            Structure.name == entry["name"],
-                            Structure.direction == str(entry["geometry"]["direction"]),
-                            Structure.theta == entry["geometry"]["theta"]
-                        )
-                        .execute())
-
-                    (Mesh.update(**m)
-                        .where(
-                            Mesh.structure_id == query.get().id
-                        )
-                        .execute())
-
-                    for item in sm:
-                        (SubMesh.update(**item)
-                            .where(
-                                SubMesh.mesh_id == query.get().mesh_id,
-                                SubMesh.name == item["name"]
-                            )
-                            .execute())
-
-                    (MeshResult.update(**mr)
-                        .where(
-                            MeshResult.mesh_id == query.get().mesh_id)
-                        .execute())
+            
+            # TODO: empty entries
+            structureID = self._updateStructure(entry, query)
+            meshID = self._updateMesh(entry["mesh"], query, structureID)
+            self._updateSubMesh(entry.get("submesh", []), query, meshID)
+            self._updateMeshResult(entry.get("meshresults", {}), query, meshID)
 
 
     @timer
     def updateFromDB(self):
         squery = Structure.select().order_by(Structure.id)
         mquery = Mesh.select().order_by(Mesh.structure_id)
-
+        self.params = []
 
         for s, m in zip(squery.dicts(), mquery.dicts()):
             name = s.pop("name")

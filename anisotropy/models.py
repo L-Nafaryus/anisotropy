@@ -9,15 +9,12 @@ class ListField(Field):
     def python_value(self, value):
         pval = []
 
-        for ch in value[1 : -1].split(","):
+        for entry in value[1 : -1].split(","):
             try:
-                pval.append(float(ch))
+                pval.append(float(entry))
 
             except:
-                pass
-
-            finally:
-                pval.append(ch.strip().replace("'", ""))
+                pval.append(entry.strip().replace("'", ""))
 
         return pval
 
@@ -47,6 +44,7 @@ class Structure(BaseModel):
 
 
 class Mesh(BaseModel):
+    mesh_id = PrimaryKeyField()
     structure_id = ForeignKeyField(Structure, backref = "meshes")
 
     maxSize = FloatField(null = True) 
@@ -105,14 +103,14 @@ class MeshResult(BaseModel):
     
     surfaceArea = FloatField(null = True)
     volume = FloatField(null = True)
-
-    elements = FloatField(null = True)
-    edges = FloatField(null = True)
-    faces = FloatField(null = True)
-    volumes = FloatField(null = True)
-    tetrahedrons = FloatField(null = True)
-    prisms = FloatField(null = True)
-    pyramids = FloatField(null = True)
+    
+    elements = IntegerField(null = True)
+    edges = IntegerField(null = True)
+    faces = IntegerField(null = True)
+    volumes = IntegerField(null = True)
+    tetrahedrons = IntegerField(null = True)
+    prisms = IntegerField(null = True)
+    pyramids = IntegerField(null = True)
 
     calculationTime = TimeField(null = True)
 
