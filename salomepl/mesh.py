@@ -21,59 +21,10 @@ class Fineness(enum.Enum):
     VeryFine = 4
     Custom = 5
 
-class ExtrusionMethod(object):
-    pass
-    #SURF_OFFSET_SMOOTH = smeshBuilder.SURF_OFFSET_SMOOTH
-    #FACE_OFFSET = smeshBuilder.FACE_OFFSET
-    #NODE_OFFSET = smeshBuilder.NODE_OFFSET
 
 def getSmesh():
     return smesh
 
-def defaultParameters(**configParameters):
-    maxSize = 0.5
-    minSize = 0.05
-
-    fineness = Fineness.Custom.value
-    growthRate = 0.7
-    nbSegPerEdge = 0.3
-    nbSegPerRadius = 1
-    
-    chordalErrorEnabled = True
-    chordalError = 0.25
-    
-    secondOrder = False
-    optimize = True
-    quadAllowed = False
-    useSurfaceCurvature = True
-    fuseEdges = True
-    checkChartBoundary = False
-
-    viscousLayers = False
-    thickness = 0.005
-    numberOfLayers = 1
-    stretchFactor = 1
-    isFacesToIgnore = True 
-    facesToIgnore = ["inlet", "outlet"]
-    faces = []
-    extrusionMethod = ExtrusionMethod.SURF_OFFSET_SMOOTH
-
-    p = locals()
-    del p["configParameters"]
-
-    if configParameters:
-        for k, v in p.items():
-            if configParameters.get(k) is not None:
-                p[k] = configParameters[k]
-            
-                # Overwrite special values
-                if k == "fineness":
-                    p["fineness"] = Fineness.__dict__[p["fineness"]].value
-                
-                if k == "extrusionMethod":
-                    p["extrusionMethod"] = ExtrusionMethod.__dict__[p["extrusionMethod"]] 
-
-    return p
 
 def updateParams(old, new: dict):
     old.SetMaxSize(new.get("maxSize", old.GetMaxSize()))
@@ -112,13 +63,20 @@ class Mesh(object):
 
         self.params = updateParams(self.params, kwargs)
 
+    def _extrusionMethod(self, key: str):
+        return dict(
+            SURF_OFFSET_SMOOTH = smeshBuilder.SURF_OFFSET_SMOOTH,
+            FACE_OFFSET = smeshBuilder.FACE_OFFSET,
+            NODE_OFFSET = smeshBuilder.NODE_OFFSET,
+        ).get(key, smeshBuilder.SURF_OFFSET_SMOOTH)
+
     def ViscousLayers(self,
             thickness = 1, 
             numberOfLayers = 1, 
             stretchFactor = 0,
             faces = [], 
             isFacesToIgnore = True, 
-            extrMethod = None,#ExtrusionMethod.SURF_OFFSET_SMOOTH, 
+            extrMethod = "SURF_OFFSET_SMOOTH",
             **kwargs
         ):
 
@@ -128,7 +86,7 @@ class Mesh(object):
             stretchFactor,
             faces,
             isFacesToIgnore,
-            extrMethod
+            self._extrusionMethod(extrMethod)
         )
 
     def Triangle(self, subshape, **kwargs):

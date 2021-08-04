@@ -36,9 +36,9 @@ def genmesh(root, name, direction, theta):
     from anisotropy import (
         Anisotropy,
         logger,
-        simple,
-        bodyCentered,
-        faceCentered
+        Simple,
+        BodyCentered,
+        FaceCentered
     )
 
     import salomepl
@@ -47,6 +47,7 @@ def genmesh(root, name, direction, theta):
     #   Model
     ##
     model = Anisotropy()
+    model.setupDB()
     model.updateFromDB()
 
     p = model.getParams(name, direction, theta)
@@ -70,8 +71,12 @@ def genmesh(root, name, direction, theta):
     #   Shape
     ##
     geompy = salomepl.geometry.getGeom()
-    structure = locals().get(p["name"])
-    shape, groups = structure(**p["geometry"])
+    structure = dict(
+        simple = Simple,
+        bodyCentered = BodyCentered,
+        faceCentered = FaceCentered
+    )[p["name"]]
+    shape, groups = structure(**p["geometry"]).build()
 
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
@@ -98,7 +103,7 @@ def genmesh(root, name, direction, theta):
 
     faces = []
     for group in groups:
-        if group.GetName() in mconfig["facesToIgnore"]:
+        if group.GetName() in mp["facesToIgnore"]:
             faces.append(group)
 
 

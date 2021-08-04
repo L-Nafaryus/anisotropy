@@ -216,7 +216,7 @@ class Anisotropy(object):
                     ))
 
 
-    def getParams(structure: str, direction: list, theta: float):
+    def getParams(self, structure: str, direction: list, theta: float):
         for entry in self.params:
             if entry["name"] == structure and \
                 entry["geometry"]["direction"] == direction and \
@@ -256,7 +256,7 @@ class Anisotropy(object):
                     Structure.update(**raw)
                     .where(
                         Structure.name == req["name"],
-                        Structure.direction == req["direction"],
+                        Structure.direction == str(req["direction"]),
                         Structure.theta == req["theta"]
                     )
                 )
@@ -289,6 +289,9 @@ class Anisotropy(object):
         return tabID
 
     def _updateSubMesh(self, srcs: list, queryMain, meshID) -> None:
+        if not srcs:
+            return
+
         for src in srcs:
             raw = deepcopy(src)
 
@@ -306,13 +309,16 @@ class Anisotropy(object):
                     query = (
                         SubMesh.update(**raw)
                         .where(
-                            SubMesh.mesh_id == req["mesh_id"]
+                            SubMesh.mesh_id == req["mesh_id"],
                             SubMesh.name == src["name"]
                         )
                     )
                     query.execute()
 
     def _updateMeshResult(self, src: dict, queryMain, meshID) -> None:
+        if not src:
+            return
+
         raw = deepcopy(src)
 
         with self.db.atomic():
@@ -348,20 +354,21 @@ class Anisotropy(object):
                 )
             )
             
-            # TODO: empty entries
             structureID = self._updateStructure(entry, query)
             meshID = self._updateMesh(entry["mesh"], query, structureID)
             self._updateSubMesh(entry.get("submesh", []), query, meshID)
             self._updateMeshResult(entry.get("meshresults", {}), query, meshID)
 
-
+    # TODO: loadDB (one model), loadsDB (all models)
     @timer
     def updateFromDB(self):
         squery = Structure.select().order_by(Structure.id)
         mquery = Mesh.select().order_by(Mesh.structure_id)
+        smquery = SubMesh.select()
+        mrquery = MeshResult.select().order_dy(MeshResult.mesh_id)
         self.params = []
 
-        for s, m in zip(squery.dicts(), mquery.dicts()):
+        for s, m, mr in zip(squery.dicts(), mquery.dicts(), mrquery.dicts()):
             name = s.pop("name")
             path = s.pop("path")
 
@@ -369,7 +376,9 @@ class Anisotropy(object):
                 name = name,
                 path = path,
                 geometry = s,
-                mesh = m
+                mesh = m,
+                submesh = [ d for d in smquery.dicts() if d["mesh_id"] == m["mesh_id"] ],
+                meshresults = mr 
             ))
 
         self.params = sorted(self.params, key = lambda entry: f"{ entry['name'] } { entry['geometry']['direction'] } { entry['geometry']['theta'] }")
@@ -379,7 +388,7 @@ class Anisotropy(object):
         scriptpath = os.path.join(self.env["ROOT"], "anisotropy/genmesh.py")
         port = 2900
 
-        return salomepl.utils.runSalome(port, scriptpath, env["ROOT"], name, direction, theta)
+        return salomepl.utils.runSalome(port, scriptpath, self.env["ROOT"], name, direction, theta)
 
     def computeFlow(self):
         pass
