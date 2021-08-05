@@ -8,10 +8,8 @@ bodyCentered = true
 faceCentered = true 
 
 [[structures]]
-    name = "simple"
-    # auto # path: str
-
-    [structures.geometry]
+    [structures.structure]
+    type = "simple"
     # auto # from theta: list # theta: float
     theta = [0.01, 0.28, 0.01]  # [min, max, step]
     # auto # from directions:list # direction: list
@@ -77,10 +75,8 @@ faceCentered = true
     checkChartBoundary = false
 
 [[structures]]
-    name = "bodyCentered"
-    # auto # path: str
-
-    [structures.geometry]
+    [structures.structure]
+    type = "bodyCentered"
     # auto # from theta: list # theta: float
     theta = [0.01, 0.17, 0.01]  # [min, max, step]
     # auto # from directions:list # direction: list
@@ -146,10 +142,8 @@ faceCentered = true
     checkChartBoundary = false
 
 [[structures]]
-    name = "faceCentered"
-    # auto # path: str
-
-    [structures.geometry]
+    [structures.structure]
+    type = "faceCentered"
     # auto # from theta: list # theta: float
     theta = [0.01, 0.18, 0.01]  # [min, max, step]
     # auto # from directions:list # direction: list

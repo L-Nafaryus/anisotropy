@@ -43,22 +43,20 @@ from anisotropy.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult
 from anisotropy.utils import struct, deepupdate
 import salomepl
 import openfoam
+from math import sqrt
 
 ###
 #   Environment variables and config
 ##
 env = { "ROOT": os.path.abspath(".") }
-env.update({
-    "BUILD": os.path.join(env["ROOT"], "build"),
-    "LOG": os.path.join(env["ROOT"], "logs"),
-    "CONFIG": os.path.join(env["ROOT"], "conf/config.toml")
-})
-env["db_path"] = os.path.join(env["BUILD"], "anisotropy.db")
+env.update(dict(
+    BUILD = os.path.join(env["ROOT"], "build"),
+    LOG = os.path.join(env["ROOT"], "logs"),
+    DEFAULT_CONFIG = os.path.join(env["ROOT"], "anisotropy/default.toml"),
+    CONFIG = os.path.join(env["ROOT"], "conf/config.toml")
+))
+env["db_path"] = env["BUILD"]
 
-_defaultConfig = os.path.join(env["ROOT"], "anisotropy/default.toml")
-
-if os.path.exists(_defaultConfig):
-    env.update(toml.load(_defaultConfig))
 
 #if os.path.exists(env["CONFIG"]):
 #    config = toml.load(env["CONFIG"])
@@ -111,8 +109,6 @@ class Anisotropy(object):
         self.db = None
         self.params = []
 
-        #self.evalParameters(env)
-        #self.setupDB()
 
     @staticmethod
     def version():
@@ -132,88 +128,128 @@ class Anisotropy(object):
 
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
-    def evalEnvParameters(self):
-        """ 'Uncompress' and eval environment parameters """
+    
+    def loadScratch(self):
+        if not os.path.exists(self.env["DEFAULT_CONFIG"]):
+            logger.error("Missed default configuration file")
+            return
 
-        from math import sqrt
+        buf = toml.load(self.env["DEFAULT_CONFIG"]).get("structures")
+        paramsAll = []
 
-        structures = deepcopy(self.env["structures"])
-        self.params = []
-
-        for structure in structures:
-            _theta = structure["geometry"]["theta"]
+        # TODO: custom config and merge
+        
+        for entry in buf:
+            #   Shortcuts
+            _theta = entry["structure"]["theta"]
             thetaMin = int(_theta[0] / _theta[2])
             thetaMax = int(_theta[1] / _theta[2]) + 1
             thetaList = list(
                 map(lambda n: n * _theta[2], range(thetaMin, thetaMax))
             )
 
-            _thickness = structure["mesh"]["thickness"]
+            _thickness = entry["mesh"]["thickness"]
             count = len(thetaList)
             thicknessList = list(
                 map(lambda n: _thickness[0] + n * (_thickness[1] - _thickness[0]) / (count - 1), range(0, count))
             )
 
-            for direction in structure["geometry"]["directions"]:
+            for direction in entry["structure"]["directions"]:
                 for n, theta in enumerate(thetaList):
-                    if structure["name"] == "simple":
-                        r0 = 1
-                        L = 2 * r0
-                        radius = r0 / (1 - theta)
+                    entryNew = {
+                        "structure": dict(
+                            type = entry["structure"]["type"],
+                            theta = theta,
+                            direction = [ float(num) for num in direction ],
+                        ),
+                        "mesh": dict(
+                            **deepcopy(entry["mesh"]),
+                            thickness = thicknessList[n]
+                        ),
+                        "submesh": dict(
+                            **deepcopy(entry["submesh"])
+                        )
+                    }
+                    
+                    paramsAll.append(entryNew)
 
-                        C1, C2 = 0.8, 0.5
-                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
-                        delta = 0.2
-                        fillets = delta - Cf * (radius - r0)
+        self.setupDB()
+        
+        for entry in paramsAll:
+            self.updateDB(entry)
 
-                    elif structure["name"] == "faceCentered":
-                        L = 1.0
-                        r0 = L * sqrt(2) / 4
-                        radius = r0 / (1 - theta)
+    
+    def evalParams(self):
+        structure = self.params.get("structure")
 
-                        C1, C2 = 0.3, 0.2
-                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
-                        delta = 0.012
-                        fillets = delta - Cf * (radius - r0)
+        if not structure:
+            logger.error("Trying to eval empty parameters")
+            return
+        
+        if structure["type"] == "simple":
+            thetaMin = 0.01
+            thetaMax = 0.28
 
-                    elif structure["name"] == "bodyCentered":
-                        L = 1.0
-                        r0 = L * sqrt(3) / 4
-                        radius = r0 / (1 - theta)
+            r0 = 1
+            L = 2 * r0
+            radius = r0 / (1 - theta)
 
-                        C1, C2 = 0.3, 0.2
-                        Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
-                        delta = 0.02
-                        fillets = delta - Cf * (radius - r0)
+            C1, C2 = 0.8, 0.5
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            delta = 0.2
+            fillets = delta - Cf * (radius - r0)
+
+        elif structure["type"] == "faceCentered":
+            thetaMin = 0.01
+            thetaMax = 0.13
+
+            L = 1.0
+            r0 = L * sqrt(2) / 4
+            radius = r0 / (1 - theta)
+
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            delta = 0.012
+            fillets = delta - Cf * (radius - r0)
+
+        elif structure["type"] == "bodyCentered":
+            thetaMin = 0.01
+            thetaMax = 0.18
+    
+            L = 1.0
+            r0 = L * sqrt(3) / 4
+            radius = r0 / (1 - theta)
+
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            delta = 0.02
+            fillets = delta - Cf * (radius - r0)
+
+        self.params["structure"] = dict(
+            **structure,
+            L = L,
+            r0 = r0,
+            radius = radius,
+            fillets = fillets 
+        )
+
+    def getCasePath(self):
+        structure = self.params.get("structure")
+
+        if not structure:
+            logger.error("Trying to use empty parameters")
+            return
+
+        return os.path.join(
+            self.env["BUILD"], 
+            structure["type"],
+            f"direction-{ structure['direction'] }",
+            f"theta-{ structure['theta'] }"
+        )
 
 
-                    path = os.path.join(
-                        self.env["BUILD"],
-                        structure["name"],
-                        f"direction-{ direction }",
-                        f"theta-{ theta }"
-                    )
-                    geometry = dict(
-                        theta = theta,
-                        direction = [ float(num) for num in direction ],
-                        r0 = r0,
-                        L = L,
-                        radius = radius,
-                        filletsEnabled = structure["geometry"]["filletsEnabled"],
-                        fillets = fillets
 
-                    )
-                    mesh = deepcopy(structure["mesh"])
-                    mesh.update(
-                        thickness = thicknessList[n]
-                    )
-                    self.params.append(dict(
-                        name = structure["name"],
-                        path = path,
-                        geometry = geometry,
-                        mesh = mesh,
-                        submesh = deepcopy(structure["submesh"])
-                    ))
+
 
 
     def getParams(self, structure: str, direction: list, theta: float):
@@ -225,8 +261,10 @@ class Anisotropy(object):
 
 
     def setupDB(self):
+        os.makedirs(self.env["db_path"], exist_ok = True)
+
         self.db = db
-        self.db.init(self.env["db_path"])
+        self.db.init(os.path.join(self.env["db_path"], "anisotropy.db"))
 
         if not os.path.exists(self.env["db_path"]):
             self.db.create_tables([
@@ -238,11 +276,7 @@ class Anisotropy(object):
 
 
     def _updateStructure(self, src: dict, queryMain) -> int:
-        raw = deepcopy(src["geometry"])
-        raw.update(
-            name = src["name"],
-            path = src["path"]
-        )
+        raw = deepcopy(src)
 
         with self.db.atomic():
             if not queryMain.exists():
@@ -250,12 +284,12 @@ class Anisotropy(object):
 
             else:
                 req = queryMain.dicts().get()
-                tabID = req["id"]
+                tabID = req["structure_id"]
 
                 query = (
                     Structure.update(**raw)
                     .where(
-                        Structure.name == req["name"],
+                        Structure.type == req["type"],
                         Structure.direction == str(req["direction"]),
                         Structure.theta == req["theta"]
                     )
@@ -281,7 +315,7 @@ class Anisotropy(object):
                 query = (
                     Mesh.update(**raw)
                     .where(
-                        Mesh.structure_id == req["id"]
+                        Mesh.structure_id == req["structure_id"]
                     )
                 )
                 query.execute()
@@ -341,28 +375,64 @@ class Anisotropy(object):
                 query.execute()
 
     @timer
-    def updateDB(self):
-        for entry in self.params:
-            query = (
-                Structure
-                .select(Structure, Mesh)
-                .join(Mesh, JOIN.INNER, on = (Mesh.structure_id == Structure.id))
-                .where(
-                    Structure.name == entry["name"],
-                    Structure.direction == str(entry["geometry"]["direction"]),
-                    Structure.theta == entry["geometry"]["theta"]
-                )
+    def updateDB(self, src: dict = None):
+        if src:
+            params = src
+
+        elif self.params:
+            params = self.params
+
+        else:
+            logger.error("Trying to update db from empty parameters")
+            return
+
+        # TODO: query for every table
+        query = (
+            Structure
+            .select(Structure, Mesh)
+            .join(
+                Mesh, 
+                JOIN.INNER, 
+                on = (Mesh.structure_id == Structure.structure_id)
             )
-            
-            structureID = self._updateStructure(entry, query)
-            meshID = self._updateMesh(entry["mesh"], query, structureID)
-            self._updateSubMesh(entry.get("submesh", []), query, meshID)
-            self._updateMeshResult(entry.get("meshresults", {}), query, meshID)
+            .where(
+                Structure.type == params["structure"]["type"],
+                Structure.direction == str(params["structure"]["direction"]),
+                Structure.theta == params["structure"]["theta"]
+            )
+        )
+        
+        structureID = self._updateStructure(entry["structure"], query)
+        
+        meshID = self._updateMesh(entry["mesh"], query, structureID)
+        self._updateSubMesh(entry.get("submesh", []), query, meshID)
+        self._updateMeshResult(entry.get("meshresults", {}), query, meshID)
+
+
+    def loadDB(self, structure_type: str, structure_direction: list, structure_theta: float):
+        query = (
+            Structure
+            .select(Structure, Mesh)
+            .join(
+                Mesh, 
+                JOIN.INNER, 
+                on = (Mesh.structure_id == Structure.structure_id)
+            )
+            .where(
+                Structure.type == structure_type,
+                Structure.direction == str(structure_direction),
+                Structure.theta == structure_theta
+            )
+        )
+
+        self.params = query.dicts().get()
+
+    
 
     # TODO: loadDB (one model), loadsDB (all models)
     @timer
     def updateFromDB(self):
-        squery = Structure.select().order_by(Structure.id)
+        squery = Structure.select().order_by(Structure.structure_id)
         mquery = Mesh.select().order_by(Mesh.structure_id)
         smquery = SubMesh.select()
         mrquery = MeshResult.select().order_dy(MeshResult.mesh_id)

@@ -30,6 +30,8 @@ class BaseModel(Model):
 
 
 class Structure(BaseModel):
+    structure_id = PrimaryKeyField()
+
     name = TextField()
     direction = ListField()
     theta = FloatField()
@@ -40,7 +42,7 @@ class Structure(BaseModel):
 
     filletsEnabled = BooleanField()
     fillets = FloatField()
-    path = TextField()
+    #path = TextField()
 
 
 class Mesh(BaseModel):
@@ -76,6 +78,7 @@ class Mesh(BaseModel):
 
 
 class SubMesh(BaseModel):
+    submesh_id = PrimaryKeyField()
     mesh_id = ForeignKeyField(Mesh, backref = "submeshes")
     name = TextField()
 
@@ -99,6 +102,7 @@ class SubMesh(BaseModel):
 
 
 class MeshResult(BaseModel):
+    meshresult_id = PrimaryKeyField()
     mesh_id = ForeignKeyField(Mesh, backref = "meshresults")
     
     surfaceArea = FloatField(null = True)
