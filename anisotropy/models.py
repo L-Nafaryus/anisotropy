@@ -32,16 +32,16 @@ class BaseModel(Model):
 class Structure(BaseModel):
     structure_id = PrimaryKeyField()
 
-    name = TextField()
+    type = TextField()
     direction = ListField()
     theta = FloatField()
 
-    r0 = FloatField()
-    L = FloatField()
-    radius = FloatField()
+    r0 = FloatField(null = True)
+    L = FloatField(null = True)
+    radius = FloatField(null = True)
 
-    filletsEnabled = BooleanField()
-    fillets = FloatField()
+    filletsEnabled = BooleanField(null = True)
+    fillets = FloatField(null = True)
     #path = TextField()
 
 

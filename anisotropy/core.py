@@ -41,9 +41,7 @@ import toml
 from copy import deepcopy
 from anisotropy.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult
 from anisotropy.utils import struct, deepupdate
-import salomepl
-import openfoam
-from math import sqrt
+
 
 ###
 #   Environment variables and config
@@ -79,18 +77,45 @@ env["db_path"] = env["BUILD"]
 #   Logger
 ##
 logger_env = env.get("logger", {})
-logging.basicConfig(
-    level = logging.INFO,
-    format = logger_env.get("format", "%(levelname)s: %(message)s"),
-    handlers = [
-        logging.StreamHandler(),
-        logging.FileHandler(
-            os.path.join(env["LOG"], logger_env.get("name", "anisotropy"))
-        )
-    ]
-)
-logger = logging.getLogger(logger_env.get("name", "anisotropy"))
 
+class CustomFormatter(logging.Formatter):
+    grey = "\x1b[38;21m"
+    yellow = "\x1b[33;21m"
+    red = "\x1b[31;21m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = logger_env.get("format", "[ %(asctime)s ] [ %(levelname)s ] %(message)s")
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+
+        return formatter.format(record)
+
+logger = logging.getLogger(logger_env.get("name", "anisotropy"))
+logger.setLevel(logging.DEBUG)
+
+sh = logging.StreamHandler()
+sh.setLevel(logging.DEBUG)
+sh.setFormatter(CustomFormatter())
+
+fh = logging.FileHandler(os.path.join(env["LOG"], logger_env.get("name", "anisotropy")))
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(CustomFormatter())
+
+logger.addHandler(sh)
+logger.addHandler(fh)
+
+peeweeLogger = logging.getLogger("peewee")
+peeweeLogger.setLevel(logging.INFO)
 
 def timer(func):
     def inner(*args, **kwargs):
@@ -102,6 +127,9 @@ def timer(func):
 
     return inner
 
+import salomepl
+import openfoam
+from math import sqrt
 
 class Anisotropy(object):
     def __init__(self):
@@ -156,19 +184,18 @@ class Anisotropy(object):
 
             for direction in entry["structure"]["directions"]:
                 for n, theta in enumerate(thetaList):
+                    mesh = deepcopy(entry["mesh"])
+                    mesh["thickness"] = thicknessList[n]
+
                     entryNew = {
                         "structure": dict(
                             type = entry["structure"]["type"],
                             theta = theta,
                             direction = [ float(num) for num in direction ],
+                            filletsEnabled = entry["structure"]["filletsEnabled"]
                         ),
-                        "mesh": dict(
-                            **deepcopy(entry["mesh"]),
-                            thickness = thicknessList[n]
-                        ),
-                        "submesh": dict(
-                            **deepcopy(entry["submesh"])
-                        )
+                        "mesh": mesh,
+                        "submesh": deepcopy(entry["submesh"])
                     }
                     
                     paramsAll.append(entryNew)
@@ -192,10 +219,10 @@ class Anisotropy(object):
 
             r0 = 1
             L = 2 * r0
-            radius = r0 / (1 - theta)
+            radius = r0 / (1 - structure["theta"])
 
             C1, C2 = 0.8, 0.5
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
             delta = 0.2
             fillets = delta - Cf * (radius - r0)
 
@@ -205,10 +232,10 @@ class Anisotropy(object):
 
             L = 1.0
             r0 = L * sqrt(2) / 4
-            radius = r0 / (1 - theta)
+            radius = r0 / (1 - structure["theta"])
 
             C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
             delta = 0.012
             fillets = delta - Cf * (radius - r0)
 
@@ -218,15 +245,15 @@ class Anisotropy(object):
     
             L = 1.0
             r0 = L * sqrt(3) / 4
-            radius = r0 / (1 - theta)
+            radius = r0 / (1 - structure["theta"])
 
             C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (theta - thetaMin)
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
             delta = 0.02
             fillets = delta - Cf * (radius - r0)
 
-        self.params["structure"] = dict(
-            **structure,
+        self.params["structure"].update(
+            #**structure,
             L = L,
             r0 = r0,
             radius = radius,
@@ -263,10 +290,11 @@ class Anisotropy(object):
     def setupDB(self):
         os.makedirs(self.env["db_path"], exist_ok = True)
 
+        dbname = os.path.join(self.env["db_path"], "anisotropy.db")
         self.db = db
-        self.db.init(os.path.join(self.env["db_path"], "anisotropy.db"))
+        self.db.init(dbname)
 
-        if not os.path.exists(self.env["db_path"]):
+        if not os.path.exists(dbname):
             self.db.create_tables([
                 Structure, 
                 Mesh,
@@ -315,39 +343,39 @@ class Anisotropy(object):
                 query = (
                     Mesh.update(**raw)
                     .where(
-                        Mesh.structure_id == req["structure_id"]
+                        Mesh.structure_id == structureID #req["structure_id"]
                     )
                 )
                 query.execute()
 
         return tabID
 
-    def _updateSubMesh(self, srcs: list, queryMain, meshID) -> None:
-        if not srcs:
+    def _updateSubMesh(self, src: dict, queryMain, meshID) -> None:
+        if not src:
             return
 
-        for src in srcs:
-            raw = deepcopy(src)
+        raw = deepcopy(src)
+        
+        with self.db.atomic():
+            if not SubMesh.select().where(SubMesh.mesh_id == meshID).exists():
+                tabID = SubMesh.create(
+                    mesh_id = meshID,
+                    **raw
+                )
+                logger.debug(f"[ DB ] Created SubMesh entry { tabID }")
 
-            with self.db.atomic():
-                if not queryMain.exists():
-                    tabID = SubMesh.create(
-                        mesh_id = meshID,
-                        **raw
+            else:
+                #req = queryMain.dicts().get()
+                #tabID = req["mesh_id"]
+
+                query = (
+                    SubMesh.update(**raw)
+                    .where(
+                        SubMesh.mesh_id == meshID, #req["mesh_id"],
+                        SubMesh.name == src["name"]
                     )
-
-                else:
-                    req = queryMain.dicts().get()
-                    tabID = req["mesh_id"]
-
-                    query = (
-                        SubMesh.update(**raw)
-                        .where(
-                            SubMesh.mesh_id == req["mesh_id"],
-                            SubMesh.name == src["name"]
-                        )
-                    )
-                    query.execute()
+                )
+                query.execute()
 
     def _updateMeshResult(self, src: dict, queryMain, meshID) -> None:
         if not src:
@@ -356,20 +384,21 @@ class Anisotropy(object):
         raw = deepcopy(src)
 
         with self.db.atomic():
-            if not queryMain.exists():
+            if not MeshResult.select().where(MeshResult.mesh_id == meshID).exists():
                 tabID = MeshResult.create(
                     mesh_id = meshID,
                     **raw
                 )
+                logger.debug(f"[ DB ] Created MeshResult entry { tabID }")
 
             else:
-                req = queryMain.dicts().get()
-                tabID = req["mesh_id"]
+                #req = queryMain.dicts().get()
+                #tabID = req["mesh_id"]
 
                 query = (
-                    Mesh.update(**raw)
+                    MeshResult.update(**raw)
                     .where(
-                        Mesh.mesh_id == req["mesh_id"]
+                        MeshResult.mesh_id == meshID #req["mesh_id"]
                     )
                 )
                 query.execute()
@@ -386,7 +415,6 @@ class Anisotropy(object):
             logger.error("Trying to update db from empty parameters")
             return
 
-        # TODO: query for every table
         query = (
             Structure
             .select(Structure, Mesh)
@@ -402,30 +430,47 @@ class Anisotropy(object):
             )
         )
         
-        structureID = self._updateStructure(entry["structure"], query)
+        structureID = self._updateStructure(params["structure"], query)
         
-        meshID = self._updateMesh(entry["mesh"], query, structureID)
-        self._updateSubMesh(entry.get("submesh", []), query, meshID)
-        self._updateMeshResult(entry.get("meshresults", {}), query, meshID)
+        meshID = self._updateMesh(params["mesh"], query, structureID)
+
+        for submeshParams in params.get("submesh", []):
+            self._updateSubMesh(submeshParams, query, meshID)
+
+        self._updateMeshResult(params.get("meshresults", {}), query, meshID)
 
 
     def loadDB(self, structure_type: str, structure_direction: list, structure_theta: float):
-        query = (
+        structureQuery = (
             Structure
-            .select(Structure, Mesh)
-            .join(
-                Mesh, 
-                JOIN.INNER, 
-                on = (Mesh.structure_id == Structure.structure_id)
-            )
+            .select()
             .where(
                 Structure.type == structure_type,
                 Structure.direction == str(structure_direction),
                 Structure.theta == structure_theta
             )
         )
+        
+        self.params = {}
 
-        self.params = query.dicts().get()
+        with self.db.atomic():
+            if structureQuery.exists():
+                self.params["structure"] = structureQuery.dicts().get()
+
+                meshQuery = structureQuery.get().meshes
+
+                if meshQuery.exists():
+                    self.params["mesh"] = meshQuery.dicts().get()
+
+                    submeshQuery = meshQuery.get().submeshes
+                    
+                    if submeshQuery.exists():
+                        self.params["submesh"] = [ entry for entry in submeshQuery.dicts() ]
+
+                    meshresultQuery = meshQuery.get().meshresults
+
+                    if meshresultQuery.exists():
+                        self.params["meshresult"] = meshresultQuery.dicts().get()
 
     
 

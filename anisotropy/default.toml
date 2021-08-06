@@ -1,6 +1,6 @@
 [logger]
 name = "anisotropy"
-format = "%(levelname)s: %(message)s"
+format = "[ %(levelname)s ] %(message)s"
 
 [base]
 simple = true 

@@ -48,9 +48,10 @@ def genmesh(root, name, direction, theta):
     ##
     model = Anisotropy()
     model.setupDB()
-    model.updateFromDB()
+    model.loadDB(name, direction, theta)
+    model.evalParams()
 
-    p = model.getParams(name, direction, theta)
+    p = model.params
 
 
     ###
@@ -58,10 +59,10 @@ def genmesh(root, name, direction, theta):
     ##
     logger.info("\n".join([
         "genmesh:",
-        f"structure type:\t{ p['name'] }",
-        f"coefficient:\t{ p['geometry']['theta'] }",
-        f"fillet:\t{ p['geometry']['fillets'] }",
-        f"flow direction:\t{ p['geometry']['direction'] }"
+        f"structure type:\t{ p['structure']['type'] }",
+        f"coefficient:\t{ p['structure']['theta'] }",
+        f"fillet:\t{ p['structure']['fillets'] }",
+        f"flow direction:\t{ p['structure']['direction'] }"
     ]))
 
     salome.salome_init()
@@ -75,13 +76,13 @@ def genmesh(root, name, direction, theta):
         simple = Simple,
         bodyCentered = BodyCentered,
         faceCentered = FaceCentered
-    )[p["name"]]
-    shape, groups = structure(**p["geometry"]).build()
+    )[p["structure"]["type"]]
+    shape, groups = structure(**p["structure"]).build()
 
     [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
     logger.info("\n".join([
-        "shape:"
+        "shape:",
         f"edges length:\t{ length }",
         f"surface area:\t{ surfaceArea }",
         f"volume:\t{ volume }"
@@ -141,19 +142,22 @@ def genmesh(root, name, direction, theta):
     mesh.removePyramids()
     mesh.assignGroups()
 
-    mesh.exportUNV(os.path.join(p["path"], "mesh.unv"))
+    casePath = model.getCasePath()
+    os.makedirs(casePath, exist_ok = True)
+    mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
 
     meshStats = mesh.stats()
-    p["meshResult"] = dict(
-        mesh_id = p["mesh"]["id"],
+    p["meshresults"] = dict(
+        #mesh_id = p["mesh"]["mesh_id"],
         surfaceArea = surfaceArea,
         volume = volume,
         **meshStats
     )
     model.updateDB()
 
-    statstr = "\n".join(map(lambda k, v: f"{ k }:\t{ v }", meshStats))
-    logger.info(f"mesh stats:\n{ statsstr }")
+    logger.info("mesh stats:\n{}".format(
+        "\n".join(map(lambda v: f"{ v[0] }:\t{ v[1] }", meshStats.items()))
+    ))
 
     salome.salome_close()
 

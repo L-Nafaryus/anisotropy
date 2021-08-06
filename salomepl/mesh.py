@@ -1,9 +1,13 @@
+import logging
+
+logger = logging.getLogger("anisotropy")
+
 try:
     import SMESH
     from salome.smesh import smeshBuilder
 
 except ImportError:
-    print("[Warning] Trying to get SALOME mesh modules outside SALOME environment. Modules won't be imported.")
+    logger.warning("[Warning] Trying to get SALOME mesh modules outside SALOME environment. Modules won't be imported.")
 
 if globals().get("smeshBuilder"):
     smesh = smeshBuilder.New()
