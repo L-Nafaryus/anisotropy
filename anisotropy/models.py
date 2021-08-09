@@ -118,3 +118,9 @@ class MeshResult(BaseModel):
 
     calculationTime = TimeField(null = True)
 
+class Flow(BaseModel):
+    # TODO: flow model
+    pass
+
+class FlowResults(BaseModel):
+    pass

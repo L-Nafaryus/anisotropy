@@ -74,6 +74,24 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
+    [flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    constant.nu = 1e-6
+
+    approx.pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    approx.pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    # multiplication velocity value with direction vector
+    approx.velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    approx.velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
 [[structures]]
     [structures.structure]
     type = "bodyCentered"
@@ -140,6 +158,24 @@ faceCentered = true
     useSurfaceCurvature = true
     fuseEdges = true
     checkChartBoundary = false
+
+    [flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    constant.nu = 1e-6
+
+    approx.pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    approx.pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    # multiplication velocity value with direction vector
+    approx.velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    approx.velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
 [[structures]]
     [structures.structure]
@@ -208,4 +244,21 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
+    [flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    constant.nu = 1e-6
+
+    approx.pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    approx.pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    # multiplication velocity value with direction vector
+    approx.velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    approx.velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 

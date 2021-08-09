@@ -54,7 +54,7 @@ env.update(dict(
     CONFIG = os.path.join(env["ROOT"], "conf/config.toml")
 ))
 env["db_path"] = env["BUILD"]
-
+env["salome_port"] = 2810
 
 #if os.path.exists(env["CONFIG"]):
 #    config = toml.load(env["CONFIG"])
@@ -157,7 +157,7 @@ class Anisotropy(object):
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
     
-    def loadScratch(self):
+    def loadFromScratch(self):
         if not os.path.exists(self.env["DEFAULT_CONFIG"]):
             logger.error("Missed default configuration file")
             return
@@ -200,6 +200,7 @@ class Anisotropy(object):
                     
                     paramsAll.append(entryNew)
 
+        return paramsAll
         self.setupDB()
         
         for entry in paramsAll:
@@ -499,14 +500,260 @@ class Anisotropy(object):
         self.params = sorted(self.params, key = lambda entry: f"{ entry['name'] } { entry['geometry']['direction'] } { entry['geometry']['theta'] }")
 
     @timer
-    def computeMesh(self, name, direction, theta):
-        scriptpath = os.path.join(self.env["ROOT"], "anisotropy/genmesh.py")
+    def computeMesh(self, type, direction, theta):
+        scriptpath = os.path.join(self.env["ROOT"], "anisotropy/__main__.py")
         port = 2900
 
-        return salomepl.utils.runSalome(port, scriptpath, self.env["ROOT"], name, direction, theta)
+        return salomepl.utils.runSalome(port, scriptpath, self.env["ROOT"], "_compute_mesh", type, direction, theta)
 
-    def computeFlow(self):
-        pass
+    def genmesh(self):
+        import salome 
+
+        p = self.params
+
+        logger.info("\n".join([
+            "genmesh:",
+            f"structure type:\t{ p['structure']['type'] }",
+            f"coefficient:\t{ p['structure']['theta'] }",
+            f"fillet:\t{ p['structure']['fillets'] }",
+            f"flow direction:\t{ p['structure']['direction'] }"
+        ]))
+
+        salome.salome_init()
+
+
+        ###
+        #   Shape
+        ##
+        geompy = salomepl.geometry.getGeom()
+        structure = dict(
+            simple = Simple,
+            bodyCentered = BodyCentered,
+            faceCentered = FaceCentered
+        )[p["structure"]["type"]]
+        shape, groups = structure(**p["structure"]).build()
+
+        [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
+
+        logger.info("\n".join([
+            "shape:",
+            f"edges length:\t{ length }",
+            f"surface area:\t{ surfaceArea }",
+            f"volume:\t{ volume }"
+        ]))
+
+
+        ###
+        #   Mesh
+        ##
+        mp = p["mesh"]
+
+        lengths = [
+            geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shape, geompy.ShapeType["EDGE"]) 
+        ]
+        meanSize = sum(lengths) / len(lengths)
+        mp["maxSize"] = meanSize
+        mp["minSize"] = meanSize * 1e-1
+        mp["chordalError"] = mp["maxSize"] / 2
+
+        faces = []
+        for group in groups:
+            if group.GetName() in mp["facesToIgnore"]:
+                faces.append(group)
+
+
+        mesh = salomepl.mesh.Mesh(shape)
+        mesh.Tetrahedron(**mp)
+
+        if mp["viscousLayers"]:
+            mesh.ViscousLayers(**mp, faces = faces)
+
+        smp = p["submesh"]
+
+        for submesh in smp:
+            for group in groups:
+                if submesh["name"] == group.GetName():
+                    subshape = group
+
+                    submesh["maxSize"] = meanSize * 1e-1
+                    submesh["minSize"] = meanSize * 1e-3
+                    submesh["chordalError"] = submesh["minSize"] * 1e+1
+
+                    mesh.Triangle(subshape, **submesh)
+
+
+        model.updateDB()
+        returncode, errors = mesh.compute()
+
+        if not returncode:
+            mesh.removePyramids()
+            mesh.assignGroups()
+
+            casePath = model.getCasePath()
+            os.makedirs(casePath, exist_ok = True)
+            mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
+
+            meshStats = mesh.stats()
+            p["meshresults"] = dict(
+                surfaceArea = surfaceArea,
+                volume = volume,
+                **meshStats
+            )
+            model.updateDB()
+
+            logger.info("mesh stats:\n{}".format(
+                "\n".join(map(lambda v: f"{ v[0] }:\t{ v[1] }", meshStats.items()))
+            ))
+
+        else:
+            logger.error(errors)
+
+            p["meshresults"] = dict(
+                surfaceArea = surfaceArea,
+                volume = volume
+            )
+            model.updateDB()
+
+        salome.salome_close()
+
+    @timer
+    def computeFlow(self, type, direction, theta):
+        ###
+        #   Case preparation
+        ##
+        foamCase = [ "0", "constant", "system" ]
+
+        # ISSUE: ideasUnvToFoam cannot import mesh with '-case' flag so 'os.chdir' for that
+        os.chdir(self.getCasePath())
+        openfoam.foamClean()
+
+        for d in foamCase:
+            shutil.copytree(
+                os.path.join(ROOT, "openfoam/template", d), 
+                os.path.join(case, d)
+            )
+        
+        ###
+        #   Mesh manipulations
+        ##
+        if not os.path.exists("mesh.unv"):
+            logger.error(f"missed 'mesh.unv'")
+            os.chdir(self.env["ROOT"])
+            return 1
+
+        _, returncode = openfoam.ideasUnvToFoam("mesh.unv")
+
+        if returncode:
+            os.chdir(self.env["ROOT"])
+            return returncode
+        
+        openfoam.createPatch(dictfile = "system/createPatchDict")
+
+        openfoam.foamDictionary(
+            "constant/polyMesh/boundary", 
+            "entry0.defaultFaces.type", 
+            "wall"
+        )
+        openfoam.foamDictionary(
+            "constant/polyMesh/boundary", 
+            "entry0.defaultFaces.inGroups", 
+            "1 (wall)"
+        )
+        
+        out = openfoam.checkMesh()
+        
+        if out:
+            logger.info(out)
+        # TODO: replace all task variables
+        openfoam.transformPoints(task.flow.scale)
+        
+        ###
+        #   Decomposition and initial approximation
+        ##
+        openfoam.foamDictionary(
+            "constant/transportProperties",
+            "nu",
+            str(task.flow.constant.nu)
+        )
+
+        openfoam.decomposePar()
+
+        openfoam.renumberMesh()
+
+        pressureBF = task.flow.approx.pressure.boundaryField
+        velocityBF = task.flow.approx.velocity.boundaryField
+        direction = {
+            "[1, 0, 0]": 0,
+            "[0, 0, 1]": 1,
+            "[1, 1, 1]": 2
+        }[str(task.geometry.direction)]
+
+        openfoam.foamDictionary(
+            "0/p", 
+            "boundaryField.inlet.value", 
+            openfoam.uniform(pressureBF.inlet.value)
+        )
+        openfoam.foamDictionary(
+            "0/p", 
+            "boundaryField.outlet.value", 
+            openfoam.uniform(pressureBF.outlet.value)
+        )
+
+        openfoam.foamDictionary(
+            "0/U", 
+            "boundaryField.inlet.value", 
+            openfoam.uniform(velocityBF.inlet.value[direction])
+        )
+        
+        openfoam.potentialFoam()
+        
+        ###
+        #   Main computation
+        ##
+        pressureBF = task.flow.main.pressure.boundaryField
+        velocityBF = task.flow.main.velocity.boundaryField
+
+        for n in range(os.cpu_count()):
+            openfoam.foamDictionary(
+                f"processor{n}/0/U", 
+                "boundaryField.inlet.type", 
+                velocityBF.inlet.type
+            )
+            openfoam.foamDictionary(
+                f"processor{n}/0/U", 
+                "boundaryField.inlet.value", 
+                openfoam.uniform(velocityBF.inlet.value[direction])
+            )
+        
+        returncode, out = openfoam.simpleFoam()
+        if out:
+            logger.info(out)
+
+        ###
+        #   Check results
+        ##
+        elapsed = time.monotonic() - stime
+        logger.info("computeFlow: elapsed time: {}".format(timedelta(seconds = elapsed)))
+
+        if returncode == 0:
+            task.status.flow = True
+            task.statistics.flowTime = elapsed
+
+            postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
+
+            with open(postProcessing, "r") as io:
+                lastLine = io.readlines()[-1]
+                flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
+                
+                task.statistics.flowRate = flowRate
+
+            with open(os.path.join(case, "task.toml"), "w") as io:
+                toml.dump(dict(task), io)
+
+        os.chdir(ROOT)
+        
+        return returncode
+
     
     def _queue(self):
         pass

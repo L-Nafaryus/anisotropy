@@ -7,7 +7,7 @@ try:
     from salome.smesh import smeshBuilder
 
 except ImportError:
-    logger.warning("[Warning] Trying to get SALOME mesh modules outside SALOME environment. Modules won't be imported.")
+    logger.warning("Trying to get SALOME mesh modules outside SALOME environment. Modules won't be imported.")
 
 if globals().get("smeshBuilder"):
     smesh = smeshBuilder.New()
