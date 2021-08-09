@@ -1,4 +1,4 @@
-anisotrope-cube
+anisotropy
 ===============
 
 Requirements

@@ -3,3 +3,5 @@ pyquaternion
 toml
 peewee
 pandas
+Sphinx
+sphinx-rtd-theme
