@@ -1,13 +1,13 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""asd"""
-from anisotropy.core import (
-    Anisotropy,
-    logger
-)
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
 
-from anisotropy.simple import Simple
-from anisotropy.bodyCentered import BodyCentered
-from anisotropy.faceCentered import FaceCentered
+"""anisotropy
+"""
 
+__license__ = "GPL3"
+__version__ = "1.1.0"
+__author__ = __maintainer = "George Kusayko"
+__email__ = "gkusayko@gmail.com"
 
+from anisotropy.core.main import main

@@ -5,7 +5,7 @@ def version():
     msg = "Missed package anisotropy"
 
     try:
-        from anisotropy import Anisotropy
+        from anisotropy.core.main import Anisotropy
         msg = Anisotropy.version()
 
     except ImportError:
@@ -22,7 +22,7 @@ def anisotropy():
 @click.option("-s", "--stage", "stage", type = click.Choice(["all", "mesh", "flow"]), default = "all")
 @click.option("-p", "--param", "params", metavar = "key=value", multiple = True)
 def compute(stage, params):
-    from anisotropy import Anisotropy
+    from anisotropy.core.main import Anisotropy
 
     model = Anisotropy()
     model.setupDB()
@@ -69,7 +69,7 @@ def _compute_mesh(root, name, direction, theta):
         os.path.join(root, "env/lib/python3.9/site-packages")
     ])
 
-    from anisotropy import Anisotropy
+    from anisotropy.core.main import Anisotropy
 
     ###
     model = Anisotropy()

@@ -5,8 +5,8 @@ unittest.TestLoader.sortTestMethodsUsing = None
 
 class TestAnisotropy(unittest.TestCase):
     def setUp(self):
-        import anisotropy
-        self.model = anisotropy.Anisotropy()
+        from anisotropy.core.main import Anisotropy
+        self.model = Anisotropy()
 
     def test_01_create_db(self):
         self.model.setupDB()
@@ -14,11 +14,15 @@ class TestAnisotropy(unittest.TestCase):
         
         self.assertTrue(os.path.exists(path))
 
-    def test_02_load_scratch(self):
+    def test_02_load_from_scratch(self):
         passed = True
 
         try:
-            self.model.loadScratch()
+            paramsAll = self.model.loadFromScratch()
+            self.model.setupDB()
+        
+            for entry in paramsAll:
+                self.model.updateDB(entry)
         
         except Exception as e:
             passed = False
@@ -31,8 +35,6 @@ class TestAnisotropy(unittest.TestCase):
 
         self.assertEqual(self.model.params["structure"]["type"], "simple")
         
-    def test_04_updateDB(self):
-        self.model.updateDB()
 
 if __name__ == "__main__":
     unittest.main()

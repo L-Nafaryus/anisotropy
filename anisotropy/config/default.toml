@@ -74,7 +74,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [flow]
+    [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     constant.nu = 1e-6
@@ -159,7 +159,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [flow]
+    [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     constant.nu = 1e-6
@@ -244,7 +244,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [flow]
+    [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     constant.nu = 1e-6

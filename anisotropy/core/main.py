@@ -4,43 +4,11 @@ from datetime import timedelta, datetime
 import shutil
 import logging
 
-__version__ = "1.1"
-###
-#   Shell args
-##
-#configPath = "conf/config.toml"
-#mode = "safe"
-
-#for n, arg in enumerate(sys.argv):
-#    if arg == "-c" or arg == "--config":
-#        configPath = sys.args[n + 1]
-
-#    if arg == "-s" or arg == "--safe":
-#        mode = "safe"
-
-#    elif arg == "-a" or arg == "--all":
-#        mode = "all"
-
-###
-#   Load configuration and tools
-##
-#CONFIG = os.path.join(ROOT, configPath)
-#config = struct(toml.load(CONFIG))
-
-#LOG = os.path.join(ROOT, "logs")
-#if not os.path.exists(LOG):
-#    os.makedirs(LOG)
-
-#BUILD = os.path.join(ROOT, "build")
-#if not os.path.exists(BUILD):
-#    os.makedirs(BUILD)
-
-##################################################################################
-import os
 import toml
 from copy import deepcopy
-from anisotropy.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult
-from anisotropy.utils import struct, deepupdate
+
+from anisotropy.core.models import db, Structure, Mesh, SubMesh, MeshResult
+from anisotropy.core.utils import struct, deepupdate
 
 
 ###
@@ -50,7 +18,7 @@ env = { "ROOT": os.path.abspath(".") }
 env.update(dict(
     BUILD = os.path.join(env["ROOT"], "build"),
     LOG = os.path.join(env["ROOT"], "logs"),
-    DEFAULT_CONFIG = os.path.join(env["ROOT"], "anisotropy/default.toml"),
+    DEFAULT_CONFIG = os.path.join(env["ROOT"], "anisotropy/config/default.toml"),
     CONFIG = os.path.join(env["ROOT"], "conf/config.toml")
 ))
 env["db_path"] = env["BUILD"]
@@ -101,10 +69,10 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 logger = logging.getLogger(logger_env.get("name", "anisotropy"))
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 sh = logging.StreamHandler()
-sh.setLevel(logging.DEBUG)
+sh.setLevel(logging.INFO)
 sh.setFormatter(CustomFormatter())
 
 fh = logging.FileHandler(os.path.join(env["LOG"], logger_env.get("name", "anisotropy")))
@@ -127,12 +95,17 @@ def timer(func):
 
     return inner
 
-import salomepl
-import openfoam
+from anisotropy import salomepl
+from anisotropy import openfoam
 from math import sqrt
+from peewee import JOIN
 
 class Anisotropy(object):
+    """Ultimate class that organize whole working process"""
+
     def __init__(self):
+        """Constructor method"""
+
         self.env = env
         self.db = None
         self.params = []
@@ -140,6 +113,11 @@ class Anisotropy(object):
 
     @staticmethod
     def version():
+        """Returns versions of all used main programs
+
+        :return: Versions joined by next line symbol
+        :rtype: str
+        """
         versions = {
             "anisotropy": __version__,
             "Python": sys.version.split(" ")[0],
@@ -157,7 +135,13 @@ class Anisotropy(object):
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
     
-    def loadFromScratch(self):
+    def loadFromScratch(self) -> list:
+        """Loads parameters from configuration file and expands special values
+
+        :return: List of dicts with parameters
+        :rtype: list
+        """
+
         if not os.path.exists(self.env["DEFAULT_CONFIG"]):
             logger.error("Missed default configuration file")
             return
@@ -201,13 +185,11 @@ class Anisotropy(object):
                     paramsAll.append(entryNew)
 
         return paramsAll
-        self.setupDB()
-        
-        for entry in paramsAll:
-            self.updateDB(entry)
 
     
     def evalParams(self):
+        """Evals specific geometry(structure) parameters"""
+
         structure = self.params.get("structure")
 
         if not structure:
@@ -261,7 +243,12 @@ class Anisotropy(object):
             fillets = fillets 
         )
 
-    def getCasePath(self):
+    def getCasePath(self) -> str:
+        """Constructs case path from main control parameters
+        
+        :return: Absolute path to case
+        :rtype: str
+        """
         structure = self.params.get("structure")
 
         if not structure:
@@ -629,7 +616,7 @@ class Anisotropy(object):
 
         for d in foamCase:
             shutil.copytree(
-                os.path.join(ROOT, "openfoam/template", d), 
+                os.path.join(ROOT, "anisotropy/openfoam/template", d), 
                 os.path.join(case, d)
             )
         

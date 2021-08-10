@@ -1,4 +1,11 @@
-from peewee import *
+from peewee import (
+    SqliteDatabase, 
+    Model, Field, 
+    AutoField, ForeignKeyField, 
+    TextField, FloatField, 
+    IntegerField, BooleanField, 
+    TimeField
+)
 
 class ListField(Field):
     field_type = "list"
@@ -30,7 +37,7 @@ class BaseModel(Model):
 
 
 class Structure(BaseModel):
-    structure_id = PrimaryKeyField()
+    structure_id = AutoField()
 
     type = TextField()
     direction = ListField()
@@ -46,7 +53,7 @@ class Structure(BaseModel):
 
 
 class Mesh(BaseModel):
-    mesh_id = PrimaryKeyField()
+    mesh_id = AutoField()
     structure_id = ForeignKeyField(Structure, backref = "meshes")
 
     maxSize = FloatField(null = True) 
@@ -78,7 +85,7 @@ class Mesh(BaseModel):
 
 
 class SubMesh(BaseModel):
-    submesh_id = PrimaryKeyField()
+    submesh_id = AutoField()
     mesh_id = ForeignKeyField(Mesh, backref = "submeshes")
     name = TextField()
 
@@ -102,7 +109,7 @@ class SubMesh(BaseModel):
 
 
 class MeshResult(BaseModel):
-    meshresult_id = PrimaryKeyField()
+    meshresult_id = AutoField()
     mesh_id = ForeignKeyField(Mesh, backref = "meshresults")
     
     surfaceArea = FloatField(null = True)
