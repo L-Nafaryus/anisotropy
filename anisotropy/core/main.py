@@ -95,6 +95,7 @@ def timer(func):
 
     return inner
 
+from anisotropy import __version__
 from anisotropy import salomepl
 from anisotropy import openfoam
 from math import sqrt

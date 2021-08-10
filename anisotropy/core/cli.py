@@ -82,4 +82,4 @@ def _compute_mesh(root, name, direction, theta):
 ###
 #   CLI entry
 ##
-anisotropy()
+#anisotropy()

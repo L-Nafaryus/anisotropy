@@ -5,5 +5,4 @@ anisotropy
    :maxdepth: 4
 
    anisotropy
-   salomepl
-   openfoam
+   setup
