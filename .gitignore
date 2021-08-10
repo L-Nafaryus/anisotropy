@@ -18,3 +18,4 @@ env/
 *.toc
 *.png
 *.out
+*.egg-info

@@ -7,23 +7,40 @@ from setuptools import setup
 
 import anisotropy
 
+def read(filename, split = False):
+    content = ""
+
+    with open(os.path.join(os.path.dirname(__file__), filename), "r") as io:
+        content = io.read()
+
+    return content.strip().split("\n") if split else content
+
+
 def main():
     setup(
         name = "anisotropy",
         description = "Anisotropy",
-        long_description = anisotropy.__doc__,
+        long_description = read("README.rst"),
+        long_description_content_type = "text/x-rst",
         version = anisotropy.__version__,
         author = anisotropy.__author__,
         author_email = anisotropy.__email__,
         license = anisotropy.__license__,
+
         url = "https://github.com/L-Nafaryus/anisotropy",
-        keywords = "anisotropy console",
+        project_urls = {
+            "Source": "https://github.com/L-Nafaryus/anisotropy"
+        },
+
+        keywords = "anisotropy console CFD",
         classifiers = [
             "Environment :: Console",
             "Operating System :: POSIX",
             "Operating System :: Unix",
+            "Intended Audience :: Science/Research",
             "Programming Language :: Python :: 3.9"
         ],
+
         package_data = {
             "anisotropy": [
                 "config/default.toml"
@@ -36,7 +53,15 @@ def main():
             "anisotropy.openfoam",
             "anisotropy.salomepl",
             "anisotropy.samples"
-        )
+        ),
+        
+        python_requires = ">=3.6",
+        install_requires = read("requirements.txt", True),
+        entry_points = {
+            "console_scripts": [
+                "anisotropy=anisotropy.core.cli:anisotropy"
+            ]
+        }
     )
 
 

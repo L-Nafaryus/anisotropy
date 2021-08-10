@@ -5,3 +5,4 @@ peewee
 pandas
 Sphinx
 sphinx-rtd-theme
+Click
