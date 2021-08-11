@@ -28,8 +28,8 @@ def version() -> str:
 
     return str(out, "utf-8").strip().split(" ")[-1]
 
-
-def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args) -> int:
+def runSalome(port: int, scriptpath: str, root: str, *args, logpath: str = None) -> int:
+    # ISSUE: salome removes commas from string list
 
     if os.environ.get("SALOME_PATH"):
         cmd = [ os.path.join(os.environ["SALOME_PATH"], "salome") ]
@@ -40,9 +40,10 @@ def runSalome(port: int, scriptpath: str, root: str, logpath: str = None, *args)
     if not logpath:
         logpath = "/tmp/salome.log"
 
-    fullargs = list(args)
-    fullargs.extend([ root, logpath ])
-    fmtargs = "args:{}".format(", ".join([ str(arg) for arg in args ]))
+    #fullargs = list(args)
+    args = list(args)
+    args.insert(1, root)
+    fmtargs = "args:{}".format(",".join([ '"{}"'.format(str(arg)) for arg in args ]))
     cmdargs = [
         "start", "-t",
         "--shutdown-servers=1",

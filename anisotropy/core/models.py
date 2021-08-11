@@ -1,11 +1,27 @@
+# -*- coding: utf-8 -*-
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
+
 from peewee import (
-    SqliteDatabase, 
+    SqliteDatabase, JOIN, 
     Model, Field, 
     AutoField, ForeignKeyField, 
     TextField, FloatField, 
     IntegerField, BooleanField, 
     TimeField
 )
+
+db = SqliteDatabase(
+    None,
+    pragmas = { "foreign_keys": 1 },
+    field_types = { "list": "text" }
+)
+
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+
 
 class ListField(Field):
     field_type = "list"
@@ -24,16 +40,6 @@ class ListField(Field):
                 pval.append(entry.strip().replace("'", ""))
 
         return pval
-
-db = SqliteDatabase(
-    None,
-    pragmas = { "foreign_keys": 1 },
-    field_types = { "list": "text" }
-)
-
-class BaseModel(Model):
-    class Meta:
-        database = db
 
 
 class Structure(BaseModel):

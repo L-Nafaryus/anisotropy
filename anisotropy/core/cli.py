@@ -25,22 +25,28 @@ def compute(stage, params):
     from anisotropy.core.main import Anisotropy
 
     model = Anisotropy()
-    model.setupDB()
+    model.db.setup()
 
-    if model.isEmptyDB():
+    if model.db.isempty():
         paramsAll = model.loadFromScratch()
 
         for entry in paramsAll:
-            model.updateDB(entry)
+            model.db.update(entry)
 
-    model.loadDB(type, direction, theta)
+    (type, direction, theta) = ("simple", [1.0, 0.0, 0.0], 0.01)
+
+    model.load(type, direction, theta)
     # TODO: merge cli params with db params here 
     model.evalParams()
-    model.updateDB()
+    model.update()
 
     # TODO: do smth with output
     if stage == "all" or stage == "mesh":
         ((out, err, code), elapsed) = model.computeMesh(type, direction, theta)
+
+        model.load(type, direction, theta)
+        model.params["meshresult"]["calculationTime"] = elapsed
+        model.update()
 
     if stage == "all" or stage == "flow":
         ((out, err, code), elapsed) = model.computeFlow(type, direction, theta)
@@ -48,21 +54,22 @@ def compute(stage, params):
 
 @anisotropy.command()
 @click.argument("root")
-@click.argument("name")
+@click.argument("type")
 @click.argument("direction")
-@click.argument("theta", type = click.FLOAT)
-def _compute_mesh(root, name, direction, theta):
+@click.argument("theta")
+def computemesh(root, type, direction, theta):
     # [Salome Environment]
-
+    
     ###
     #   Args
     ##
-    direction = list(map(lambda num: float(num), direction[1:-1].split(",")))
+    direction = [ float(num) for num in direction[1:-1].split(" ") if num ]
+    theta = float(theta)
 
     ###
     #   Modules
     ##
-    import salome
+    import os, sys
 
     sys.path.extend([
         root,
@@ -73,8 +80,7 @@ def _compute_mesh(root, name, direction, theta):
 
     ###
     model = Anisotropy()
-    model.setupDB()
-    model.loadDB(type, direction, theta)
+    model.load(type, direction, theta)
 
     model.genmesh()
 
@@ -82,4 +88,5 @@ def _compute_mesh(root, name, direction, theta):
 ###
 #   CLI entry
 ##
-#anisotropy()
+if __name__ == "__main__":
+    anisotropy()

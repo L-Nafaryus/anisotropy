@@ -8,42 +8,61 @@ from types import FunctionType
 import os
 
 class CustomFormatter(logging.Formatter):
-    grey = "\x1b[38;21m"
-    yellow = "\x1b[33;21m"
-    red = "\x1b[31;21m"
-    bold_red = "\x1b[31;1m"
-    reset = "\x1b[0m"
-    format = "[ %(asctime)s ] [ %(levelname)s ] %(message)s"
+    def _getFormat(self, level: int):
+        grey = "\x1b[38;21m"
+        yellow = "\x1b[33;21m"
+        red = "\x1b[31;21m"
+        bold_red = "\x1b[31;1m"
+        reset = "\x1b[0m"
+        format = "[ %(asctime)s ] [ %(levelname)s ] %(message)s"
 
-    FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
-    }
+        formats = {
+            logging.DEBUG: grey + format + reset,
+            logging.INFO: grey + format + reset,
+            logging.WARNING: yellow + format + reset,
+            logging.ERROR: red + format + reset,
+            logging.CRITICAL: bold_red + format + reset
+        }
+
+        return formats.get(level)
 
     def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        log_fmt = self._getFormat(record.levelno)
+        time_fmt = "%H:%M:%S %d-%m-%y"
+        formatter = logging.Formatter(log_fmt, time_fmt)
 
         return formatter.format(record)
 
-def setupLogger(logger, level: int):
+
+def setupLogger(logger, level: int, filepath: str = None):
+    """Applies settings to logger
+
+    :param logger: Instance of :class:`logging.Logger`
+    :type logger: Instance of :class:`logging.Logger`
+    :param level: Logging level (logging.INFO, logging.WARNING, ..)
+    :type level: int
+    :param filepath: Path to directory
+    :type filepath: str, optional
+    """
+
     logger.setLevel(level)
 
-    sh = logging.StreamHandler()
-    sh.setLevel(level)
-    sh.setFormatter(CustomFormatter())
+    streamhandler = logging.StreamHandler()
+    streamhandler.setLevel(level)
+    streamhandler.setFormatter(CustomFormatter())
+    logger.addHandler(streamhandler)
 
-    fh = logging.FileHandler(os.path.join("logs", logger.name))
-    fh.setLevel(level)
-    fh.setFormatter(CustomFormatter())
+    if filepath:
+        if not os.path.exists(filepath):
+            os.makedirs(filepath, exist_ok = True)
 
-    logger.addHandler(sh)
-    logger.addHandler(fh)
+        filehandler = logging.FileHandler(
+            os.path.join(filepath, "{}.log".format(logger.name))
+        )
+        filehandler.setLevel(level)
+        filehandler.setFormatter(CustomFormatter())
+        logger.addHandler(filehandler)
 
-    return logger
 
 class struct:
     def __init__(self, *args, **kwargs):
@@ -104,17 +123,32 @@ def deepupdate(target, src):
         else:
             target[k] = copy.copy(v)
 
+#if os.path.exists(env["CONFIG"]):
+#    config = toml.load(env["CONFIG"])
 
+#    for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
+#        if config.get(restricted):
+#            config.pop(restricted)
+
+    # TODO: not working if custom config empty and etc
+#    for m, structure in enumerate(config["structures"]):
+#        for n, estructure in enumerate(env["structures"]):
+#            if estructure["name"] == structure["name"]:
+#                deepupdate(env["structures"][n], config["structures"][m])
+
+#    config.pop("structures")
+#    deepupdate(env, config)
 
 def timer(func: FunctionType) -> (tuple, float):
     """(Decorator) Returns output of inner function and execution time
     
     :param func: inner function
-    :type: FunctionType
+    :type func: FunctionType
 
     :return: output, elapsed time
     :rtype: tuple(tuple, float)
     """
+
     def inner(*args, **kwargs):
         start = time.monotonic()
         ret = func(*args, **kwargs)

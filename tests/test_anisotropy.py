@@ -9,7 +9,7 @@ class TestAnisotropy(unittest.TestCase):
         self.model = Anisotropy()
 
     def test_01_create_db(self):
-        self.model.setupDB()
+        self.model.db.setup()
         path = os.path.join(self.model.env["db_path"], "anisotropy.db")
         
         self.assertTrue(os.path.exists(path))
@@ -19,10 +19,9 @@ class TestAnisotropy(unittest.TestCase):
 
         try:
             paramsAll = self.model.loadFromScratch()
-            self.model.setupDB()
         
             for entry in paramsAll:
-                self.model.updateDB(entry)
+                self.model.update(entry)
         
         except Exception as e:
             passed = False
@@ -31,8 +30,7 @@ class TestAnisotropy(unittest.TestCase):
         self.assertTrue(passed)
 
     def test_03_load_db(self):
-        self.model.setupDB()
-        self.model.loadDB("simple", [1.0, 0.0, 0.0], 0.01)
+        self.model.load("simple", [1.0, 0.0, 0.0], 0.01)
 
         self.assertEqual(self.model.params["structure"]["type"], "simple")
         
