@@ -15,12 +15,12 @@ from anisotropy.core.utils import struct, deepupdate
 #   Environment variables and config
 ##
 env = { "ROOT": os.path.abspath(".") }
-env.update(dict(
+env.update(
     BUILD = os.path.join(env["ROOT"], "build"),
     LOG = os.path.join(env["ROOT"], "logs"),
     DEFAULT_CONFIG = os.path.join(env["ROOT"], "anisotropy/config/default.toml"),
     CONFIG = os.path.join(env["ROOT"], "conf/config.toml")
-))
+)
 env["db_path"] = env["BUILD"]
 env["salome_port"] = 2810
 
@@ -44,60 +44,20 @@ env["salome_port"] = 2810
 ###
 #   Logger
 ##
+from anisotropy.core.utils import setupLogger
 logger_env = env.get("logger", {})
 
-class CustomFormatter(logging.Formatter):
-    grey = "\x1b[38;21m"
-    yellow = "\x1b[33;21m"
-    red = "\x1b[31;21m"
-    bold_red = "\x1b[31;1m"
-    reset = "\x1b[0m"
-    format = logger_env.get("format", "[ %(asctime)s ] [ %(levelname)s ] %(message)s")
-
-    FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
-    }
-
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
-
-        return formatter.format(record)
-
 logger = logging.getLogger(logger_env.get("name", "anisotropy"))
-logger.setLevel(logging.INFO)
-
-sh = logging.StreamHandler()
-sh.setLevel(logging.INFO)
-sh.setFormatter(CustomFormatter())
-
-fh = logging.FileHandler(os.path.join(env["LOG"], logger_env.get("name", "anisotropy")))
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(CustomFormatter())
-
-logger.addHandler(sh)
-logger.addHandler(fh)
+setupLogger(logger, logging.INFO)
 
 peeweeLogger = logging.getLogger("peewee")
 peeweeLogger.setLevel(logging.INFO)
 
-def timer(func):
-    def inner(*args, **kwargs):
-        start = time.monotonic()
-        ret = func(*args, **kwargs)
-        elapsed = time.monotonic() - start
-
-        return ret, elapsed
-
-    return inner
-
+from anisotropy.core.utils import timer
 from anisotropy import __version__
 from anisotropy import salomepl
 from anisotropy import openfoam
+from anisotropy.samples import Simple, FaceCentered, BodyCentered
 from math import sqrt
 from peewee import JOIN
 

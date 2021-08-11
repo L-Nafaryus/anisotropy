@@ -1,4 +1,5 @@
 from math import pi, sqrt
+from anisotropy.salomepl import geometry
 
 class Simple(object):
     def __init__(self, **kwargs):
@@ -13,9 +14,8 @@ class Simple(object):
 
 
     def build(self):
-        import salomepl
 
-        geompy = salomepl.geometry.getGeom()
+        geompy = geometry.getGeom()
 
         ###
         #   Pore Cell

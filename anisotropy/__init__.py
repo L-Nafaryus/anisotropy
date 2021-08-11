@@ -10,4 +10,4 @@ __version__ = "1.1.0"
 __author__ = __maintainer = "George Kusayko"
 __email__ = "gkusayko@gmail.com"
 
-from anisotropy.core.main import main
+#from anisotropy.core.main import main

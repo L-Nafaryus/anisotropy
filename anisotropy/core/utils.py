@@ -2,7 +2,48 @@ import logging
 
 from multiprocessing import Queue, Process, cpu_count
 import socket
+import copy
+import time
+from types import FunctionType
+import os
 
+class CustomFormatter(logging.Formatter):
+    grey = "\x1b[38;21m"
+    yellow = "\x1b[33;21m"
+    red = "\x1b[31;21m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "[ %(asctime)s ] [ %(levelname)s ] %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+
+        return formatter.format(record)
+
+def setupLogger(logger, level: int):
+    logger.setLevel(level)
+
+    sh = logging.StreamHandler()
+    sh.setLevel(level)
+    sh.setFormatter(CustomFormatter())
+
+    fh = logging.FileHandler(os.path.join("logs", logger.name))
+    fh.setLevel(level)
+    fh.setFormatter(CustomFormatter())
+
+    logger.addHandler(sh)
+    logger.addHandler(fh)
+
+    return logger
 
 class struct:
     def __init__(self, *args, **kwargs):
@@ -42,7 +83,6 @@ class struct:
     def __repr__(self):
         return str(self)
 
-import copy
 
 def deepupdate(target, src):
     for k, v in src.items():
@@ -64,44 +104,25 @@ def deepupdate(target, src):
         else:
             target[k] = copy.copy(v)
 
-class Logger:
-    def __init__(self, name, logpath):
-        logging.basicConfig(
-            level = logging.INFO, 
-            format = "%(levelname)s: %(message)s",
-            handlers = [
-                logging.StreamHandler(),
-                logging.FileHandler(logpath)
-            ]
-        )
 
-        self.logger = logging.getLogger(name)
-        self.warnings = 0
-        self.errors = 0
-        self.criticals = 0
-        self.exceptions = 0
-        
-    def info(self, *args):
-        self.logger.info(*args)
 
-    def warning(self, *args):
-        self.warnings += 1
-        self.logger.warning(*args)
+def timer(func: FunctionType) -> (tuple, float):
+    """(Decorator) Returns output of inner function and execution time
+    
+    :param func: inner function
+    :type: FunctionType
 
-    def error(self, *args):
-        self.errors += 1
-        self.logger.error(*args)
+    :return: output, elapsed time
+    :rtype: tuple(tuple, float)
+    """
+    def inner(*args, **kwargs):
+        start = time.monotonic()
+        ret = func(*args, **kwargs)
+        elapsed = time.monotonic() - start
 
-    def critical(self, *args):
-        self.criticals += 1
-        self.logger.critical(*args)
+        return ret, elapsed
 
-    def exception(self, *args):
-        self.exceptions += 1
-        self.logger.exception(*args)
-
-    def fancyline(self):
-        self.logger.info("-" * 80)
+    return inner
 
 
 

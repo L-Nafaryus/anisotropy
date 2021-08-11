@@ -26,6 +26,7 @@ class TestAnisotropy(unittest.TestCase):
         
         except Exception as e:
             passed = False
+            print(e)
         
         self.assertTrue(passed)
 
@@ -35,6 +36,10 @@ class TestAnisotropy(unittest.TestCase):
 
         self.assertEqual(self.model.params["structure"]["type"], "simple")
         
+    def tearDown(self):
+        #os.removedirs(self.model.env["BUILD"])
+        #os.removedirs(self.model.env["LOG"])
+        pass
 
 if __name__ == "__main__":
     unittest.main()
