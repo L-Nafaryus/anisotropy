@@ -82,7 +82,7 @@ faceCentered = true
     approx.pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
     approx.pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
 
-    # multiplication velocity value with direction vector
+    # multiplication velocity value with flow direction vector
     approx.velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
     approx.velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 

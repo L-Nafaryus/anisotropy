@@ -171,7 +171,7 @@ def queue(cmd, qin, qout, *args):
             break
 
         # Execute command
-        res = cmd(*var, *args)
+        res = cmd(var, *args)
 
         # Put results to the queue
         qout.put((pos, res))
@@ -189,10 +189,6 @@ def parallel(np, var, cmd):
     qin = Queue(1)
     qout = Queue()
     
-    logging.info("cpu count: {}".format(np))
-    logging.info("var: {}".format(var))
-    logging.info("cmd: {}".format(cmd))
-
     # Create processes
     for n in range(nprocs):
         pargs = [cmd, qin, qout]

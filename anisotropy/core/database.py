@@ -8,7 +8,7 @@ from copy import deepcopy
 
 from anisotropy import env
 from anisotropy.core.utils import setupLogger
-from anisotropy.core.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult
+from anisotropy.core.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult, Flow, FlowResult
 
 logger = logging.getLogger(env["logger_name"])
 setupLogger(logger, logging.INFO, env["LOG"])
@@ -32,7 +32,9 @@ class Database(object):
                 Structure, 
                 Mesh,
                 SubMesh,
-                MeshResult
+                MeshResult,
+                Flow,
+                FlowResult
             ])
 
 
@@ -77,6 +79,20 @@ class Database(object):
         return params
 
 
+    def loadGeneral(self) -> list:
+        query = (
+            Structure
+            .select()
+            .order_by(Structure.type, Structure.direction, Structure.theta)
+        )
+        response = []
+
+        for entry in query.dicts():
+            response.append({ "structure": entry })
+
+        return response
+
+
     def update(self, params: dict):
         if not params:
             logger.error("Trying to update db from empty parameters")
@@ -106,6 +122,7 @@ class Database(object):
 
         self._updateMeshResult(params.get("meshresult", {}), query, meshID)
 
+        # TODO: update method flow flow / flowresult
 
     def _updateStructure(self, src: dict, queryMain) -> int:
         raw = deepcopy(src)

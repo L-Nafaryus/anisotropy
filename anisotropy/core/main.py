@@ -119,8 +119,22 @@ class Anisotropy(object):
                             filletsEnabled = entry["structure"]["filletsEnabled"]
                         ),
                         "mesh": mesh,
-                        "submesh": deepcopy(entry["submesh"])
+                        "submesh": deepcopy(entry["submesh"]),
+                        "flow": deepcopy(entry["flow"])
                     }
+
+                    # TODO: optimize it
+                    # For type = fixedValue only
+                    _velocity = entryNew["flow"]["approx"]["velocity"]["boundaryField"]["inlet"]["value"]
+                    entryNew["flow"]["approx"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
+                        val * _velocity for val in entryNew["structure"]["direction"] 
+                    ]
+
+                    _velocity = entryNew["flow"]["velocity"]["boundaryField"]["inlet"]["value"]
+                    entryNew["flow"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
+                        val * _velocity for val in entryNew["structure"]["direction"] 
+                    ]
+
                     
                     paramsAll.append(entryNew)
 
@@ -378,11 +392,13 @@ class Anisotropy(object):
         
         if out:
             logger.info(out)
-        # TODO: replace all task variables
+        
         openfoam.transformPoints(flow["scale"])
         
         ###
         #   Decomposition and initial approximation
+        #
+        #   NOTE: Temporarily without decomposition
         ##
         openfoam.foamDictionary(
             "constant/transportProperties",
@@ -390,7 +406,7 @@ class Anisotropy(object):
             str(flow["constant"]["nu"])
         )
 
-        openfoam.decomposePar()
+        #openfoam.decomposePar()
 
         openfoam.renumberMesh()
 
@@ -412,11 +428,11 @@ class Anisotropy(object):
             "boundaryField.outlet.value", 
             openfoam.uniform(pressureBF["outlet"]["value"])
         )
-        # TODO: flow variable
+        
         openfoam.foamDictionary(
             "0/U", 
             "boundaryField.inlet.value", 
-            openfoam.uniform(velocityBF.inlet.value[direction])
+            openfoam.uniform(velocityBF["inlet"]["value"])
         )
         
         openfoam.potentialFoam()
@@ -424,20 +440,31 @@ class Anisotropy(object):
         ###
         #   Main computation
         ##
-        pressureBF = task.flow.main.pressure.boundaryField
-        velocityBF = task.flow.main.velocity.boundaryField
+        pressureBF = flow["pressure"]["boundaryField"]
+        velocityBF = flow["velocity"]["boundaryField"]
 
-        for n in range(os.cpu_count()):
-            openfoam.foamDictionary(
-                f"processor{n}/0/U", 
-                "boundaryField.inlet.type", 
-                velocityBF.inlet.type
-            )
-            openfoam.foamDictionary(
-                f"processor{n}/0/U", 
-                "boundaryField.inlet.value", 
-                openfoam.uniform(velocityBF.inlet.value[direction])
-            )
+        openfoam.foamDictionary(
+            "0/U",
+            "boundaryField.inlet.type",
+            velocityBF["inlet"]["type"] 
+        )
+        openfoam.foamDictionary(
+            "0/U",
+            "boundaryField.inlet.value",
+            velocityBF["inlet"]["value"] 
+        )
+
+        #for n in range(os.cpu_count()):
+        #    openfoam.foamDictionary(
+        #        f"processor{n}/0/U", 
+        #        "boundaryField.inlet.type", 
+        #        velocityBF.inlet.type
+        #    )
+        #    openfoam.foamDictionary(
+        #        f"processor{n}/0/U", 
+        #        "boundaryField.inlet.value", 
+        #        openfoam.uniform(velocityBF.inlet.value[direction])
+        #    )
         
         returncode, out = openfoam.simpleFoam()
         if out:
@@ -446,25 +473,21 @@ class Anisotropy(object):
         ###
         #   Check results
         ##
-        elapsed = time.monotonic() - stime
-        logger.info("computeFlow: elapsed time: {}".format(timedelta(seconds = elapsed)))
 
         if returncode == 0:
-            task.status.flow = True
-            task.statistics.flowTime = elapsed
-
             postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
 
             with open(postProcessing, "r") as io:
                 lastLine = io.readlines()[-1]
                 flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
                 
-                task.statistics.flowRate = flowRate
+            self.params["flowresult"] = dict(
+                flowRate = flowRate
+            )
 
-            with open(os.path.join(case, "task.toml"), "w") as io:
-                toml.dump(dict(task), io)
+        self.update()
 
-        os.chdir(ROOT)
+        os.chdir(self.env["ROOT"])
         
         return returncode
 
