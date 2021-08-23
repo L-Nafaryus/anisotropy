@@ -42,6 +42,6 @@ def application(name: str, *args: str, case: str = None, stderr: bool = True, us
             logger.error("""{}:
             {}""".format(name, str(err, "utf-8")))
 
-    return out, p.returncode
+    return out, err, p.returncode
 
 

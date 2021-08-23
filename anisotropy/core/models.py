@@ -10,6 +10,7 @@ from peewee import (
     IntegerField, BooleanField, 
     TimeField
 )
+import json
 
 db = SqliteDatabase(
     None,
@@ -40,6 +41,15 @@ class ListField(Field):
                 pval.append(entry.strip().replace("'", ""))
 
         return pval
+
+
+class JSONField(TextField):
+    def db_value(self, value):
+        return json.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return json.loads(value)
 
 
 class Structure(BaseModel):
@@ -132,33 +142,22 @@ class MeshResult(BaseModel):
     calculationTime = TimeField(null = True)
 
 class Flow(BaseModel):
-    # TODO: find better way
     flow_id = AutoField()
     structure_id = ForeignKeyField(Structure, backref = "flows")
 
-    approx_pressure_boundaryField_inlet_type = TextField(null = True)
-    approx_pressure_boundaryField_inlet_value = FloatField(null = True)
+    scale = ListField(null = True)
+    pressure = JSONField(null = True)
+    velocity = JSONField(null = True)
+    transportProperties = JSONField(null = True)
 
-    approx_pressure_boundaryField_outlet_type = TextField(null = True)
-    approx_pressure_boundaryField_outlet_value = FloatField(null = True)
+   
+class FlowApproximation(BaseModel):
+    flow_approximation_id = AutoField()
+    flow_id = ForeignKeyField(Flow, backref = "flowapprox")
 
-    approx_velocity_boundaryField_inlet_type = TextField(null = True)
-    approx_velocity_boundaryField_inlet_value = ListField(null = True)
-
-    approx_velocity_boundaryField_outlet_type = TextField(null = True)
-    approx_velocity_boundaryField_outlet_value = ListField(null = True)
-
-    pressure_boundaryField_inlet_type = TextField(null = True)
-    pressure_boundaryField_inlet_value = FloatField(null = True)
-
-    pressure_boundaryField_outlet_type = TextField(null = True)
-    pressure_boundaryField_outlet_value = FloatField(null = True)
-
-    velocity_boundaryField_inlet_type = TextField(null = True)
-    velocity_boundaryField_inlet_value = ListField(null = True)
-
-    velocity_boundaryField_outlet_type = TextField(null = True)
-    velocity_boundaryField_outlet_value = ListField(null = True)
+    pressure = JSONField(null = True)
+    velocity = JSONField(null = True)
+    transportProperties = JSONField(null = True)
 
 class FlowResult(BaseModel):
     flowresult_id = AutoField()

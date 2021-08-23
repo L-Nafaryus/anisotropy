@@ -44,7 +44,7 @@ class BodyCentered(object):
             ###
             #   Bounding box
             ##
-            if direction == [1, 0, 0]:
+            if self.direction == [1, 0, 0]:
                 sk = geompy.Sketcher3D()
                 sk.addPointsAbsolute(xl, 0, 0)
                 sk.addPointsAbsolute(0, yw, 0)
@@ -56,7 +56,7 @@ class BodyCentered(object):
                 vecflow = geompy.GetNormal(inletface)
                 poreCell = geompy.MakePrismVecH(inletface, vecflow, diag)
 
-            elif direction == [0, 0, 1]:
+            elif self.direction == [0, 0, 1]:
                 sk = geompy.Sketcher3D()
                 sk.addPointsAbsolute(0, yw, 0)
                 sk.addPointsAbsolute(xl, 0, 0)

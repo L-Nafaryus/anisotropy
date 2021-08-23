@@ -12,10 +12,10 @@ def potentialFoam(case: str = None, useMPI: bool = False):
 
 def simpleFoam(case: str = None, useMPI: bool = False):
     if useMPI:
-        _, returncode = application("simpleFoam", "-parallel", useMPI = True, case = case, stderr = True)
+        out, err, returncode = application("simpleFoam", "-parallel", useMPI = True, case = case, stderr = True)
 
     else:
-        _, returncode = application("simpleFoam", case = case, stderr = True)
+        out, err, returncode = application("simpleFoam", case = case, stderr = True)
 
     out = ""
 
@@ -24,5 +24,5 @@ def simpleFoam(case: str = None, useMPI: bool = False):
             if re.search("solution converged", line):
                 out = "simpleFoam:\n\t{}".format(line.strip())
 
-    return returncode, out
+    return out, err, returncode 
 

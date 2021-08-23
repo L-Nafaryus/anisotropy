@@ -34,5 +34,5 @@ def checkMesh(case: str = None) -> str:
 
 
 def renumberMesh(case: str = None):
-    application("renumberMesh", "-parallel", "-overwrite", useMPI = True, case = case, stderr = True)
+    application("renumberMesh", "-overwrite", useMPI = False, case = case, stderr = True)
 

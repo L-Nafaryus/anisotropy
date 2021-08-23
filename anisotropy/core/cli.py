@@ -11,6 +11,9 @@ class LiteralOption(click.Option):
 
 class KeyValueOption(click.Option):
     def _convert(self, ctx, value):
+        if not value:
+            return {}
+
         if value.find("=") == -1:
             raise click.BadParameter(f"{ value } (Missed '=')")
 
@@ -60,7 +63,7 @@ def anisotropy():
 @click.option("-s", "--stage", "stage", type = click.Choice(["all", "mesh", "flow"]), default = "all")
 @click.option("-p", "--param", "params", metavar = "key=value", multiple = True, cls = KeyValueOption)
 def compute(stage, params):
-    from anisotropy.core.main import Anisotropy
+    from anisotropy.core.main import Anisotropy, logger
 
     args = dict()
 
@@ -89,16 +92,20 @@ def compute(stage, params):
     if stage == "all" or stage == "mesh":
         ((out, err, code), elapsed) = model.computeMesh(type, direction, theta)
 
-        model.load(type, direction, theta)
-        model.params["meshresult"]["calculationTime"] = elapsed
-        model.update()
+        if out: click.echo(out)
+        if err: click.echo(err)
+        if model.params.get("meshresult"):
+            model.load(type, direction, theta)
+            model.params["meshresult"]["calculationTime"] = elapsed
+            model.update()
 
     if stage == "all" or stage == "flow":
         ((out, err, code), elapsed) = model.computeFlow(type, direction, theta)
 
-        model.load(type, direction, theta)
-        model.params["flowresult"]["calculationTime"] = elapsed
-        model.update()
+        if model.params.get("flowresult"):
+            model.load(type, direction, theta)
+            model.params["flowresult"]["calculationTime"] = elapsed
+            model.update()
 
 
 @anisotropy.command()

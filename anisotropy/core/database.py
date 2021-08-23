@@ -8,7 +8,12 @@ from copy import deepcopy
 
 from anisotropy import env
 from anisotropy.core.utils import setupLogger
-from anisotropy.core.models import db, JOIN, Structure, Mesh, SubMesh, MeshResult, Flow, FlowResult
+from anisotropy.core.models import (
+    db, JOIN, 
+    Structure, 
+    Mesh, SubMesh, MeshResult, 
+    Flow, FlowApproximation, FlowResult
+)
 
 logger = logging.getLogger(env["logger_name"])
 setupLogger(logger, logging.INFO, env["LOG"])
@@ -34,6 +39,7 @@ class Database(object):
                 SubMesh,
                 MeshResult,
                 Flow,
+                FlowApproximation,
                 FlowResult
             ])
 
@@ -76,6 +82,21 @@ class Database(object):
                     if meshresultQuery.exists():
                         params["meshresult"] = meshresultQuery.dicts().get()
 
+                flowQuery = structureQuery.get().flows
+
+                if flowQuery.exists():
+                    params["flow"] = flowQuery.dicts().get()
+
+                    flowapproxQuery = flowQuery.get().flowapprox
+
+                    if flowapproxQuery.exists():
+                        params["flowapprox"] = flowapproxQuery.dicts().get()
+
+                    flowresultsQuery = flowQuery.get().flowresults
+
+                    if flowresultsQuery.exists():
+                        params["flowresult"] = flowresultsQuery.dicts().get()
+
         return params
 
 
@@ -100,11 +121,16 @@ class Database(object):
 
         query = (
             Structure
-            .select(Structure, Mesh)
+            .select(Structure, Mesh, Flow)
             .join(
                 Mesh, 
                 JOIN.INNER, 
                 on = (Mesh.structure_id == Structure.structure_id)
+            )
+            .join(
+                Flow,
+                JOIN.INNER,
+                on = (Flow.structure_id == Structure.structure_id)
             )
             .where(
                 Structure.type == params["structure"]["type"],
@@ -122,7 +148,11 @@ class Database(object):
 
         self._updateMeshResult(params.get("meshresult", {}), query, meshID)
 
-        # TODO: update method flow flow / flowresult
+        flowID = self._updateFlow(params["flow"], query, structureID)
+
+        self._updateFlowApproximation(params.get("flowapprox", {}), query, flowID)
+
+        self._updateFlowResult(params.get("flowresult", {}), query, flowID)
 
     def _updateStructure(self, src: dict, queryMain) -> int:
         raw = deepcopy(src)
@@ -214,6 +244,76 @@ class Database(object):
                     MeshResult.update(**raw)
                     .where(
                         MeshResult.mesh_id == meshID 
+                    )
+                )
+                query.execute()
+
+    def _updateFlow(self, src: dict, queryMain, structureID):
+        raw = deepcopy(src)
+
+        with self.__db.atomic():
+            if not queryMain.exists():
+                tabID = Flow.create(
+                    structure_id = structureID,
+                    **raw
+                )
+
+            else:
+                req = queryMain.dicts().get()
+                tabID = req["flow_id"]
+
+                query = (
+                    Flow.update(**raw)
+                    .where(
+                        Flow.structure_id == structureID
+                    )
+                )
+                query.execute()
+
+        return tabID
+
+    def _updateFlowApproximation(self, src: dict, queryMain, flowID):
+        if not src:
+            return
+
+        raw = deepcopy(src)
+
+        with self.__db.atomic():
+            if not FlowApproximation.select().where(FlowApproximation.flow_id == flowID).exists():
+                tabID = FlowApproximation.create(
+                    flow_id = flowID,
+                    **raw
+                )
+                logger.debug(f"[ DB ] Created FlowApproximation entry { tabID }")
+
+            else:
+                query = (
+                    FlowApproximation.update(**raw)
+                    .where(
+                        FlowApproximation.flow_id == flowID 
+                    )
+                )
+                query.execute()
+
+    def _updateFlowResult(self, src: dict, queryMain, flowID):
+        if not src:
+            return
+
+        raw = deepcopy(src)
+
+        with self.__db.atomic():
+            if not FlowResult.select().where(FlowResult.flow_id == flowID).exists():
+                tabID = FlowResult.create(
+                    flow_id = flowID,
+                    **raw
+                )
+                logger.debug(f"[ DB ] Created FlowResult entry { tabID }")
+
+            else:
+                query = (
+                    FlowResult.update(**raw)
+                    .where(
+                        FlowResult.flow_id == flowID 
                     )
                 )
                 query.execute()

@@ -105,23 +105,63 @@ class struct:
 
 def deepupdate(target, src):
     for k, v in src.items():
-        #if type(v) == list:
-        #    if not k in target:
-        #        target[k] = copy.deepcopy(v)
-        #    else:
-        #        target[k].extend(v)
-        if type(v) == dict:
+        if isinstance(v, dict):
             if not k in target:
                 target[k] = copy.deepcopy(v)
+
             else:
                 deepupdate(target[k], v)
-        #elif type(v) == set:
-        #    if not k in target:
-        #        target[k] = v.copy()
-        #    else:
-        #        target[k].update(v.copy())
+
         else:
             target[k] = copy.copy(v)
+
+def collapse(source, key = None, level = 0, sep = "_"):
+    if isinstance(source, dict) and source:
+        level = level + 1
+        res = {}
+
+        for k, v in source.items():
+            ret, lvl = collapse(v, k, level)
+
+            for kk,vv in ret.items():
+                if level == lvl:
+                    newkey = k
+
+                else:
+                    newkey = "{}{}{}".format(k, sep, kk)
+
+                res.update({ newkey: vv })
+
+        if level == 1:
+            return res
+
+        else:
+            return res, level
+
+    else:
+        return { key: source }, level
+
+def expand(source, sep = "_"):
+    res = {}
+
+    for k, v in source.items():
+        if k.find(sep) == -1:
+            res.update({ k: v })
+
+        else:
+            keys = k.split(sep)
+            cur = res
+
+            for n, kk in enumerate(keys):
+                if not len(keys) == n + 1:
+                    if not cur.get(kk):
+                        cur.update({ kk: {} })
+
+                    cur = cur[kk]
+
+                else:
+                    cur[kk] = v
+    return res
 
 #if os.path.exists(env["CONFIG"]):
 #    config = toml.load(env["CONFIG"])

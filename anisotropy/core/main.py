@@ -120,13 +120,13 @@ class Anisotropy(object):
                         ),
                         "mesh": mesh,
                         "submesh": deepcopy(entry["submesh"]),
-                        "flow": deepcopy(entry["flow"])
+                        "flow": deepcopy(entry["flow"]),
+                        "flowapprox": deepcopy(entry["flowapprox"])
                     }
 
-                    # TODO: optimize it
                     # For type = fixedValue only
-                    _velocity = entryNew["flow"]["approx"]["velocity"]["boundaryField"]["inlet"]["value"]
-                    entryNew["flow"]["approx"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
+                    _velocity = entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"]
+                    entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
                         val * _velocity for val in entryNew["structure"]["direction"] 
                     ]
 
@@ -212,7 +212,7 @@ class Anisotropy(object):
         return os.path.join(
             self.env["BUILD"], 
             structure["type"],
-            f"direction-{ structure['direction'] }",
+            "direction-{}".format(str(structure['direction']).replace(" ", "")),
             f"theta-{ structure['theta'] }"
         )
 
@@ -350,15 +350,17 @@ class Anisotropy(object):
         foamCase = [ "0", "constant", "system" ]
 
         flow = self.params["flow"]
+        flowapprox = self.params["flowapprox"]
 
         # ISSUE: ideasUnvToFoam cannot import mesh with '-case' flag so 'os.chdir' for that
-        os.chdir(self.getCasePath())
+        casePath = self.getCasePath()
+        os.chdir(casePath)
         openfoam.foamClean()
 
         for d in foamCase:
             shutil.copytree(
                 os.path.join(self.env["openfoam_template"], d), 
-                os.path.join(case, d)
+                os.path.join(casePath, d)
             )
         
         ###
@@ -369,11 +371,11 @@ class Anisotropy(object):
             os.chdir(self.env["ROOT"])
             return 1
 
-        _, returncode = openfoam.ideasUnvToFoam("mesh.unv")
+        out, err, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
         if returncode:
             os.chdir(self.env["ROOT"])
-            return returncode
+            return out, err, returncode
         
         openfoam.createPatch(dictfile = "system/createPatchDict")
 
@@ -398,25 +400,20 @@ class Anisotropy(object):
         ###
         #   Decomposition and initial approximation
         #
-        #   NOTE: Temporarily without decomposition
+        #   NOTE: Temporary without decomposition
         ##
         openfoam.foamDictionary(
             "constant/transportProperties",
             "nu",
-            str(flow["constant"]["nu"])
+            str(flow["transportProperties"]["nu"])
         )
 
         #openfoam.decomposePar()
 
         openfoam.renumberMesh()
 
-        pressureBF = flow["approx"]["pressure"]["boundaryField"]
-        velocityBF = flow["approx"]["velocity"]["boundaryField"]
-        direction = {
-            "[1, 0, 0]": 0,
-            "[0, 0, 1]": 1,
-            "[1, 1, 1]": 2
-        }[str(task.geometry.direction)]
+        pressureBF = flowapprox["pressure"]["boundaryField"]
+        velocityBF = flowapprox["velocity"]["boundaryField"]
 
         openfoam.foamDictionary(
             "0/p", 
@@ -451,7 +448,7 @@ class Anisotropy(object):
         openfoam.foamDictionary(
             "0/U",
             "boundaryField.inlet.value",
-            velocityBF["inlet"]["value"] 
+            openfoam.uniform(velocityBF["inlet"]["value"])
         )
 
         #for n in range(os.cpu_count()):
@@ -466,7 +463,7 @@ class Anisotropy(object):
         #        openfoam.uniform(velocityBF.inlet.value[direction])
         #    )
         
-        returncode, out = openfoam.simpleFoam()
+        out, err, returncode = openfoam.simpleFoam()
         if out:
             logger.info(out)
 
@@ -477,7 +474,7 @@ class Anisotropy(object):
         if returncode == 0:
             postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
 
-            with open(postProcessing, "r") as io:
+            with open(os.path.join(casePath, postProcessing), "r") as io:
                 lastLine = io.readlines()[-1]
                 flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
                 
@@ -489,7 +486,7 @@ class Anisotropy(object):
 
         os.chdir(self.env["ROOT"])
         
-        return returncode
+        return out, err, returncode
 
     
     def _queue(self):
