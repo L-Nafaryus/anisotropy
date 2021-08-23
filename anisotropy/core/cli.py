@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
+
 import click
 import ast
 
@@ -41,7 +45,6 @@ class KeyValueOption(click.Option):
             return self._convert(ctx, value)
 
         
-#pass_anisotropy = click.make_pass_decorator(Anisotropy)
 def version():
     msg = "Missed package anisotropy"
 
@@ -59,11 +62,34 @@ def version():
 def anisotropy():
     pass
 
-@anisotropy.command()
-@click.option("-s", "--stage", "stage", type = click.Choice(["all", "mesh", "flow"]), default = "all")
-@click.option("-p", "--param", "params", metavar = "key=value", multiple = True, cls = KeyValueOption)
-def compute(stage, params):
+@anisotropy.command(
+    help = """Computes cases by chain (mesh -> flow)
+    
+    Control parameters: type, direction, theta (each parameter affects on a queue)
+    """
+)
+@click.option(
+    "-s", "--stage", "stage", 
+    type = click.Choice(["all", "mesh", "flow"]), 
+    default = "all",
+    help = "Current computation stage"
+)
+@click.option(
+    "-P", "--parallel", "parallel",
+    type = click.INT,
+    default = 1,
+    help = "Count of parallel processes"
+)
+@click.option(
+    "-p", "--param", "params", 
+    metavar = "key=value", 
+    multiple = True, 
+    cls = KeyValueOption,
+    help = "Overwrite existing parameter (except control variables)"
+)
+def compute(stage, parallel, params):
     from anisotropy.core.main import Anisotropy, logger
+    from anisotropy.core.utils import timer
 
     args = dict()
 
@@ -81,7 +107,8 @@ def compute(stage, params):
             model.db.update(entry)
 
     type, direction, theta = args["type"], args["direction"], args["theta"]
-
+    
+    
     model.load(type, direction, theta)
     # TODO: merge cli params with db params here 
     model.evalParams()
@@ -90,17 +117,21 @@ def compute(stage, params):
     # TODO: single compute / queue
     
     if stage == "all" or stage == "mesh":
-        ((out, err, code), elapsed) = model.computeMesh(type, direction, theta)
+        ((out, err, code), elapsed) = timer(model.computeMesh)()
 
         if out: click.echo(out)
         if err: click.echo(err)
+
         if model.params.get("meshresult"):
             model.load(type, direction, theta)
             model.params["meshresult"]["calculationTime"] = elapsed
             model.update()
 
     if stage == "all" or stage == "flow":
-        ((out, err, code), elapsed) = model.computeFlow(type, direction, theta)
+        ((out, err, code), elapsed) = timer(model.computeFlow)()
+
+        if out: click.echo(out)
+        if err: click.echo(err)
 
         if model.params.get("flowresult"):
             model.load(type, direction, theta)
@@ -108,13 +139,15 @@ def compute(stage, params):
             model.update()
 
 
-@anisotropy.command()
+@anisotropy.command(
+    help = "! Not a user command"
+)
 @click.argument("root")
 @click.argument("type")
 @click.argument("direction")
 @click.argument("theta")
 def computemesh(root, type, direction, theta):
-    # ISSUE: can't hide command from help, hidden = True doesn't work
+    # ISSUE: can't hide command from help, 'hidden = True' doesn't work
     # [Salome Environment]
     
     ###

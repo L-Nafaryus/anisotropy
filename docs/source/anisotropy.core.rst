@@ -12,6 +12,14 @@ anisotropy.core.cli module
    :undoc-members:
    :show-inheritance:
 
+anisotropy.core.database module
+-------------------------------
+
+.. automodule:: anisotropy.core.database
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 anisotropy.core.main module
 ---------------------------
 

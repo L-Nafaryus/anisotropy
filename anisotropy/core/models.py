@@ -139,6 +139,7 @@ class MeshResult(BaseModel):
     prisms = IntegerField(null = True)
     pyramids = IntegerField(null = True)
 
+    status = TextField(null = True, default = "Idle")
     calculationTime = TimeField(null = True)
 
 class Flow(BaseModel):
@@ -164,4 +165,6 @@ class FlowResult(BaseModel):
     flow_id = ForeignKeyField(Flow, backref = "flowresults")
 
     flowRate = FloatField(null = True)
+
+    status = TextField(null = True, default = "Idle")
     calculationTime = TimeField(null = True)

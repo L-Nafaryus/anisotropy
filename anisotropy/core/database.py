@@ -45,6 +45,11 @@ class Database(object):
 
 
     def isempty(self) -> bool:
+        """Checks DB for main table existence (Structure)
+
+        :return: True if exists
+        :rtype: bool
+        """
         query = Structure.select()
 
         return not query.exists()
@@ -96,6 +101,8 @@ class Database(object):
 
                     if flowresultsQuery.exists():
                         params["flowresult"] = flowresultsQuery.dicts().get()
+            else:
+                logger.error("Missed Structure table")
 
         return params
 

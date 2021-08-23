@@ -32,7 +32,7 @@ peeweeLogger.setLevel(logging.INFO)
 
 
 class Anisotropy(object):
-    """Ultimate class that organize whole working process"""
+    """Ultimate class that organizes whole working process"""
 
     def __init__(self):
         """Constructor method"""
@@ -43,10 +43,18 @@ class Anisotropy(object):
 
 
     def load(self, structure_type: str, structure_direction: list, structure_theta: float):
+        """Shortcut for `Database.setup` and `Database.load`. 
+
+        See :class:`anisotropy.core.database.Database` for more details.
+        """
         self.db.setup()
         self.params = self.db.load(structure_type, structure_direction, structure_theta)
 
     def update(self, params: dict = None):
+        """Shortcut for `Database.setup` and `Database.update`. 
+
+        See :class:`anisotropy.core.database.Database` for more details.
+        """
         self.db.setup()
         self.db.update(self.params if not params else params)
 
@@ -124,7 +132,7 @@ class Anisotropy(object):
                         "flowapprox": deepcopy(entry["flowapprox"])
                     }
 
-                    # For type = fixedValue only
+                    # For `type = fixedValue` only
                     _velocity = entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"]
                     entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
                         val * _velocity for val in entryNew["structure"]["direction"] 
@@ -190,7 +198,6 @@ class Anisotropy(object):
             fillets = delta - Cf * (radius - r0)
 
         self.params["structure"].update(
-            #**structure,
             L = L,
             r0 = r0,
             radius = radius,
@@ -198,7 +205,7 @@ class Anisotropy(object):
         )
 
     def getCasePath(self) -> str:
-        """Constructs case path from main control parameters
+        """Constructs case path from control parameters
         
         :return: Absolute path to case
         :rtype: str
@@ -217,20 +224,31 @@ class Anisotropy(object):
         )
 
 
-    @timer
-    def computeMesh(self, type, direction, theta):
+    def computeMesh(self):
+        """Computes a mesh on shape via Salome
+
+        :return: Process output, error messages and returncode
+        :rtype: tuple(str, str, int)
+        """
         scriptpath = os.path.join(self.env["ROOT"], "anisotropy/core/cli.py")
         port = 2900
+
+        p = self.params["structure"]
 
         return salomepl.utils.runSalome(
             self.env["salome_port"], 
             scriptpath, 
             self.env["ROOT"],
-            "computemesh", type, direction, theta,
+            "computemesh", 
+            p["type"], p["direction"], p["theta"],
             logpath = os.path.join(self.env["LOG"], "salome.log")
         )
 
     def genmesh(self):
+        """Computes a mesh on shape
+
+        Warning: Working only inside Salome Environment
+        """
         # ISSUE: double logger output
 
         import salome 
@@ -309,7 +327,12 @@ class Anisotropy(object):
 
 
         self.update()
-        returncode, errors = mesh.compute()
+        out, err, returncode = mesh.compute()
+
+        ###
+        #   Results
+        ##
+        p["meshresult"] = dict()
 
         if not returncode:
             mesh.removePyramids()
@@ -320,7 +343,8 @@ class Anisotropy(object):
             mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
 
             meshStats = mesh.stats()
-            p["meshresult"] = dict(
+            p["meshresult"].update(
+                status = "Done",
                 surfaceArea = surfaceArea,
                 volume = volume,
                 **meshStats
@@ -334,7 +358,8 @@ class Anisotropy(object):
         else:
             logger.error(errors)
 
-            p["meshresult"] = dict(
+            p["meshresult"].update(
+                status = "Failed",
                 surfaceArea = surfaceArea,
                 volume = volume
             )
@@ -342,8 +367,13 @@ class Anisotropy(object):
 
         salome.salome_close()
 
-    @timer
-    def computeFlow(self, type, direction, theta):
+
+    def computeFlow(self):
+        """Computes a flow on mesh via OpenFOAM
+
+        :return: Process output, error messages and returncode
+        :rtype: tuple(str, str, int)
+        """
         ###
         #   Case preparation
         ##
@@ -468,19 +498,28 @@ class Anisotropy(object):
             logger.info(out)
 
         ###
-        #   Check results
+        #   Results
         ##
+        self.params["flowresult"] = dict()
 
-        if returncode == 0:
+        if not returncode:
             postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
 
             with open(os.path.join(casePath, postProcessing), "r") as io:
                 lastLine = io.readlines()[-1]
                 flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
                 
-            self.params["flowresult"] = dict(
+            self.params["flowresult"].update(
+                status = "Done",
                 flowRate = flowRate
             )
+
+        else:
+            self.params["flowresult"].update(
+                status = "Failed",
+                flowRate = flowRate
+            )
+
 
         self.update()
 
@@ -489,10 +528,3 @@ class Anisotropy(object):
         return out, err, returncode
 
     
-    def _queue(self):
-        pass
-
-    def computeAll(self):
-        pass
-
-

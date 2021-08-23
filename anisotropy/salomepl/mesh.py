@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
+
 import logging
 
 logger = logging.getLogger("anisotropy")
@@ -113,9 +117,9 @@ class Mesh(object):
     def compute(self):
         isDone = self.mesh.Compute()
         returncode = int(not isDone)
-        errors = self.mesh.GetComputeErrors()
+        err = self.mesh.GetComputeErrors()
 
-        return returncode, errors
+        return "", err, returncode
 
     def stats(self):
         return {

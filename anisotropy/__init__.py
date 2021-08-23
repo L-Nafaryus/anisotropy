@@ -7,7 +7,7 @@
 
 __license__ = "GPL3"
 __version__ = "1.1.0"
-__author__ = __maintainer = "George Kusayko"
+__author__ = __maintainer__ = "George Kusayko"
 __email__ = "gkusayko@gmail.com"
 
 ###

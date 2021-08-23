@@ -6,3 +6,4 @@ anisotropy
 
    anisotropy
    setup
+   tests
