@@ -6,3 +6,5 @@ pandas
 Sphinx
 sphinx-rtd-theme
 Click
+peewee-erd
+pydeps

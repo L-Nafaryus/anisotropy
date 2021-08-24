@@ -97,13 +97,13 @@ class Simple(object):
 
             point = []
             xl, yw, zh = -self.L - self.L / 6, -self.L - self.L / 6, -self.L / 6
-            point.append((L + xl, self.L + yw, self.L + zh))
+            point.append((self.L + xl, self.L + yw, self.L + zh))
             point.append((5 * self.L / 3 + xl, 2 * self.L / 3 + yw, 2 * self.L / 3 + zh))
             point.append((2 * self.L + xl, self.L + yw, 0 + zh))
             point.append((5 * self.L / 3 + xl, 5 * self.L / 3 + yw, -self.L / 3 + zh))
-            point.append((L + xl, 2 * self.L + yw, 0 + zh))
+            point.append((self.L + xl, 2 * self.L + yw, 0 + zh))
             point.append((2 * self.L / 3 + xl, 5 * self.L / 3 + yw, 2 * self.L / 3 + zh))
-            point.append((L + xl, self.L + yw, self.L + zh))
+            point.append((self.L + xl, self.L + yw, self.L + zh))
 
             scale = 100
             oo = geompy.MakeVertex(0, 0, 0)

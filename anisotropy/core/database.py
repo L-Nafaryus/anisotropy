@@ -107,13 +107,22 @@ class Database(object):
         return params
 
 
-    def loadGeneral(self) -> list:
+    def loadGeneral(self, type: str = None, direction: list = None, theta: float = None) -> list:
         query = (
             Structure
             .select()
             .order_by(Structure.type, Structure.direction, Structure.theta)
         )
         response = []
+
+        if type:
+            query = query.where(Structure.type == type)
+
+        if direction:
+            query = query.where(Structure.direction == str(direction))
+
+        if theta:
+            query = query.where(Structure.theta == theta)
 
         for entry in query.dicts():
             response.append({ "structure": entry })

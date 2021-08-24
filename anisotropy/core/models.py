@@ -18,7 +18,6 @@ db = SqliteDatabase(
     field_types = { "list": "text" }
 )
 
-
 class BaseModel(Model):
     class Meta:
         database = db

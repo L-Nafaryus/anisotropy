@@ -4,6 +4,7 @@
 
 import click
 import ast
+import os
 
 class LiteralOption(click.Option):
     def type_cast_value(self, ctx, value):
@@ -75,7 +76,7 @@ def anisotropy():
     help = "Current computation stage"
 )
 @click.option(
-    "-P", "--parallel", "parallel",
+    "-N", "--nprocs", "nprocs",
     type = click.INT,
     default = 1,
     help = "Count of parallel processes"
@@ -87,16 +88,16 @@ def anisotropy():
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(stage, parallel, params):
+def compute(stage, nprocs, params):
     from anisotropy.core.main import Anisotropy, logger
-    from anisotropy.core.utils import timer
+    from anisotropy.core.utils import timer, parallel
 
     args = dict()
 
     for param in params:
         args.update(param)
 
-
+    ###
     model = Anisotropy()
     model.db.setup()
 
@@ -106,37 +107,65 @@ def compute(stage, parallel, params):
         for entry in paramsAll:
             model.db.update(entry)
 
-    type, direction, theta = args["type"], args["direction"], args["theta"]
+    ###
+    def computeCase(stage, type, direction, theta):
+        case = Anisotropy()
+        case.load(type, direction, theta)
+        case.evalParams()
+        case.update()
+
+        if stage == "all" or stage == "mesh":
+            (out, err, returncode), elapsed = timer(case.computeMesh)()
+
+            click.echo(out)
+            click.echo(err)
+
+            case.load(type, direction, theta)
+
+            if case.params.get("meshresult"):
+                case.params["meshresult"]["calculationTime"] = elapsed
+                case.update()
+
+        if returncode:
+            logger.error("Mesh computation failed. Skipping flow computation ...")
+            return
+
+        if stage == "all" or stage == "flow":
+            (out, err, returncode), elapsed = timer(case.computeFlow)()
+
+            click.echo(out)
+            click.echo(err)
+
+            case.load(type, direction, theta)
+
+            if case.params.get("flowresult"):
+                case.params["flowresult"]["calculationTime"] = elapsed
+                case.update()
+        
+        if returncode:
+            logger.error("Flow computation failed.")
+            return
+
+
+    ###
+    params = model.db.loadGeneral(
+        args.get("type"), 
+        args.get("direction"), 
+        args.get("theta")
+    )
+    queueargs = []
     
-    
-    model.load(type, direction, theta)
-    # TODO: merge cli params with db params here 
-    model.evalParams()
-    model.update()
+    for p in params:
+        s = p["structure"]
 
-    # TODO: single compute / queue
-    
-    if stage == "all" or stage == "mesh":
-        ((out, err, code), elapsed) = timer(model.computeMesh)()
+        queueargs.append((stage, s["type"], s["direction"], s["theta"]))
 
-        if out: click.echo(out)
-        if err: click.echo(err)
+    if nprocs == 1:
+        for pos, qarg in enumerate(queueargs):
+            computeCase(*qarg)
 
-        if model.params.get("meshresult"):
-            model.load(type, direction, theta)
-            model.params["meshresult"]["calculationTime"] = elapsed
-            model.update()
-
-    if stage == "all" or stage == "flow":
-        ((out, err, code), elapsed) = timer(model.computeFlow)()
-
-        if out: click.echo(out)
-        if err: click.echo(err)
-
-        if model.params.get("flowresult"):
-            model.load(type, direction, theta)
-            model.params["flowresult"]["calculationTime"] = elapsed
-            model.update()
+    else:
+        parallel(nprocs, queueargs, computeCase)
 
 
 @anisotropy.command(
@@ -174,6 +203,25 @@ def computemesh(root, type, direction, theta):
 
     model.genmesh()
 
+
+@anisotropy.command(
+    help = """Build documentation
+    
+    TARGET is the builder to use (default: html)
+    """
+)
+@click.argument(
+    "target",
+    default = "html"
+)
+def docs(target):
+    from sphinx.cmd.make_mode import run_make_mode
+    from anisotropy import env
+
+    sourcepath = os.path.join(env["DOCS"], "source")
+    buildpath = os.path.join(env["DOCS"], "build")
+
+    run_make_mode([target, sourcepath, buildpath])
 
 ###
 #   CLI entry

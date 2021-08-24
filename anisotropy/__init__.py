@@ -21,7 +21,8 @@ env = dict(
 env.update(
     BUILD = os.path.join(env["ROOT"], "build"),
     LOG = os.path.join(env["ROOT"], "logs"),
-    CONFIG = os.path.join(env["ROOT"], "anisotropy/config/default.toml")
+    CONFIG = os.path.join(env["ROOT"], "anisotropy/config/default.toml"),
+    DOCS = os.path.join(env["ROOT"], "docs")
 )
 env.update(
     logger_name = "anisotropy",

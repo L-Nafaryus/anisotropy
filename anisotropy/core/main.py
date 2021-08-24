@@ -356,7 +356,7 @@ class Anisotropy(object):
             ))
 
         else:
-            logger.error(errors)
+            logger.error(err)
 
             p["meshresult"].update(
                 status = "Failed",
