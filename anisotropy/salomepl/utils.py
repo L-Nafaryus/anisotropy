@@ -2,76 +2,105 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
-#import salome
 import subprocess
 import logging
 import sys, os
-
-def hasDesktop() -> bool:
-    return salome.sg.hasDesktop()
+import re
 
 
 class SalomeNotFound(Exception):
     pass
 
 
-def version() -> str:
-    if os.environ.get("SALOME_PATH"):
-        cmd = os.path.join(os.environ["SALOME_PATH"], "salome")
+class SalomeManager(object):
+    def __init__(self):
+        self.__port = None
+        self.__lastproc = None
 
-    else:
-        raise(SalomeNotFound("Can't find salome executable."))
 
-    proc = subprocess.Popen(
-        [ cmd, "--version" ], 
-        stdout = subprocess.PIPE, 
-        stderr = subprocess.PIPE
-    )
+    def runner(self, cmdargs: list, **kwargs):
+        timeout = kwargs.pop("timeout") if kwargs.get("timeout") else None
 
-    out, err = proc.communicate()
+        try:
+            with subprocess.Popen(
+                cmdargs,
+                stdout = kwargs.pop("stdout") if kwargs.get("stdout") else subprocess.PIPE,
+                stderr = kwargs.pop("stdout") if kwargs.get("stderr") else subprocess.PIPE,
+                **kwargs
+            ) as proc:
+                self.__lastproc = proc
+                out, err = proc.communicate(timeout = timeout)
 
-    return str(out, "utf-8").strip().split(" ")[-1]
+        except FileNotFoundError:
+            raise SalomeNotFound()
 
-def runSalome(port: int, scriptpath: str, root: str, *args, logpath: str = None) -> int:
-    # ISSUE: salome removes commas from string list
+        return out, err, proc.returncode
 
-    if os.environ.get("SALOME_PATH"):
-        cmd = [ os.path.join(os.environ["SALOME_PATH"], "salome") ]
 
-    else:
-        raise(SalomeNotFound("Can't find salome executable."))
+    def port(self) -> int:
+        out, err, returncode = self.runner(["salome", "start", "--print-port"], text = True)
+        
+        if returncode == 0:
+            reg = re.search("(?!port:)([0-9]+)", out)
 
-    if not logpath:
-        logpath = "/tmp/salome.log"
+            if reg:
+                return int(reg.group())
 
-    #fullargs = list(args)
-    args = list(args)
-    args.insert(1, root)
-    fmtargs = "args:{}".format(",".join([ '"{}"'.format(str(arg)) for arg in args ]))
-    cmdargs = [
-        "start", "-t",
-        "--shutdown-servers=1",
-        "--port", str(port),
-        scriptpath,
-        fmtargs
-    ]
+        return 2810
 
-    cmd.extend(cmdargs)
 
-    with subprocess.Popen(
-        cmd,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE
-    ) as proc, open(logpath, "wb") as logfile:
+    def version(self) -> int:
+        out, err, returncode = self.runner(["salome", "--version"], text = True)
 
-        logfile = open(logpath, "wb")
-        for line in proc.stdout:
-            logfile.write(line)
+        return out.strip().split(" ")[-1]
 
-        out, err = proc.communicate()
 
-        if err:
-            logfile.write(err)
+    def kill(self, port: int = None):
+        return self.runner(["salome", "kill", str(self.__port or port)])
 
-    return out, err, proc.returncode
+
+    def execute(self, scriptpath: str, *args, root: str = None, logpath: str = None, timeout: int = None, **kwargs):
+
+        if not root:
+            root = os.environ["HOME"]
+
+        # ISSUE: salome removes commas from string list
+        args = list(args)
+        args.insert(1, root)
+
+        salomeargs = "args:"
+        salomeargs += ",".join([ '"{}"'.format(str(arg)) for arg in args ])
+
+        if kwargs:
+            salomeargs += "," + ",".join([ '{}="{}"'.format(k, v) for k, v in kwargs.items() ])
+
+        ###
+        self.__port = self.port()
+        cmd = [
+            "salome",
+            "start", 
+            "-t",
+            "--shutdown-servers=1",
+            "--port", str(self.__port),
+            scriptpath,
+            salomeargs
+        ]
+
+        try:
+            out, err, returncode = self.runner(cmd, timeout = timeout)
+
+        except subprocess.TimeoutExpired:
+            lastproc = self.__lastproc
+            self.kill()
+
+            out, err = lastproc.communicate()
+            returncode = lastproc.returncode
+
+        if logpath:
+            with open(os.path.join(logpath, "salome.log"), "wb") as io:
+                io.write(out)
+                io.write(err)
+
+        return str(out, "utf-8"), str(err, "utf-8"), returncode
+
 

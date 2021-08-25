@@ -10,7 +10,8 @@ Welcome to anisotropy's documentation!
     :maxdepth: 2
     :caption: Contents:
 
-    modules 
+    INSTALL
+    anisotropy
 
 .. include:: ../../README.rst
 

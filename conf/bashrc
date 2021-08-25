@@ -1,0 +1,2 @@
+export PATH="${PATH}:${HOME}/programs/salome/SALOME-9.7.0-MPI"
+source "${HOME}/programs/OpenFOAM/OpenFOAM-v2012/etc/bashrc"

@@ -74,7 +74,7 @@ class Anisotropy(object):
         }
 
         try:
-            versions["Salome"] = salomepl.utils.version()
+            versions["Salome"] = salomepl.utils.SalomeManager().version()
             versions["OpenFOAM"] = openfoam.version()
 
         except Exception:
@@ -230,19 +230,24 @@ class Anisotropy(object):
         :return: Process output, error messages and returncode
         :rtype: tuple(str, str, int)
         """
-        scriptpath = os.path.join(self.env["ROOT"], "anisotropy/core/cli.py")
-        port = 2900
-
         p = self.params["structure"]
+        scriptpath = os.path.join(self.env["ROOT"], "anisotropy/core/cli.py")
+        salomeargs = [
+            "computemesh",
+            p["type"], 
+            p["direction"], 
+            p["theta"],
+        ]
+        manager = salomepl.utils.SalomeManager()
 
-        return salomepl.utils.runSalome(
-            self.env["salome_port"], 
+        return manager.execute(
             scriptpath, 
-            self.env["ROOT"],
-            "computemesh", 
-            p["type"], p["direction"], p["theta"],
+            *salomeargs, 
+            timeout = self.env["salome_timeout"],
+            root = self.env["ROOT"],
             logpath = os.path.join(self.env["LOG"], "salome.log")
         )
+
 
     def genmesh(self):
         """Computes a mesh on shape
