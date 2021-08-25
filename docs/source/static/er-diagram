@@ -1,0 +1,591 @@
+digraph erd {
+    fontname = "Helvetica"
+    fontsize = 12
+    splines = true
+    node [
+        shape = "plaintext"
+    ]
+    
+        "BaseModel"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            BaseModel
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="id">
+            <FONT COLOR="#333333" FACE="Helvetica">id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "Flow"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            Flow
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flow_id">
+            <FONT COLOR="#333333" FACE="Helvetica">flow_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="structure_id">
+            <FONT COLOR="#333333" FACE="Helvetica">structure_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="scale">
+            <FONT COLOR="#333333" FACE="Helvetica">scale</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ListField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="pressure">
+            <FONT COLOR="#333333" FACE="Helvetica">pressure</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="velocity">
+            <FONT COLOR="#333333" FACE="Helvetica">velocity</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="transportProperties">
+            <FONT COLOR="#333333" FACE="Helvetica">transportProperties</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "FlowApproximation"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            FlowApproximation
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flow_approximation_id">
+            <FONT COLOR="#333333" FACE="Helvetica">flow_approximation_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flow_id">
+            <FONT COLOR="#333333" FACE="Helvetica">flow_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="pressure">
+            <FONT COLOR="#333333" FACE="Helvetica">pressure</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="velocity">
+            <FONT COLOR="#333333" FACE="Helvetica">velocity</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="transportProperties">
+            <FONT COLOR="#333333" FACE="Helvetica">transportProperties</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">JSONField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "FlowResult"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            FlowResult
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flowresult_id">
+            <FONT COLOR="#333333" FACE="Helvetica">flowresult_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flow_id">
+            <FONT COLOR="#333333" FACE="Helvetica">flow_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="flowRate">
+            <FONT COLOR="#333333" FACE="Helvetica">flowRate</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="status">
+            <FONT COLOR="#333333" FACE="Helvetica">status</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TextField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="calculationTime">
+            <FONT COLOR="#333333" FACE="Helvetica">calculationTime</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TimeField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "Mesh"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            Mesh
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="mesh_id">
+            <FONT COLOR="#333333" FACE="Helvetica">mesh_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="structure_id">
+            <FONT COLOR="#333333" FACE="Helvetica">structure_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="maxSize">
+            <FONT COLOR="#333333" FACE="Helvetica">maxSize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="minSize">
+            <FONT COLOR="#333333" FACE="Helvetica">minSize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="fineness">
+            <FONT COLOR="#333333" FACE="Helvetica">fineness</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="growthRate">
+            <FONT COLOR="#333333" FACE="Helvetica">growthRate</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="nbSegPerEdge">
+            <FONT COLOR="#333333" FACE="Helvetica">nbSegPerEdge</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="nbSegPerRadius">
+            <FONT COLOR="#333333" FACE="Helvetica">nbSegPerRadius</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="chordalErrorEnabled">
+            <FONT COLOR="#333333" FACE="Helvetica">chordalErrorEnabled</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="chordalError">
+            <FONT COLOR="#333333" FACE="Helvetica">chordalError</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="secondOrder">
+            <FONT COLOR="#333333" FACE="Helvetica">secondOrder</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="optimize">
+            <FONT COLOR="#333333" FACE="Helvetica">optimize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="quadAllowed">
+            <FONT COLOR="#333333" FACE="Helvetica">quadAllowed</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="useSurfaceCurvature">
+            <FONT COLOR="#333333" FACE="Helvetica">useSurfaceCurvature</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="fuseEdges">
+            <FONT COLOR="#333333" FACE="Helvetica">fuseEdges</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="checkChartBoundary">
+            <FONT COLOR="#333333" FACE="Helvetica">checkChartBoundary</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="viscousLayers">
+            <FONT COLOR="#333333" FACE="Helvetica">viscousLayers</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="thickness">
+            <FONT COLOR="#333333" FACE="Helvetica">thickness</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="numberOfLayers">
+            <FONT COLOR="#333333" FACE="Helvetica">numberOfLayers</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="stretchFactor">
+            <FONT COLOR="#333333" FACE="Helvetica">stretchFactor</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="isFacesToIgnore">
+            <FONT COLOR="#333333" FACE="Helvetica">isFacesToIgnore</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="facesToIgnore">
+            <FONT COLOR="#333333" FACE="Helvetica">facesToIgnore</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ListField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="extrusionMethod">
+            <FONT COLOR="#333333" FACE="Helvetica">extrusionMethod</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TextField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "MeshResult"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            MeshResult
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="meshresult_id">
+            <FONT COLOR="#333333" FACE="Helvetica">meshresult_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="mesh_id">
+            <FONT COLOR="#333333" FACE="Helvetica">mesh_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="surfaceArea">
+            <FONT COLOR="#333333" FACE="Helvetica">surfaceArea</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="volume">
+            <FONT COLOR="#333333" FACE="Helvetica">volume</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="elements">
+            <FONT COLOR="#333333" FACE="Helvetica">elements</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="edges">
+            <FONT COLOR="#333333" FACE="Helvetica">edges</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="faces">
+            <FONT COLOR="#333333" FACE="Helvetica">faces</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="volumes">
+            <FONT COLOR="#333333" FACE="Helvetica">volumes</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="tetrahedrons">
+            <FONT COLOR="#333333" FACE="Helvetica">tetrahedrons</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="prisms">
+            <FONT COLOR="#333333" FACE="Helvetica">prisms</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="pyramids">
+            <FONT COLOR="#333333" FACE="Helvetica">pyramids</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="status">
+            <FONT COLOR="#333333" FACE="Helvetica">status</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TextField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="calculationTime">
+            <FONT COLOR="#333333" FACE="Helvetica">calculationTime</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TimeField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "Structure"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            Structure
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="structure_id">
+            <FONT COLOR="#333333" FACE="Helvetica">structure_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="type">
+            <FONT COLOR="#333333" FACE="Helvetica">type</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TextField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="direction">
+            <FONT COLOR="#333333" FACE="Helvetica">direction</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ListField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="theta">
+            <FONT COLOR="#333333" FACE="Helvetica">theta</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="r0">
+            <FONT COLOR="#333333" FACE="Helvetica">r0</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="L">
+            <FONT COLOR="#333333" FACE="Helvetica">L</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="radius">
+            <FONT COLOR="#333333" FACE="Helvetica">radius</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="filletsEnabled">
+            <FONT COLOR="#333333" FACE="Helvetica">filletsEnabled</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="fillets">
+            <FONT COLOR="#333333" FACE="Helvetica">fillets</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+        "SubMesh"
+        [label=<
+            <TABLE BGCOLOR="#eeeeee" BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD COLSPAN="2" CELLPADDING="6.0" ALIGN="CENTER" BGCOLOR="#333333">
+            <FONT FACE="Helvetica Bold" COLOR="white">
+            SubMesh
+            </FONT></TD></TR>
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="submesh_id">
+            <FONT COLOR="#333333" FACE="Helvetica">submesh_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">AutoField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="mesh_id">
+            <FONT COLOR="#333333" FACE="Helvetica">mesh_id</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">ForeignKeyField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="name">
+            <FONT COLOR="#333333" FACE="Helvetica">name</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">TextField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="maxSize">
+            <FONT COLOR="#333333" FACE="Helvetica">maxSize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="minSize">
+            <FONT COLOR="#333333" FACE="Helvetica">minSize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="fineness">
+            <FONT COLOR="#333333" FACE="Helvetica">fineness</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">IntegerField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="growthRate">
+            <FONT COLOR="#333333" FACE="Helvetica">growthRate</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="nbSegPerEdge">
+            <FONT COLOR="#333333" FACE="Helvetica">nbSegPerEdge</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="nbSegPerRadius">
+            <FONT COLOR="#333333" FACE="Helvetica">nbSegPerRadius</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="chordalErrorEnabled">
+            <FONT COLOR="#333333" FACE="Helvetica">chordalErrorEnabled</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="chordalError">
+            <FONT COLOR="#333333" FACE="Helvetica">chordalError</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">FloatField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="secondOrder">
+            <FONT COLOR="#333333" FACE="Helvetica">secondOrder</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="optimize">
+            <FONT COLOR="#333333" FACE="Helvetica">optimize</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="quadAllowed">
+            <FONT COLOR="#333333" FACE="Helvetica">quadAllowed</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="useSurfaceCurvature">
+            <FONT COLOR="#333333" FACE="Helvetica">useSurfaceCurvature</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="fuseEdges">
+            <FONT COLOR="#333333" FACE="Helvetica">fuseEdges</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            <TR><TD CELLPADDING="6.0" ALIGN="LEFT" BORDER="0" PORT="checkChartBoundary">
+            <FONT COLOR="#333333" FACE="Helvetica">checkChartBoundary</FONT>
+            </TD><TD CELLPADDING="6.0" ALIGN="LEFT">
+            <FONT COLOR="#333333" FACE="Helvetica">BooleanField</FONT>
+            </TD></TR>'''
+            
+            </TABLE>
+        >]
+    
+    
+        "Flow":"structure_id" -> "Structure":"structure_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+        "FlowApproximation":"flow_id" -> "Flow":"flow_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+        "FlowResult":"flow_id" -> "Flow":"flow_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+        "Mesh":"structure_id" -> "Structure":"structure_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+        "MeshResult":"mesh_id" -> "Mesh":"mesh_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+        "SubMesh":"mesh_id" -> "Mesh":"mesh_id"
+            [arrowhead=empty, arrowtail=none, dir=both];
+    
+    
+}

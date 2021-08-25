@@ -1,4 +1,4 @@
-anisotropy package
+Anisotropy package
 ==================
 
 Subpackages

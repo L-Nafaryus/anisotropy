@@ -12,6 +12,7 @@ Welcome to anisotropy's documentation!
 
     INSTALL
     anisotropy
+    notes
 
 .. include:: ../../README.rst
 

@@ -11,7 +11,6 @@ The main goal for the current meshes is to achieve the following points:
 Example:
 
 .. code-block:: python
-    :linenos:
 
     shape, groups = simple(0.28, True, [1, 0, 0])
     lengths = [ geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shape, geompy.ShapeType["EDGE"]) ]

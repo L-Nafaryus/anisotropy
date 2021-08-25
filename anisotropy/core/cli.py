@@ -203,26 +203,6 @@ def computemesh(root, type, direction, theta):
 
     model.genmesh()
 
-
-@anisotropy.command(
-    help = """Build documentation
-    
-    TARGET is the builder to use (default: html)
-    """
-)
-@click.argument(
-    "target",
-    default = "html"
-)
-def docs(target):
-    from sphinx.cmd.make_mode import run_make_mode
-    from anisotropy import env
-
-    sourcepath = os.path.join(env["DOCS"], "source")
-    buildpath = os.path.join(env["DOCS"], "build")
-
-    run_make_mode([target, sourcepath, buildpath])
-
 ###
 #   CLI entry
 ##

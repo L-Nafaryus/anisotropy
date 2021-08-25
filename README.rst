@@ -1,22 +1,24 @@
 anisotropy
-===============
+==========
 
 Requirements
 ------------
 
-* python 3.5>
-* OpenFOAM
-* SALOME
-* ParaView
+.. csv-table:: Requirements
+    :header: "Software", "Used version", "Recommended version"
 
-Running
--------
+    "Python", "3.9.6", "> 3.6"
+    "Salome", "9.7.0", "> 9.6.0"
+    "OpenFOAM", "v2012", ""
 
-*in progress*
+Installation
+------------
+
+For installation guide see ``INSTALL``.
 
 License
 -------
 
 GNU GPLv3
 
-For more information see ``LICENSE`` file in this repository.
+For more information see ``LICENSE``.

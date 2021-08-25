@@ -1,6 +1,5 @@
-===============
-Mesh generation
-===============
+Salome Netgen parameters
+========================
 
 .. ``netgen parameters``
     minSize  
