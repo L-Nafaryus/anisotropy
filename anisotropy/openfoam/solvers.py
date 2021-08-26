@@ -8,10 +8,12 @@ import re
 
 def potentialFoam(case: str = None, useMPI: bool = False):
     if useMPI:
-        application("potentialFoam", "-parallel", useMPI = True, case = case, stderr = True)
+        out, err, returncode = application("potentialFoam", "-parallel", useMPI = True, case = case, stderr = True)
 
     else:
-        application("potentialFoam", case = case, stderr = True)
+        out, err, returncode = application("potentialFoam", case = case, stderr = True)
+
+    return out, err, returncode
 
 
 def simpleFoam(case: str = None, useMPI: bool = False):

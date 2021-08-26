@@ -27,8 +27,8 @@ from anisotropy.samples import Simple, FaceCentered, BodyCentered
 logger = logging.getLogger(env["logger_name"])
 setupLogger(logger, logging.INFO, env["LOG"])
 
-peeweeLogger = logging.getLogger("peewee")
-peeweeLogger.setLevel(logging.INFO)
+#peeweeLogger = logging.getLogger("peewee")
+#peeweeLogger.setLevel(logging.INFO)
 
 
 class Anisotropy(object):
@@ -38,7 +38,7 @@ class Anisotropy(object):
         """Constructor method"""
 
         self.env = env
-        self.db = Database("anisotropy", env["db_path"])
+        self.db = Database(self.env["db_name"], self.env["db_path"])
         self.params = []
 
 
@@ -245,7 +245,7 @@ class Anisotropy(object):
             *salomeargs, 
             timeout = self.env["salome_timeout"],
             root = self.env["ROOT"],
-            logpath = os.path.join(self.env["LOG"], "salome.log")
+            logpath = self.env["LOG"]
         )
 
 
@@ -260,20 +260,14 @@ class Anisotropy(object):
 
         p = self.params
 
-        logger.info("\n".join([
-            "genmesh:",
-            f"structure type:\t{ p['structure']['type'] }",
-            f"coefficient:\t{ p['structure']['theta'] }",
-            f"fillet:\t{ p['structure']['fillets'] }",
-            f"flow direction:\t{ p['structure']['direction'] }"
-        ]))
-
         salome.salome_init()
 
 
         ###
         #   Shape
         ##
+        logger.info("Constructing shape ...")
+
         geompy = salomepl.geometry.getGeom()
         structure = dict(
             simple = Simple,
@@ -284,17 +278,12 @@ class Anisotropy(object):
 
         [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
-        logger.info("\n".join([
-            "shape:",
-            f"edges length:\t{ length }",
-            f"surface area:\t{ surfaceArea }",
-            f"volume:\t{ volume }"
-        ]))
-
 
         ###
         #   Mesh
         ##
+        logger.info("Prepairing mesh ...")
+
         mp = p["mesh"]
 
         lengths = [
@@ -332,6 +321,7 @@ class Anisotropy(object):
 
 
         self.update()
+        logger.info("Computing mesh ...")
         out, err, returncode = mesh.compute()
 
         ###
@@ -345,6 +335,7 @@ class Anisotropy(object):
 
             casePath = self.getCasePath()
             os.makedirs(casePath, exist_ok = True)
+            logger.info("Exporting mesh ...")
             mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
 
             meshStats = mesh.stats()
@@ -355,10 +346,6 @@ class Anisotropy(object):
                 **meshStats
             )
             self.update()
-
-            logger.info("mesh stats:\n{}".format(
-                "\n".join(map(lambda v: f"{ v[0] }:\t{ v[1] }", meshStats.items()))
-            ))
 
         else:
             logger.error(err)
@@ -389,6 +376,11 @@ class Anisotropy(object):
 
         # ISSUE: ideasUnvToFoam cannot import mesh with '-case' flag so 'os.chdir' for that
         casePath = self.getCasePath()
+
+        if not os.path.exists(casePath):
+            logger.warning(f"Cannot find case path. Skipping computation ...\n\t{ casePath }")
+            return "", "", 1
+
         os.chdir(casePath)
         openfoam.foamClean()
 
@@ -404,7 +396,7 @@ class Anisotropy(object):
         if not os.path.exists("mesh.unv"):
             logger.error(f"missed 'mesh.unv'")
             os.chdir(self.env["ROOT"])
-            return 1
+            return "", "", 1
 
         out, err, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
@@ -499,8 +491,6 @@ class Anisotropy(object):
         #    )
         
         out, err, returncode = openfoam.simpleFoam()
-        if out:
-            logger.info(out)
 
         ###
         #   Results
@@ -521,8 +511,7 @@ class Anisotropy(object):
 
         else:
             self.params["flowresult"].update(
-                status = "Failed",
-                flowRate = flowRate
+                status = "Failed"
             )
 
 
@@ -530,6 +519,6 @@ class Anisotropy(object):
 
         os.chdir(self.env["ROOT"])
         
-        return out, err, returncode
+        return out, str(err, "utf-8"), returncode
 
     

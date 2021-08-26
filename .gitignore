@@ -16,6 +16,5 @@ env/
 *.run.xml
 *.synctex.gz
 *.toc
-*.png
 *.out
 *.egg-info

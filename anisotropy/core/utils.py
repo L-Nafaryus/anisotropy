@@ -48,7 +48,7 @@ def setupLogger(logger, level: int, filepath: str = None):
     :param filepath: Path to directory
     :type filepath: str, optional
     """
-
+    logger.handlers = []
     logger.setLevel(level)
 
     streamhandler = logging.StreamHandler()

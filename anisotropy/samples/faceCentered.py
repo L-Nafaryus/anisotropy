@@ -155,13 +155,13 @@ class FaceCentered(object):
         xy = geompy.MakeVectorDXDYDZ(1, 1, 0)
         xmy = geompy.MakeVectorDXDYDZ(1, -1, 0)
 
-        grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos1), radius)
+        grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos1), self.radius)
         lattice1 = geompy.MakeMultiTranslation2D(grain, xy, length, xn, xmy, length, yn)
-        lattice1 = geompy.MakeMultiTranslation1D(lattice1, oz, L, zn - 1)
+        lattice1 = geompy.MakeMultiTranslation1D(lattice1, oz, self.L, zn - 1)
 
-        grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos2), radius)
+        grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos2), self.radius)
         lattice2 = geompy.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
-        lattice2 = geompy.MakeMultiTranslation1D(lattice2, oz, L, zn)
+        lattice2 = geompy.MakeMultiTranslation1D(lattice2, oz, self.L, zn)
         
         grains = geompy.ExtractShapes(lattice1, geompy.ShapeType["SOLID"], True)
         grains += geompy.ExtractShapes(lattice2, geompy.ShapeType["SOLID"], True)

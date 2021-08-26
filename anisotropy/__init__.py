@@ -26,6 +26,7 @@ env.update(
 )
 env.update(
     logger_name = "anisotropy",
+    db_name = "anisotropy",
     db_path = env["BUILD"],
     salome_timeout = 15 * 60,
     openfoam_template = os.path.join(env["ROOT"], "anisotropy/openfoam/template")

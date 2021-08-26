@@ -42,9 +42,9 @@ def application(name: str, *args: str, case: str = None, stderr: bool = True, us
         out, err = p.communicate()
         logfile.write(err)
 
-        if err and stderr:
-            logger.error("""{}:
-            {}""".format(name, str(err, "utf-8")))
+        #if err and stderr:
+        #    logger.error("""{}:
+        #    {}""".format(name, str(err, "utf-8")))
 
     return out, err, p.returncode
 

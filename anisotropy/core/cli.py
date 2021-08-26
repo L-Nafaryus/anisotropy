@@ -82,14 +82,24 @@ def anisotropy():
     help = "Count of parallel processes"
 )
 @click.option(
+    "-D", "--database", "database",
+    help = "Database path"
+)
+@click.option(
+    "-f", "--force", "force",
+    type = click.BOOL,
+    default = False,
+    help = "Overwrite existing entries"
+)
+@click.option(
     "-p", "--param", "params", 
     metavar = "key=value", 
     multiple = True, 
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(stage, nprocs, params):
-    from anisotropy.core.main import Anisotropy, logger
+def compute(stage, nprocs, database, force, params):
+    from anisotropy.core.main import Anisotropy, Database, logger
     from anisotropy.core.utils import timer, parallel
 
     args = dict()
@@ -99,13 +109,30 @@ def compute(stage, nprocs, params):
 
     ###
     model = Anisotropy()
+
+    if database:
+        if database[-3: ] == ".db":
+            splitted = database.split("/")
+            db_path = "/".join(splitted[ :-1])
+            db_name = splitted[-1: ][0][ :-3]
+
+        else:
+            raise Exception("Invalid database extension")
+
+        model.db = Database(db_name, db_path)
+        
+    logger.info("Constructing database, tables ...")
     model.db.setup()
 
-    if model.db.isempty():
-        paramsAll = model.loadFromScratch()
+    def fill_db():
+        if model.db.isempty():
+            paramsAll = model.loadFromScratch()
 
-        for entry in paramsAll:
-            model.db.update(entry)
+            for entry in paramsAll:
+                model.db.update(entry)
+
+    _, fill_elapsed = timer(fill_db)()
+    logger.info(f"Elapsed time = { fill_elapsed }")
 
     ###
     def computeCase(stage, type, direction, theta):
@@ -114,37 +141,48 @@ def compute(stage, nprocs, params):
         case.evalParams()
         case.update()
 
+        logger.info(f"Case: type = { type }, direction = { direction }, theta = { theta }")
+        logger.info(f"Stage: { stage }")
+
         if stage == "all" or stage == "mesh":
-            (out, err, returncode), elapsed = timer(case.computeMesh)()
+            if not case.params.get("meshresult", {}).get("status") == "Done" or force:
+                (out, err, returncode), elapsed = timer(case.computeMesh)()
 
-            click.echo(out)
-            click.echo(err)
+                if out: logger.info(out)
+                if err: logger.error(err)
 
-            case.load(type, direction, theta)
+                case.load(type, direction, theta)
 
-            if case.params.get("meshresult"):
-                case.params["meshresult"]["calculationTime"] = elapsed
-                case.update()
+                if case.params.get("meshresult"):
+                    case.params["meshresult"]["calculationTime"] = elapsed
+                    case.update()
 
-        if returncode:
-            logger.error("Mesh computation failed. Skipping flow computation ...")
-            return
+                if returncode:
+                    logger.error("Mesh computation failed. Skipping flow computation ...")
+                    return
+
+            else:
+                logger.info("Mesh exists. Skipping ...")
 
         if stage == "all" or stage == "flow":
-            (out, err, returncode), elapsed = timer(case.computeFlow)()
+            if not case.params.get("flowresult", {}).get("status") == "Done" or force:
+                (out, err, returncode), elapsed = timer(case.computeFlow)()
 
-            click.echo(out)
-            click.echo(err)
+                if out: logger.info(out)
+                if err: logger.error(err)
 
-            case.load(type, direction, theta)
+                case.load(type, direction, theta)
 
-            if case.params.get("flowresult"):
-                case.params["flowresult"]["calculationTime"] = elapsed
-                case.update()
-        
-        if returncode:
-            logger.error("Flow computation failed.")
-            return
+                if case.params.get("flowresult"):
+                    case.params["flowresult"]["calculationTime"] = elapsed
+                    case.update()
+            
+                if returncode:
+                    logger.error("Flow computation failed.")
+                    return
+
+            else:
+                logger.info("Flow exists. Skipping ...")
 
 
     ###
