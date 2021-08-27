@@ -92,13 +92,19 @@ def anisotropy():
     help = "Overwrite existing entries"
 )
 @click.option(
+    "-u", "--update", "update",
+    type = click.BOOL,
+    default = False,
+    help = "Update db parameters from config"
+)
+@click.option(
     "-p", "--param", "params", 
     metavar = "key=value", 
     multiple = True, 
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(stage, nprocs, database, force, params):
+def compute(stage, nprocs, database, force, update, params):
     from anisotropy.core.main import Anisotropy, Database, logger
     from anisotropy.core.utils import timer, parallel
 
@@ -125,7 +131,7 @@ def compute(stage, nprocs, database, force, params):
     model.db.setup()
 
     def fill_db():
-        if model.db.isempty():
+        if model.db.isempty() or update:
             paramsAll = model.loadFromScratch()
 
             for entry in paramsAll:
@@ -234,12 +240,15 @@ def computemesh(root, type, direction, theta):
     ])
 
     from anisotropy.core.main import Anisotropy
+    import salome 
 
     ###
     model = Anisotropy()
     model.load(type, direction, theta)
 
+    salome.salome_init()
     model.genmesh()
+    salome.salome_close()
 
 ###
 #   CLI entry

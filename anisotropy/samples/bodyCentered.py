@@ -179,7 +179,7 @@ class BodyCentered(object):
         #   Groups
         ##
         shape = geompy.MakeCutList(poreCell, [grains])
-        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "bodyCenteredCubic")
+        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "bodyCentered")
 
         sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
         geompy.UnionIDs(sall,

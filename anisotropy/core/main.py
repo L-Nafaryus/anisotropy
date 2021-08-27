@@ -254,14 +254,8 @@ class Anisotropy(object):
 
         Warning: Working only inside Salome Environment
         """
-        # ISSUE: double logger output
-
-        import salome 
 
         p = self.params
-
-        salome.salome_init()
-
 
         ###
         #   Shape
@@ -356,8 +350,6 @@ class Anisotropy(object):
                 volume = volume
             )
             self.update()
-
-        salome.salome_close()
 
 
     def computeFlow(self):

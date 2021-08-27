@@ -35,8 +35,8 @@ faceCentered = true
     minSize = 0.05
 
     fineness = 5
-    growthRate = 0.7
-    nbSegPerEdge = 0.3
+    growthRate = 0.5
+    nbSegPerEdge = 2
     nbSegPerRadius = 1
     
     chordalErrorEnabled = true
@@ -123,8 +123,8 @@ faceCentered = true
     minSize = 0.05
 
     fineness = 5
-    growthRate = 0.7
-    nbSegPerEdge = 0.3
+    growthRate = 0.5
+    nbSegPerEdge = 2
     nbSegPerRadius = 1
     
     chordalErrorEnabled = true
@@ -191,7 +191,7 @@ faceCentered = true
     [structures.structure]
     type = "faceCentered"
     # auto # from theta: list # theta: float
-    theta = [0.01, 0.18, 0.01]  # [min, max, step]
+    theta = [0.01, 0.12, 0.01]  # [min, max, step]
     # auto # from directions:list # direction: list
     directions = [  
         [1, 0, 0],
@@ -211,8 +211,8 @@ faceCentered = true
     minSize = 0.05
 
     fineness = 5
-    growthRate = 0.7
-    nbSegPerEdge = 0.3
+    growthRate = 0.5
+    nbSegPerEdge = 2
     nbSegPerRadius = 1
     
     chordalErrorEnabled = true
