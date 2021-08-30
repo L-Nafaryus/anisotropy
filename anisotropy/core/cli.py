@@ -292,8 +292,72 @@ def computemesh(root, type, direction, theta, path):
 @anisotropy.command(
     help = "Post processing"
 )
-def postprocessing():
-    pass
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+@click.argument(
+    "plot",
+    type = click.Choice(["permeability"])
+)
+def postprocessing(path, plot):
+    from anisotropy import env
+    from anisotropy.core.main import Database
+    from pandas import Series
+    import matplotlib.pyplot as plt
+
+    env.update(
+        LOG = os.path.join(path, "logs"),
+        BUILD = os.path.join(path, "build"),
+        CONFIG = os.path.join(path, "anisotropy.toml"),
+        db_path = path
+    )
+
+    ###
+    db = Database(env["db_name"], env["db_path"]) 
+    db.setup()
+
+    params = db.loadGeneral()
+    paramsAll = []
+
+    for p in params:
+        s = p["structure"]
+        paramsAll.append(db.load(s["type"], s["direction"], s["theta"]))
+
+    paramsAll.sort(key = lambda src: f"{ src['structure']['type'] }{ src['structure']['direction'] }{ src['structure']['theta'] }")
+
+    def getTD(src, type, direction):
+        return src["structure"]["type"] == type and src["structure"]["direction"] == direction
+
+    if plot == "permeability":
+        for structure in ["simple", "faceCentered", "bodyCentered"]:
+            d1 = [ entry for entry in paramsAll if getTD(entry, structure, [1.0, 0.0, 0.0]) ]
+            d2 = [ entry for entry in paramsAll if getTD(entry, structure, [0.0, 0.0, 1.0]) ]
+            d3 = [ entry for entry in paramsAll if getTD(entry, structure, [1.0, 1.0, 1.0]) ]
+
+            theta = [ entry["structure"]["theta"] for entry in d1 ]
+            fr1 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d1 ], theta)
+            fr2 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d2 ], theta)
+            fr3 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d3 ], theta)
+
+            pm2 = 2 * fr2 / fr1
+            pm3 = 2 * fr3 / fr1
+
+            plt.figure(1)
+
+            ax1 = pm2.plot(style = "o")
+            ax1.set_label("k_2 / k_1")
+            ax2 = pm3.plot(style = "o")
+            ax2.set_label("k_3 / k_1")
+
+            plt.title(structure)
+            plt.xlabel("theta")
+            plt.ylabel("permeability")
+            plt.legend()
+            plt.grid()
+            plt.show()
+
 
 
 ###

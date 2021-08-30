@@ -9,3 +9,5 @@ sphinx-rtd-theme
 Click
 peewee-erd
 pydeps
+matplotlib
+pyqt5
