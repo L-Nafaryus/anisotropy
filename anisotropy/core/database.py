@@ -14,9 +14,27 @@ from anisotropy.core.models import (
     Mesh, SubMesh, MeshResult, 
     Flow, FlowApproximation, FlowResult
 )
+from peewee import OperationalError
 
 logger = logging.getLogger(env["logger_name"])
-setupLogger(logger, logging.INFO, env["LOG"])
+#setupLogger(logger, logging.INFO, env["LOG"])
+
+# NOTE: Temporary solution for multiprocessing mode when database is locked
+def tryUntilDone(func):
+    def inner(*args, **kwargs):
+        done = False 
+
+        while not done:
+            try:
+                ret = func(*args, **kwargs)
+                done = True
+
+            except OperationalError:
+                pass
+
+        return ret
+
+    return inner
 
 
 class Database(object):
@@ -155,20 +173,21 @@ class Database(object):
             )
         )
         
-        structureID = self._updateStructure(params["structure"], query)
+        structureID = tryUntilDone(self._updateStructure)(params["structure"], query)
         
-        meshID = self._updateMesh(params["mesh"], query, structureID)
+        meshID = tryUntilDone(self._updateMesh)(params["mesh"], query, structureID)
 
         for submeshParams in params.get("submesh", []):
-            self._updateSubMesh(submeshParams, query, meshID)
+            tryUntilDone(self._updateSubMesh)(submeshParams, query, meshID)
 
-        self._updateMeshResult(params.get("meshresult", {}), query, meshID)
+        tryUntilDone(self._updateMeshResult)(params.get("meshresult", {}), query, meshID)
 
-        flowID = self._updateFlow(params["flow"], query, structureID)
+        flowID = tryUntilDone(self._updateFlow)(params["flow"], query, structureID)
 
-        self._updateFlowApproximation(params.get("flowapprox", {}), query, flowID)
+        tryUntilDone(self._updateFlowApproximation)(params.get("flowapprox", {}), query, flowID)
 
-        self._updateFlowResult(params.get("flowresult", {}), query, flowID)
+        tryUntilDone(self._updateFlowResult)(params.get("flowresult", {}), query, flowID)
+
 
     def _updateStructure(self, src: dict, queryMain) -> int:
         raw = deepcopy(src)

@@ -250,13 +250,14 @@ class Anisotropy(object):
             path
         ]
         manager = salomepl.utils.SalomeManager()
+        casepath = self.getCasePath(path)
 
         return manager.execute(
             scriptpath, 
             *salomeargs, 
             timeout = self.env["salome_timeout"],
             root = self.env["ROOT"],
-            logpath = self.env["LOG"]
+            logpath = os.path.join(casepath, "logs") 
         )
 
 

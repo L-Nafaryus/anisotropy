@@ -18,7 +18,7 @@ class CustomFormatter(logging.Formatter):
         red = "\x1b[31;21m"
         bold_red = "\x1b[31;1m"
         reset = "\x1b[0m"
-        format = "[ %(asctime)s ] [ %(levelname)s ] %(message)s"
+        format = "[ %(asctime)s ] [ %(processName)s ] [ %(levelname)s ] %(message)s"
 
         formats = {
             logging.DEBUG: grey + format + reset,
@@ -41,12 +41,14 @@ class CustomFormatter(logging.Formatter):
 def setupLogger(logger, level: int, filepath: str = None):
     """Applies settings to logger
 
-    :param logger: Instance of :class:`logging.Logger`
-    :type logger: Instance of :class:`logging.Logger`
-    :param level: Logging level (logging.INFO, logging.WARNING, ..)
-    :type level: int
-    :param filepath: Path to directory
-    :type filepath: str, optional
+    :param logger: 
+        Instance of :class:`logging.Logger`
+    
+    :param level: 
+        Logging level (logging.INFO, logging.WARNING, ..)
+
+    :param filepath: 
+        Path to directory
     """
     logger.handlers = []
     logger.setLevel(level)
@@ -215,7 +217,7 @@ def queue(cmd, qin, qout, *args):
             break
 
         # Execute command
-        res = cmd(var, *args)
+        res = cmd(*var, *args)
 
         # Put results to the queue
         qout.put((pos, res))
