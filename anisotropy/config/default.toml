@@ -78,26 +78,27 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
+    [structures.flowapprox]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with flow direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
     [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     transportProperties.nu = 1e-6
 
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
 
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
     velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
-    [structures.flowapprox]
-    transportProperties.nu = 1e-6
-
-    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
-
-    # multiplication velocity value with flow direction vector
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
-    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
 [[structures]]
     [structures.structure]
@@ -166,26 +167,27 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
+    [structures.flowapprox]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
     [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     transportProperties.nu = 1e-6
 
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
 
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
     velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
-    [structures.flowapprox]
-    transportProperties.nu = 1e-6
-
-    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
-
-    # multiplication velocity value with direction vector
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
-    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
 [[structures]]
     [structures.structure]
@@ -254,24 +256,26 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
+    [structures.flowapprox]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
     [structures.flow]
     scale = [ 1e-5, 1e-5, 1e-5 ]
 
     transportProperties.nu = 1e-6
     
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
 
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 0.0 }
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
     velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 
-    [structures.flowapprox]
-    transportProperties.nu = 1e-6
 
-    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
-    pressure.boundaryField.outlet = { type = "fixedValue", value = 0 }
-
-    # multiplication velocity value with direction vector
-    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
-    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
 

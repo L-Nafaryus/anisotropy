@@ -4,7 +4,8 @@
 
 import click
 import ast
-import os
+import os, shutil
+import logging
 
 class LiteralOption(click.Option):
     def type_cast_value(self, ctx, value):
@@ -64,6 +65,29 @@ def anisotropy():
     pass
 
 @anisotropy.command(
+    help = "Initialize project in cwd"
+)
+def init():
+    from anisotropy import env
+    from anisotropy.core.utils import setupLogger
+    from anisotropy.core.main import logger, Database
+
+    setupLogger(logger, logging.INFO)
+    
+    cwd = os.getcwd()
+    wds = [ "build", "logs" ]
+
+    for wd in wds:
+        os.makedirs(os.path.join(cwd, wd), exist_ok = True)
+
+    shutil.copy(env["CONFIG"], os.path.join(cwd, "anisotropy.toml"), follow_symlinks = True)
+    
+    db = Database(env["db_name"], cwd)
+    db.setup()
+
+    logger.info(f"Initialized anisotropy project in { cwd }")
+
+@anisotropy.command(
     help = """Computes cases by chain (mesh -> flow)
     
     Control parameters: type, direction, theta (each parameter affects on a queue)
@@ -82,18 +106,14 @@ def anisotropy():
     help = "Count of parallel processes"
 )
 @click.option(
-    "-D", "--database", "database",
-    help = "Database path"
-)
-@click.option(
     "-f", "--force", "force",
-    type = click.BOOL,
+    is_flag = True,
     default = False,
     help = "Overwrite existing entries"
 )
 @click.option(
     "-u", "--update", "update",
-    type = click.BOOL,
+    is_flag = True,
     default = False,
     help = "Update db parameters from config"
 )
@@ -104,10 +124,24 @@ def anisotropy():
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(stage, nprocs, database, force, update, params):
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+def compute(stage, nprocs, force, update, params, path):
+    from anisotropy import env
     from anisotropy.core.main import Anisotropy, Database, logger
-    from anisotropy.core.utils import timer, parallel
+    from anisotropy.core.utils import setupLogger, timer, parallel
 
+    env.update(
+        LOG = os.path.join(path, "logs"),
+        BUILD = os.path.join(path, "build"),
+        CONFIG = os.path.join(path, "anisotropy.toml"),
+        db_path = path
+    )
+
+    setupLogger(logger, logging.INFO, env["LOG"])
     args = dict()
 
     for param in params:
@@ -115,30 +149,31 @@ def compute(stage, nprocs, database, force, update, params):
 
     ###
     model = Anisotropy()
-
-    if database:
-        if database[-3: ] == ".db":
-            splitted = database.split("/")
-            db_path = "/".join(splitted[ :-1])
-            db_name = splitted[-1: ][0][ :-3]
-
-        else:
-            raise Exception("Invalid database extension")
-
-        model.db = Database(db_name, db_path)
+    model.db = Database(env["db_name"], env["db_path"]) 
         
-    logger.info("Constructing database, tables ...")
+    logger.info("Configuring database ...")
     model.db.setup()
 
-    def fill_db():
-        if model.db.isempty() or update:
-            paramsAll = model.loadFromScratch()
+    if model.db.isempty() or update:
+        paramsAll = model.loadFromScratch(env["CONFIG"])
 
-            for entry in paramsAll:
-                model.db.update(entry)
+        if args.get("type"):
+            paramsAll = [ entry for entry in paramsAll if args["type"] == entry["structure"]["type"] ]
 
-    _, fill_elapsed = timer(fill_db)()
-    logger.info(f"Elapsed time = { fill_elapsed }")
+        if args.get("direction"):
+            paramsAll = [ entry for entry in paramsAll if args["direction"] == entry["structure"]["direction"] ]
+
+        if args.get("theta"):
+            paramsAll = [ entry for entry in paramsAll if args["theta"] == entry["structure"]["theta"] ]
+
+        for entry in paramsAll:
+            model.db.update(entry)
+
+        logger.info("{} entries was updated.".format(len(paramsAll)))
+
+    else:
+        logger.info("Database was not modified.")
+
 
     ###
     def computeCase(stage, type, direction, theta):
@@ -152,7 +187,7 @@ def compute(stage, nprocs, database, force, update, params):
 
         if stage == "all" or stage == "mesh":
             if not case.params.get("meshresult", {}).get("status") == "Done" or force:
-                (out, err, returncode), elapsed = timer(case.computeMesh)()
+                (out, err, returncode), elapsed = timer(case.computeMesh)(path)
 
                 if out: logger.info(out)
                 if err: logger.error(err)
@@ -172,7 +207,7 @@ def compute(stage, nprocs, database, force, update, params):
 
         if stage == "all" or stage == "flow":
             if not case.params.get("flowresult", {}).get("status") == "Done" or force:
-                (out, err, returncode), elapsed = timer(case.computeFlow)()
+                (out, err, returncode), elapsed = timer(case.computeFlow)(path)
 
                 if out: logger.info(out)
                 if err: logger.error(err)
@@ -219,7 +254,8 @@ def compute(stage, nprocs, database, force, update, params):
 @click.argument("type")
 @click.argument("direction")
 @click.argument("theta")
-def computemesh(root, type, direction, theta):
+@click.argument("path")
+def computemesh(root, type, direction, theta, path):
     # ISSUE: can't hide command from help, 'hidden = True' doesn't work
     # [Salome Environment]
     
@@ -239,16 +275,26 @@ def computemesh(root, type, direction, theta):
         os.path.join(root, "env/lib/python3.9/site-packages")
     ])
 
-    from anisotropy.core.main import Anisotropy
+    from anisotropy import env
+    from anisotropy.core.main import Anisotropy, Database
     import salome 
 
     ###
     model = Anisotropy()
+    model.db = Database(env["db_name"], path)
     model.load(type, direction, theta)
 
     salome.salome_init()
-    model.genmesh()
+    model.genmesh(path)
     salome.salome_close()
+
+
+@anisotropy.command(
+    help = "Post processing"
+)
+def postprocessing():
+    pass
+
 
 ###
 #   CLI entry

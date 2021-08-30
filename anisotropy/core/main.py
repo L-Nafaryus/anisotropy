@@ -25,7 +25,7 @@ import anisotropy.salomepl.mesh
 from anisotropy.samples import Simple, FaceCentered, BodyCentered
 
 logger = logging.getLogger(env["logger_name"])
-setupLogger(logger, logging.INFO, env["LOG"])
+#setupLogger(logger, logging.INFO, env["LOG"])
 
 #peeweeLogger = logging.getLogger("peewee")
 #peeweeLogger.setLevel(logging.INFO)
@@ -83,18 +83,22 @@ class Anisotropy(object):
         return "\n".join([ f"{ k }: { v }" for k, v in versions.items() ])
 
     
-    def loadFromScratch(self) -> list:
+    def loadFromScratch(self, configpath: str = None) -> list:
         """Loads parameters from configuration file and expands special values
 
         :return: List of dicts with parameters
         :rtype: list
         """
+        config = configpath or self.env["CONFIG"]
 
-        if not os.path.exists(self.env["CONFIG"]):
-            logger.error("Missed default configuration file")
+        if not os.path.exists(config):
+            logger.error("Missed configuration file")
             return
 
-        buf = toml.load(self.env["CONFIG"]).get("structures")
+        else:
+            logger.info(f"Configuration file: { config }")
+
+        buf = toml.load(config).get("structures")
         paramsAll = []
 
         # TODO: custom config and merge
@@ -204,7 +208,7 @@ class Anisotropy(object):
             fillets = fillets 
         )
 
-    def getCasePath(self) -> str:
+    def getCasePath(self, path: str = None) -> str:
         """Constructs case path from control parameters
         
         :return: Absolute path to case
@@ -216,15 +220,21 @@ class Anisotropy(object):
             logger.error("Trying to use empty parameters")
             return
 
+        if path:
+            path = os.path.join(path, "build")
+    
+        else:
+            path = self.env["BUILD"]
+
         return os.path.join(
-            self.env["BUILD"], 
+            path, 
             structure["type"],
             "direction-{}".format(str(structure['direction']).replace(" ", "")),
             f"theta-{ structure['theta'] }"
         )
 
 
-    def computeMesh(self):
+    def computeMesh(self, path):
         """Computes a mesh on shape via Salome
 
         :return: Process output, error messages and returncode
@@ -237,6 +247,7 @@ class Anisotropy(object):
             p["type"], 
             p["direction"], 
             p["theta"],
+            path
         ]
         manager = salomepl.utils.SalomeManager()
 
@@ -249,12 +260,13 @@ class Anisotropy(object):
         )
 
 
-    def genmesh(self):
+    def genmesh(self, path):
         """Computes a mesh on shape
 
         Warning: Working only inside Salome Environment
         """
 
+        setupLogger(logger, logging.INFO, self.env["LOG"])
         p = self.params
 
         ###
@@ -327,10 +339,13 @@ class Anisotropy(object):
             mesh.removePyramids()
             mesh.assignGroups()
 
-            casePath = self.getCasePath()
+            casePath = self.getCasePath(path)
             os.makedirs(casePath, exist_ok = True)
             logger.info("Exporting mesh ...")
-            mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
+            returncode, err = mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
+    
+            if returncode:
+                logger.error(err)
 
             meshStats = mesh.stats()
             p["meshresult"].update(
@@ -352,7 +367,7 @@ class Anisotropy(object):
             self.update()
 
 
-    def computeFlow(self):
+    def computeFlow(self, path):
         """Computes a flow on mesh via OpenFOAM
 
         :return: Process output, error messages and returncode
@@ -387,13 +402,13 @@ class Anisotropy(object):
         ##
         if not os.path.exists("mesh.unv"):
             logger.error(f"missed 'mesh.unv'")
-            os.chdir(self.env["ROOT"])
+            os.chdir(path or self.env["ROOT"])
             return "", "", 1
 
         out, err, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
         if returncode:
-            os.chdir(self.env["ROOT"])
+            os.chdir(path or self.env["ROOT"])
             return out, err, returncode
         
         openfoam.createPatch(dictfile = "system/createPatchDict")
