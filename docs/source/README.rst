@@ -1,21 +1,22 @@
 anisotropy
 ==========
 
+anisotropy is a ``Python`` package that is the result of science-research work 
+on the anisotropy of permeability in the periodic porous media. 
+A project uses own wrappers around external applications 
+for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFOAM``).
+
+
 .. figure:: docs/source/static/simple.png
-    :scale: 50%
     :align: center
     :alt: 
     
 
 .. figure:: static/simple.png
-    :scale: 50%
     :align: center
     :alt: 
 
-anisotropy is a ``Python`` package that is the result of science-research work 
-on the anisotropy of permeability in the periodic porous media. 
-A project uses own wrappers around external applications 
-for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFOAM``).
+.. contents:: Table of contents
 
 Dependencies
 ------------
@@ -33,7 +34,7 @@ Installation
 .. toctree::
     :maxdepth: 2
 
-    INSTALL
+    Installation guide <INSTALL.rst>
 
 Getting Started
 ---------------
@@ -74,7 +75,7 @@ Example:
 .. attention::
 
     * You can't compute a flow without mesh (if you didn't it before succesfully).
-    * ``type``, ``direction`` and ``theta`` is control parameters. If you aren't specifying it than default range of values will be used from ``anisotropy.toml``.
+    * ``type``, ``direction`` and ``theta`` are control parameters. If you aren't specifying it than default range of values will be used from ``anisotropy.toml``.
 
 Post-processing
 ~~~~~~~~~~~~~~~
