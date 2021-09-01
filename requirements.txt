@@ -4,10 +4,6 @@ pyquaternion
 toml
 peewee
 pandas
-Sphinx
-sphinx-rtd-theme
 Click
-peewee-erd
-pydeps
 matplotlib
 pyqt5

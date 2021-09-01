@@ -5,8 +5,10 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
+SPHINXAPIDOC  ?= sphinx-apidoc
 SOURCEDIR     = source
 BUILDDIR      = build
+PROJECTDIR 	  = ..
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -18,3 +20,12 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+update:
+	@$(SPHINXAPIDOC) -f -o "$(SOURCEDIR)" "$(PROJECTDIR)"
+	rm -vf "$(SOURCEDIR)/modules.rst" "$(SOURCEDIR)/tests.rst" "$(SOURCEDIR)/setup.rst"
+	sed -i 's/:maxdepth: 4/:maxdepth: 1/' "$(SOURCEDIR)/anisotropy.rst"
+	cp -vf "$(PROJECTDIR)/README.rst" "$(SOURCEDIR)/"
+	cp -vf "$(PROJECTDIR)/INSTALL.rst" "$(SOURCEDIR)/"
+	peewee-erd -o="$(SOURCEDIR)/static/er-diagram.png" --main-color="#333333" --bg-color="#eeeeee" --font-size="12" "$(PROJECTDIR)/anisotropy/core/models.py"
+	pydeps "$(PROJECTDIR)/anisotropy" --max-bacon 2 --cluster -o "$(SOURCEDIR)/static/structure.png" -T png --noshow

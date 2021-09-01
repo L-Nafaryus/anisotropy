@@ -10,11 +10,10 @@ Welcome to anisotropy's documentation!
     :maxdepth: 2
     :caption: Contents:
 
-    INSTALL
     anisotropy
     notes
 
-.. include:: ../../README.rst
+.. include:: README.rst
 
 Indices and tables
 ==================

@@ -3,6 +3,7 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
+import os
 from setuptools import setup
 
 import anisotropy
@@ -15,6 +16,11 @@ def read(filename, split = False):
 
     return content.strip().split("\n") if split else content
 
+def findall(directory):
+    return [
+        os.path.join(directory, f) for f in os.listdir(directory)
+            if os.path.isfile(os.path.join(directory, f))
+    ]
 
 def main():
     setup(
@@ -37,13 +43,20 @@ def main():
             "Environment :: Console",
             "Operating System :: POSIX",
             "Operating System :: Unix",
+            "Intended Audience :: Developers",
             "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Programming Language :: Python :: 3.9"
+        ],
+
+        data_files = [
+            ("share/doc/anisotropy", findall("docs"))
         ],
 
         package_data = {
             "anisotropy": [
-                "config/default.toml"
+                "config/default.toml",
+                "config/bashrc"
             ]
         },
         packages = (
@@ -54,9 +67,12 @@ def main():
             "anisotropy.salomepl",
             "anisotropy.samples"
         ),
-        
+
         python_requires = ">=3.6",
         install_requires = read("requirements.txt", True),
+        extras_require = {
+            "documentation": ["Sphinx", "sphinx-rtd-theme", "pydeps", "peewee-erd" ]
+        },
         entry_points = {
             "console_scripts": [
                 "anisotropy=anisotropy.core.cli:anisotropy"

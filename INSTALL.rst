@@ -1,7 +1,13 @@
 Installation
 ============
 
-Recommended way is to install a package in the virtual environment. 
+Base package
+------------
+
+Via virtual environment (recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A recommended way is to install a package in the virtual environment.
 Just create and activate python virtual environment:
 
 .. code-block:: bash
@@ -16,49 +22,74 @@ and run pip inside (upgrade pip if you need):
     (env) $ python -m pip install --upgrade pip
     (env) $ python -m pip install .
 
+User installation
+~~~~~~~~~~~~~~~~~
+
+Same but without the virtual environment:
+
+.. code-block:: bash
+
+    $ python -m pip install --upgrade pip
+    $ python -m pip install .
+
+
 External applications
 ---------------------
 
-Anisotropy project requires ``Salome`` and ``OpenFOAM`` executables be ``PATH``.
+Anisotropy project requires ``Salome`` executable and ``OpenFOAM`` ``bashrc`` script be in ``PATH``.
+You can choose your way by following one of the next step.
 
-1. For simple way you can use next commands (each time):
+* You can use next commands directly (each time):
 
 .. code-block:: bash
 
-    $ export PATH="${PATH}:${HOME}/PATH/TO/SALOME/DIRECTORY"
+    $ export PATH="${HOME}/PATH/TO/SALOME/DIRECTORY:${PATH}"
     $ source "${HOME}/PATH/TO/OPENFOAM/DIRECTORY/etc/bashrc"
 
-2. Or modify file ``conf/bashrc`` in project directory (example)
+* Or modify file ``anisotropy/config/bashrc`` in project directory (example, ``bash``)
 
 .. code-block:: bash
 
-    export PATH="${PATH}:${HOME}/programs/salome/SALOME-9.7.0-MPI"
+    export PATH="${HOME}/programs/salome/SALOME-9.7.0-MPI:${PATH}"
     source "${HOME}/programs/OpenFOAM/OpenFOAM-v2012/etc/bashrc"
 
 and source it (each time):
 
 .. code-block:: bash
 
-    $ source conf/bashrc
+    $ source anisotropy/config/bashrc
 
-3. The best way is modify file like in step 2 and append it to virtual environment activate script:
+* The best way is to modify ``anisotropy/config/bashrc`` like in step 2 and append it to the virtual environment ``activate`` script:
 
 .. code-block:: bash
 
-    $ cat conf/bashrc | tee -a env/bin/activate
+    $ cat anisotropy/config/bashrc | tee -a env/bin/activate
 
 So next time you just need to ``source env/bin/activate`` and you completely ready.
+
+* You should add paths to ``~/.bashrc`` (``bash``) if you installed ``anisotropy`` in user path:
+
+.. code-block:: bash
+
+    $ cat anisotropy/config/bashrc | tee -a ~/.bashrc
+
 
 Building documentaion
 ---------------------
 
-For building documentaion you must sure that all requirements installed.
-Project uses ``Sphinx`` and ``make`` for building:
+For building a documentaion you should install a documentaion requirements:
 
 .. code-block:: bash
 
     $ source env/bin/activate
+    (env) $ python -m pip install "../anisotropy[documentaion]"
+
+
+Then just run ``make`` with your best format option:
+
+.. code-block:: bash
+
     (env) $ cd docs
     (env) $ make html
 
-
+For more information about options you can read ``Sphinx`` documentaion or run ``make help``.
