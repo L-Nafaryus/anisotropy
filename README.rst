@@ -1,7 +1,7 @@
 anisotropy
 ==========
 
-anisotropy is a ``Python`` package that is the result of science-research work 
+*anisotropy* is a ``Python`` package that is the result of science-research work 
 on the anisotropy of permeability in the periodic porous media. 
 A project uses own wrappers around external applications 
 for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFOAM``).
@@ -16,10 +16,10 @@ for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFO
     :align: center
     :alt: 
 
-.. contents:: Table of contents
+.. contents:: README contents
 
 Dependencies
-------------
+============
 
 .. csv-table::
     :header: "Software", "Used version", "Recommended version"
@@ -28,16 +28,13 @@ Dependencies
     "`Salome <https://www.salome-platform.org>`_", "9.7.0", ">= 9.6.0"
     "`OpenFOAM <https://www.openfoam.com>`_", "v2012", ""
 
-Installation
-------------
 
-.. toctree::
-    :maxdepth: 2
+.. Installation
 
-    Installation guide <INSTALL.rst>
+.. include:: INSTALL.rst
 
 Getting Started
----------------
+===============
 
 Initializing a new anisotropy project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +91,7 @@ Additional help
 You always can use ``--help`` flag with any of ``anistropy`` command to get more information.
 
 License
--------
+=======
 
 GNU GPLv3
 

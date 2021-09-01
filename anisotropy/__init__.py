@@ -3,10 +3,15 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 """anisotropy
+
+*anisotropy* is a ``Python`` package that is the result of science-research work 
+on the anisotropy of permeability in the periodic porous media. 
+A project uses own wrappers around external applications 
+for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFOAM``).
 """
 
 __license__ = "GPL3"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = __maintainer__ = "George Kusayko"
 __email__ = "gkusayko@gmail.com"
 

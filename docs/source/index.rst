@@ -8,8 +8,9 @@ Welcome to anisotropy's documentation!
 
 .. toctree::
     :maxdepth: 2
-    :caption: Contents:
+    :caption: Documentation contents:
 
+    INSTALL
     anisotropy
     notes
 
