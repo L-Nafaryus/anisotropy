@@ -148,6 +148,12 @@ def compute(stage, nprocs, force, update, params, path):
         args.update(param)
 
     ###
+    logger.info("Writing pid ...")
+
+    with open(os.path.join(path, "anisotropy.pid"), "w") as io:
+        io.write(str(os.getpid()))
+
+    ###
     model = Anisotropy()
     model.db = Database(env["db_name"], env["db_path"]) 
         
@@ -246,6 +252,33 @@ def compute(stage, nprocs, force, update, params, path):
     else:
         parallel(nprocs, queueargs, computeCase)
 
+
+@anisotropy.command(
+    help = "Kill process by pid file"
+)
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+@click.argument("pidfile")
+def kill(path, pidfile):
+    from anisotropy.salomepl.utils import SalomeManager
+
+    try:
+        with open(os.path.join(path, pidfile), "r") as io:
+            pid = io.read()
+
+        os.kill(int(pid), 9)
+
+    except FileNotFoundError:
+        click.echo(f"Unknown file { pidfile }")
+
+    except ProcessLookupError:
+        click.echo(f"Cannot find process with pid { pid }")
+
+    # TODO: killall method kills all salome instances. Not a good way
+    SalomeManager().killall()
 
 @anisotropy.command(
     help = "! Not a user command"

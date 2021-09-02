@@ -50,7 +50,10 @@ def main():
         ],
 
         data_files = [
-            ("share/doc/anisotropy", findall("docs"))
+            ("share/doc/anisotropy", findall("docs")),
+            ("share/doc/anisotropy/source", findall("docs/source")),
+            ("share/doc/anisotropy/source/static", findall("docs/source/static")),
+            ("share/doc/anisotropy/source/notes", findall("docs/source/notes"))
         ],
 
         package_data = {

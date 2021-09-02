@@ -257,7 +257,7 @@ class Anisotropy(object):
             *salomeargs, 
             timeout = self.env["salome_timeout"],
             root = self.env["ROOT"],
-            logpath = os.path.join(casepath, "logs") 
+            logpath = casepath
         )
 
 

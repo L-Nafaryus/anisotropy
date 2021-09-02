@@ -59,6 +59,10 @@ class SalomeManager(object):
         return self.runner(["salome", "kill", str(self.__port or port)])
 
 
+    def killall(self):
+        return self.runner(["salome", "killall"])
+
+
     def execute(self, scriptpath: str, *args, root: str = None, logpath: str = None, timeout: int = None, **kwargs):
 
         if not root:
@@ -97,6 +101,8 @@ class SalomeManager(object):
             returncode = lastproc.returncode
 
         if logpath:
+            os.makedirs(logpath, exist_ok = True)
+
             with open(os.path.join(logpath, "salome.log"), "wb") as io:
                 io.write(out)
                 io.write(err)
