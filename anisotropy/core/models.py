@@ -138,8 +138,9 @@ class MeshResult(BaseModel):
     prisms = IntegerField(null = True)
     pyramids = IntegerField(null = True)
 
-    status = TextField(null = True, default = "Idle")
-    calculationTime = TimeField(null = True)
+    meshStatus = TextField(null = True, default = "Idle")
+    meshCalculationTime = TimeField(null = True)
+
 
 class Flow(BaseModel):
     flow_id = AutoField()
@@ -153,17 +154,20 @@ class Flow(BaseModel):
    
 class FlowApproximation(BaseModel):
     flow_approximation_id = AutoField()
-    flow_id = ForeignKeyField(Flow, backref = "flowapprox")
+    flow_id = ForeignKeyField(Flow, backref = "flowapproximations")
 
     pressure = JSONField(null = True)
     velocity = JSONField(null = True)
     transportProperties = JSONField(null = True)
+
 
 class FlowResult(BaseModel):
     flowresult_id = AutoField()
     flow_id = ForeignKeyField(Flow, backref = "flowresults")
 
     flowRate = FloatField(null = True)
+    porosity = FloatField(null = True)
+    permeability = FloatField(null = True)
 
-    status = TextField(null = True, default = "Idle")
-    calculationTime = TimeField(null = True)
+    flowStatus = TextField(null = True, default = "Idle")
+    flowCalculationTime = TimeField(null = True)

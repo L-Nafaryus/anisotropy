@@ -101,8 +101,7 @@ class Anisotropy(object):
         buf = toml.load(config).get("structures")
         paramsAll = []
 
-        # TODO: custom config and merge
-        
+
         for entry in buf:
             #   Shortcuts
             _theta = entry["structure"]["theta"]
@@ -133,12 +132,12 @@ class Anisotropy(object):
                         "mesh": mesh,
                         "submesh": deepcopy(entry["submesh"]),
                         "flow": deepcopy(entry["flow"]),
-                        "flowapprox": deepcopy(entry["flowapprox"])
+                        "flowapproximation": deepcopy(entry["flowapproximation"])
                     }
 
                     # For `type = fixedValue` only
-                    _velocity = entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"]
-                    entryNew["flowapprox"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
+                    _velocity = entryNew["flowapproximation"]["velocity"]["boundaryField"]["inlet"]["value"]
+                    entryNew["flowapproximation"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
                         val * _velocity for val in entryNew["structure"]["direction"] 
                     ]
 
@@ -380,7 +379,7 @@ class Anisotropy(object):
         foamCase = [ "0", "constant", "system" ]
 
         flow = self.params["flow"]
-        flowapprox = self.params["flowapprox"]
+        flowapproximation = self.params["flowapproximation"]
 
         # ISSUE: ideasUnvToFoam cannot import mesh with '-case' flag so 'os.chdir' for that
         casePath = self.getCasePath()
@@ -447,8 +446,8 @@ class Anisotropy(object):
 
         openfoam.renumberMesh()
 
-        pressureBF = flowapprox["pressure"]["boundaryField"]
-        velocityBF = flowapprox["velocity"]["boundaryField"]
+        pressureBF = flowapproximation["pressure"]["boundaryField"]
+        velocityBF = flowapproximation["velocity"]["boundaryField"]
 
         openfoam.foamDictionary(
             "0/p", 

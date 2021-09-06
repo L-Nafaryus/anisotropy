@@ -29,8 +29,8 @@ def tryUntilDone(func):
                 ret = func(*args, **kwargs)
                 done = True
 
-            except OperationalError:
-                pass
+            except OperationalError as e:
+                logger.error(e)
 
         return ret
 
@@ -110,10 +110,10 @@ class Database(object):
                 if flowQuery.exists():
                     params["flow"] = flowQuery.dicts().get()
 
-                    flowapproxQuery = flowQuery.get().flowapprox
+                    flowapproximationQuery = flowQuery.get().flowapproximations
 
-                    if flowapproxQuery.exists():
-                        params["flowapprox"] = flowapproxQuery.dicts().get()
+                    if flowapproximationQuery.exists():
+                        params["flowapproximation"] = flowapproximationQuery.dicts().get()
 
                     flowresultsQuery = flowQuery.get().flowresults
 
@@ -173,20 +173,71 @@ class Database(object):
             )
         )
         
-        structureID = tryUntilDone(self._updateStructure)(params["structure"], query)
+        structureID = tryUntilDone(self._updateStructure)(params.get("structure", {}), query)
         
-        meshID = tryUntilDone(self._updateMesh)(params["mesh"], query, structureID)
+        meshID = tryUntilDone(self._updateMesh)(params.get("mesh", {}), query, structureID)
 
         for submeshParams in params.get("submesh", []):
             tryUntilDone(self._updateSubMesh)(submeshParams, query, meshID)
 
         tryUntilDone(self._updateMeshResult)(params.get("meshresult", {}), query, meshID)
 
-        flowID = tryUntilDone(self._updateFlow)(params["flow"], query, structureID)
+        flowID = tryUntilDone(self._updateFlow)(params.get("flow", {}), query, structureID)
 
-        tryUntilDone(self._updateFlowApproximation)(params.get("flowapprox", {}), query, flowID)
+        tryUntilDone(self._updateFlowApproximation)(params.get("flowapproximation", {}), query, flowID)
 
         tryUntilDone(self._updateFlowResult)(params.get("flowresult", {}), query, flowID)
+
+
+    def search(self, args: list):
+        result = {}
+        query = (
+            Structure
+            .select(Structure, Mesh, SubMesh, MeshResult, Flow, FlowApproximation, FlowResult)
+            .join(
+                Mesh,
+                JOIN.INNER,
+                on = (Mesh.structure_id == Structure.structure_id)
+            )
+            .join(
+                SubMesh,
+                JOIN.INNER,
+                on = (SubMesh.mesh_id == Mesh.mesh_id)
+            )
+            .join(
+                MeshResult,
+                JOIN.INNER,
+                on = (MeshResult.mesh_id == Mesh.mesh_id)
+            )
+            .join(
+                Flow,
+                JOIN.INNER,
+                on = (Flow.structure_id == Structure.structure_id)
+            )
+            .join(
+                FlowApproximation,
+                JOIN.INNER,
+                on = (FlowApproximation.flow_id == Flow.flow_id)
+            )
+            .join(
+                FlowResult,
+                JOIN.INNER,
+                on = (FlowResult.flow_id == Flow.flow_id)
+            )
+        )
+
+        for arg in args:
+            query = query.where(arg)
+
+
+        with self.__db.atomic():
+            if not self.isempty():
+                result = [ entry for entry in query.dicts() ] 
+
+            else:
+                logger.error("Missed Structure table")
+
+        return result
 
 
     def _updateStructure(self, src: dict, queryMain) -> int:

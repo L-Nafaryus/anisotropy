@@ -78,7 +78,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [structures.flowapprox]
+    [structures.flowapproximation]
     transportProperties.nu = 1e-6
 
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
@@ -167,7 +167,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [structures.flowapprox]
+    [structures.flowapproximation]
     transportProperties.nu = 1e-6
 
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
@@ -256,7 +256,7 @@ faceCentered = true
     fuseEdges = true
     checkChartBoundary = false
 
-    [structures.flowapprox]
+    [structures.flowapproximation]
     transportProperties.nu = 1e-6
 
     pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }

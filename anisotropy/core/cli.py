@@ -4,7 +4,7 @@
 
 import click
 import ast
-import os, shutil
+import os, sys, shutil
 import logging
 
 class LiteralOption(click.Option):
@@ -192,7 +192,7 @@ def compute(stage, nprocs, force, update, params, path):
         logger.info(f"Stage: { stage }")
 
         if stage == "all" or stage == "mesh":
-            if not case.params.get("meshresult", {}).get("status") == "Done" or force:
+            if not case.params.get("meshresult", {}).get("meshStatus") == "Done" or force:
                 (out, err, returncode), elapsed = timer(case.computeMesh)(path)
 
                 if out: logger.info(out)
@@ -201,7 +201,7 @@ def compute(stage, nprocs, force, update, params, path):
                 case.load(type, direction, theta)
 
                 if case.params.get("meshresult"):
-                    case.params["meshresult"]["calculationTime"] = elapsed
+                    case.params["meshresult"]["meshCalculationTime"] = elapsed
                     case.update()
 
                 if returncode:
@@ -212,7 +212,7 @@ def compute(stage, nprocs, force, update, params, path):
                 logger.info("Mesh exists. Skipping ...")
 
         if stage == "all" or stage == "flow":
-            if not case.params.get("flowresult", {}).get("status") == "Done" or force:
+            if not case.params.get("flowresult", {}).get("flowStatus") == "Done" or force:
                 (out, err, returncode), elapsed = timer(case.computeFlow)(path)
 
                 if out: logger.info(out)
@@ -221,7 +221,7 @@ def compute(stage, nprocs, force, update, params, path):
                 case.load(type, direction, theta)
 
                 if case.params.get("flowresult"):
-                    case.params["flowresult"]["calculationTime"] = elapsed
+                    case.params["flowresult"]["flowCalculationTime"] = elapsed
                     case.update()
             
                 if returncode:
@@ -281,7 +281,7 @@ def kill(path, pidfile):
     SalomeManager().killall()
 
 @anisotropy.command(
-    help = "! Not a user command"
+    help = "! Internal command"
 )
 @click.argument("root")
 @click.argument("type")
@@ -392,9 +392,118 @@ def postprocessing(path, plot):
             plt.show()
 
 
+@anisotropy.command()
+@click.option(
+    "-p", "--param", "params", 
+    metavar = "key=value", 
+    multiple = True, 
+    cls = KeyValueOption,
+    help = "Select by control parameter (type, direction, theta)"
+)
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+@click.option(
+    "--list", "printlist",
+    is_flag = True,
+    help = "Print a list of avaliable fields."
+)
+@click.option(
+    "--export",
+    metavar = "PATH",
+    help = "Export query result to CSV."
+)
+@click.argument(
+    "fields",
+    required = False
+)
+def query(params, path, printlist, export, fields):
+    from anisotropy import env
+    from anisotropy.core.database import Database, Structure
+    from pandas import DataFrame
 
+    env.update(
+        LOG = os.path.join(path, "logs"),
+        BUILD = os.path.join(path, "build"),
+        CONFIG = os.path.join(path, "anisotropy.toml"),
+        db_path = path
+    )
+
+    args = dict()
+
+    for param in params:
+        args.update(param)
+
+    fields = [ field.strip() for field in fields.split(",") ] if fields else []
+
+    ###
+    db = Database(env["db_name"], env["db_path"]) 
+    db.setup()
+
+    searchargs = []
+
+    if args.get("type"):
+        searchargs.append(Structure.type == args["type"])
+
+    if args.get("direction"):
+        searchargs.append(Structure.direction == str(args["direction"]))
+
+    if args.get("theta"):
+        searchargs.append(Structure.theta == args["theta"])
+
+    result = db.search(searchargs)
+    result.sort(key = lambda src: f"{ src['type'] }{ src['direction'] }{ src['theta'] }")
+
+    df = DataFrame(result)
+    df_keys = [ key for key in df.keys() ]
+    
+    if printlist:
+        click.echo("Avaliable fields for query:")
+        click.echo("\t{}".format("\n\t".join(df_keys)))
+
+        return
+
+    if not result:
+        click.echo("Empty result.")
+
+        return
+
+    
+    if fields:
+        for field in fields:
+            if field not in df_keys:
+                click.echo(f"Unknown field '{ field }'. Try to use '--list' flag to see all avaliable fields.")
+
+                return
+        
+        df = df[fields]
+
+    if export:
+        df.to_csv(export, sep = ";")
+
+    else:
+        click.echo(df.to_string())
+
+    
 ###
 #   CLI entry
 ##
 if __name__ == "__main__":
-    anisotropy()
+    try:
+        anisotropy()
+
+    except KeyboardInterrupt:
+        click.echo("Interrupted!")
+
+    finally:
+        from anisotropy.salomepl.utils import SalomeManager
+        click.echo("Exiting ...")
+
+        if os.path.exists("anisotropy.pid"):
+            os.remove("anisotropy.pid")
+
+        SalomeManager().killall()
+
+        sys.exit(0)
