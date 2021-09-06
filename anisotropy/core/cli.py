@@ -64,31 +64,104 @@ def version():
 def anisotropy():
     pass
 
-@anisotropy.command(
-    help = "Initialize project in cwd"
-)
-def init():
-    from anisotropy import env
-    from anisotropy.core.utils import setupLogger
-    from anisotropy.core.main import logger, Database
 
-    setupLogger(logger, logging.INFO)
-    
-    cwd = os.getcwd()
+@anisotropy.command(
+    help = "Initialize new anisotropy project."
+)
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+def init(path):
+    from anisotropy import env
+    from anisotropy.core.main import Database
+
+    if not os.path.exist(path) or not os.path.isdir(path):
+        click.echo(f"Cannot find directory { path }")
+
+        return
+
     wds = [ "build", "logs" ]
 
     for wd in wds:
-        os.makedirs(os.path.join(cwd, wd), exist_ok = True)
+        os.makedirs(os.path.join(path, wd), exist_ok = True)
 
-    shutil.copy(env["CONFIG"], os.path.join(cwd, "anisotropy.toml"), follow_symlinks = True)
+    shutil.copy(env["CONFIG"], os.path.join(path, "anisotropy.toml"), follow_symlinks = True)
     
-    db = Database(env["db_name"], cwd)
+    db = Database(env["db_name"], path)
     db.setup()
 
-    logger.info(f"Initialized anisotropy project in { cwd }")
+    click.echo(f"Initialized anisotropy project in { path }")
+
 
 @anisotropy.command(
-    help = """Computes cases by chain (mesh -> flow)
+    help = "Load parameters from configuration file and update database."
+)
+@click.option(
+    "-f", "--force", "force",
+    is_flag = True,
+    default = False,
+    help = "Overwrite existing entries"
+)
+@click.option(
+    "-p", "--param", "params", 
+    metavar = "key=value", 
+    multiple = True, 
+    cls = KeyValueOption,
+    help = "Specify control parameters to update (type, direction, theta)"
+)
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+def update(force, params, path):
+    from anisotropy import env
+    from anisotropy.core.main import Anisotropy, Database
+
+    env.update(
+        LOG = os.path.join(path, "logs"),
+        BUILD = os.path.join(path, "build"),
+        CONFIG = os.path.join(path, "anisotropy.toml"),
+        db_path = path
+    )
+
+    args = dict()
+
+    for param in params:
+        args.update(param)
+
+
+    model = Anisotropy()
+    model.db = Database(env["db_name"], env["db_path"]) 
+        
+    click.echo("Configuring database ...")
+    model.db.setup()
+
+    if model.db.isempty() or update:
+        paramsAll = model.loadFromScratch(env["CONFIG"])
+
+        if args.get("type"):
+            paramsAll = [ entry for entry in paramsAll if args["type"] == entry["structure"]["type"] ]
+
+        if args.get("direction"):
+            paramsAll = [ entry for entry in paramsAll if args["direction"] == entry["structure"]["direction"] ]
+
+        if args.get("theta"):
+            paramsAll = [ entry for entry in paramsAll if args["theta"] == entry["structure"]["theta"] ]
+
+        for entry in paramsAll:
+            model.db.update(entry)
+
+        click.echo("{} entries was updated.".format(len(paramsAll)))
+
+    else:
+        click.echo("Database was not modified.")
+
+
+@anisotropy.command(
+    help = """Compute cases by chain (mesh -> flow)
     
     Control parameters: type, direction, theta (each parameter affects on a queue)
     """
@@ -112,12 +185,6 @@ def init():
     help = "Overwrite existing entries"
 )
 @click.option(
-    "-u", "--update", "update",
-    is_flag = True,
-    default = False,
-    help = "Update db parameters from config"
-)
-@click.option(
     "-p", "--param", "params", 
     metavar = "key=value", 
     multiple = True, 
@@ -129,7 +196,7 @@ def init():
     default = os.getcwd(),
     help = "Specify directory to use (instead of cwd)"
 )
-def compute(stage, nprocs, force, update, params, path):
+def compute(stage, nprocs, force, params, path):
     from anisotropy import env
     from anisotropy.core.main import Anisotropy, Database, logger
     from anisotropy.core.utils import setupLogger, timer, parallel
@@ -157,29 +224,8 @@ def compute(stage, nprocs, force, update, params, path):
     model = Anisotropy()
     model.db = Database(env["db_name"], env["db_path"]) 
         
-    logger.info("Configuring database ...")
+    logger.info("Loading database ...")
     model.db.setup()
-
-    if model.db.isempty() or update:
-        paramsAll = model.loadFromScratch(env["CONFIG"])
-
-        if args.get("type"):
-            paramsAll = [ entry for entry in paramsAll if args["type"] == entry["structure"]["type"] ]
-
-        if args.get("direction"):
-            paramsAll = [ entry for entry in paramsAll if args["direction"] == entry["structure"]["direction"] ]
-
-        if args.get("theta"):
-            paramsAll = [ entry for entry in paramsAll if args["theta"] == entry["structure"]["theta"] ]
-
-        for entry in paramsAll:
-            model.db.update(entry)
-
-        logger.info("{} entries was updated.".format(len(paramsAll)))
-
-    else:
-        logger.info("Database was not modified.")
-
 
     ###
     def computeCase(stage, type, direction, theta):

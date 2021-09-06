@@ -288,8 +288,8 @@ class Database(object):
         return tabID
 
     def _updateSubMesh(self, src: dict, queryMain, meshID):
-        if not src:
-            return
+        #if not src:
+        #    return
 
         raw = deepcopy(src)
         
@@ -312,8 +312,8 @@ class Database(object):
                 query.execute()
 
     def _updateMeshResult(self, src: dict, queryMain, meshID):
-        if not src:
-            return
+        #if not src:
+        #    return
 
         raw = deepcopy(src)
 
@@ -359,8 +359,8 @@ class Database(object):
         return tabID
 
     def _updateFlowApproximation(self, src: dict, queryMain, flowID):
-        if not src:
-            return
+        #if not src:
+        #    return
 
         raw = deepcopy(src)
 
@@ -382,8 +382,8 @@ class Database(object):
                 query.execute()
 
     def _updateFlowResult(self, src: dict, queryMain, flowID):
-        if not src:
-            return
+        #if not src:
+        #    return
 
         raw = deepcopy(src)
 
