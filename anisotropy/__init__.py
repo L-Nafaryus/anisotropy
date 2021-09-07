@@ -11,7 +11,7 @@ for constructing a shapes and meshes (``Salome``) and computing a flow (``OpenFO
 """
 
 __license__ = "GPL3"
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = __maintainer__ = "George Kusayko"
 __email__ = "gkusayko@gmail.com"
 
