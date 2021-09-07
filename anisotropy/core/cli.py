@@ -97,7 +97,7 @@ def init(path):
     from anisotropy import env
     from anisotropy.core.main import Database
 
-    if not os.path.exist(path) or not os.path.isdir(path):
+    if not os.path.exists(path) or not os.path.isdir(path):
         click.echo(f"Cannot find directory { path }")
 
         return
@@ -154,12 +154,12 @@ def update(force, params, path):
 
 
     model = Anisotropy()
-    model.db = Database(env["db_name"], env["db_path"]) 
+    database = Database(env["db_name"], env["db_path"]) 
         
     click.echo("Configuring database ...")
-    model.db.setup()
+    database.setup()
 
-    if model.db.isempty() or update:
+    if database.isempty() or update:
         paramsAll = model.loadFromScratch(env["CONFIG"])
 
         if args.get("type"):
@@ -172,7 +172,7 @@ def update(force, params, path):
             paramsAll = [ entry for entry in paramsAll if args["theta"] == entry["structure"]["theta"] ]
 
         for entry in paramsAll:
-            model.db.update(entry)
+            database.update(entry)
 
         click.echo("{} entries was updated.".format(len(paramsAll)))
 
@@ -188,7 +188,7 @@ def update(force, params, path):
 )
 @click.option(
     "-s", "--stage", "stage", 
-    type = click.Choice(["all", "mesh", "flow"]), 
+    type = click.Choice(["all", "mesh", "flow", "postProcessing"]), 
     default = "all",
     help = "Current computation stage"
 )
@@ -219,7 +219,7 @@ def update(force, params, path):
 def compute(stage, nprocs, force, params, path):
     from anisotropy import env
     from anisotropy.core.main import Anisotropy, Database, logger
-    from anisotropy.core.utils import setupLogger, timer, parallel
+    from anisotropy.core.utils import setupLogger, parallel
 
     env.update(
         LOG = os.path.join(path, "logs"),
@@ -236,70 +236,20 @@ def compute(stage, nprocs, force, params, path):
 
     ###
     logger.info("Writing pid ...")
+    pidpath = os.path.join(path, "anisotropy.pid")
 
-    with open(os.path.join(path, "anisotropy.pid"), "w") as io:
+    with open(pidpath, "w") as io:
         io.write(str(os.getpid()))
 
     ###
-    model = Anisotropy()
-    model.db = Database(env["db_name"], env["db_path"]) 
+    #   Preparations
+    ##
+    database = Database(env["db_name"], env["db_path"]) 
         
     logger.info("Loading database ...")
-    model.db.setup()
+    database.setup()
 
-    ###
-    def computeCase(stage, type, direction, theta):
-        case = Anisotropy()
-        case.load(type, direction, theta)
-        case.evalParams()
-        case.update()
-
-        logger.info(f"Case: type = { type }, direction = { direction }, theta = { theta }")
-        logger.info(f"Stage: { stage }")
-
-        if stage == "all" or stage == "mesh":
-            if not case.params.get("meshresult", {}).get("meshStatus") == "Done" or force:
-                (out, err, returncode), elapsed = timer(case.computeMesh)(path)
-
-                if out: logger.info(out)
-                if err: logger.error(err)
-
-                case.load(type, direction, theta)
-
-                if case.params.get("meshresult"):
-                    case.params["meshresult"]["meshCalculationTime"] = elapsed
-                    case.update()
-
-                if returncode:
-                    logger.error("Mesh computation failed. Skipping flow computation ...")
-                    return
-
-            else:
-                logger.info("Mesh exists. Skipping ...")
-
-        if stage == "all" or stage == "flow":
-            if not case.params.get("flowresult", {}).get("flowStatus") == "Done" or force:
-                (out, err, returncode), elapsed = timer(case.computeFlow)(path)
-
-                if out: logger.info(out)
-                if err: logger.error(err)
-
-                case.load(type, direction, theta)
-
-                if case.params.get("flowresult"):
-                    case.params["flowresult"]["flowCalculationTime"] = elapsed
-                    case.update()
-            
-                if returncode:
-                    logger.error("Flow computation failed.")
-                    return
-
-            else:
-                logger.info("Flow exists. Skipping ...")
-
-
-    ###
-    params = model.db.loadGeneral(
+    params = database.loadGeneral(
         args.get("type"), 
         args.get("direction"), 
         args.get("theta")
@@ -309,14 +259,88 @@ def compute(stage, nprocs, force, params, path):
     for p in params:
         s = p["structure"]
 
-        queueargs.append((stage, s["type"], s["direction"], s["theta"]))
+        queueargs.append((s["type"], s["direction"], s["theta"]))
+    
+    ###
+    #   Wrap function
+    ##
+    def computeCase(type, direction, theta):
+        case = Anisotropy()
+        case.db = database
+        case.load(type, direction, theta)
+        case.evalParams()
+        case.update()
 
+        logger.info(f"Case: type = { type }, direction = { direction }, theta = { theta }")
+        logger.info(f"Stage mode: { stage }")
+
+        if stage in ["mesh", "all"]:
+            case.load(type, direction, theta)
+
+            if not case.params["meshresult"]["meshStatus"] == "Done" or force:
+                logger.info("Current stage: mesh")
+                out, err, returncode = case.computeMesh(path)
+
+                if out: logger.info(out)
+                if err: logger.error(err)
+                if returncode:
+                    logger.error("Mesh computation failed. Skipping flow computation ...")
+
+                    return
+
+            else:
+                logger.info("Mesh exists. Skipping ...")
+
+        if stage in ["flow", "all"]:
+            case.load(type, direction, theta)
+
+            if not case.params["flowresult"]["flowStatus"] == "Done" or force:
+                logger.info("Current stage: flow")
+                out, err, returncode = case.computeFlow(path)
+
+                if out: logger.info(out)
+                if err: logger.error(err)
+                if returncode:
+                    logger.error("Flow computation failed.")
+
+                    return
+
+            else:
+                logger.info("Flow exists. Skipping ...")
+
+        if stage in ["postProcessing", "all"]:
+            case.load(type, direction, theta)
+
+            if case.params["meshresult"]["meshStatus"] == "Done":
+                logger.info("Current stage: mesh postProcessing")
+                case.porosity()
+
+            else:
+                logger.warning("Cannot compute mesh post processing values.")
+            
+            if case.params["flowresult"]["flowStatus"] == "Done":
+                logger.info("Current stage: flow postProcessing")
+                case.flowRate()
+
+            else:
+                logger.warning("Cannot compute flow post processing values.")
+
+
+    ###
+    #   Run
+    ##
     if nprocs == 1:
         for pos, qarg in enumerate(queueargs):
             computeCase(*qarg)
 
     else:
         parallel(nprocs, queueargs, computeCase)
+
+    if os.path.exists(pidpath):
+        logger.info("Removing pid ...")
+        os.remove(pidpath)
+
+    logger.info("Computation done.")
 
 
 @anisotropy.command(
@@ -368,14 +392,14 @@ def computemesh(root, type, direction, theta, path):
     #   Modules
     ##
     import os, sys
-
-    pyversion = "{}.{}".format(*sys.version_info[:2])
+    
+    pyversion = "{}.{}".format(3, 9) #(*sys.version_info[:2])
     sys.path.extend([
         root,
         os.path.join(root, "env/lib/python{}/site-packages".format(pyversion)),
         os.path.abspath(".local/lib/python{}/site-packages".format(pyversion))
     ])
-
+    
     from anisotropy import env
     from anisotropy.core.main import Anisotropy, Database
     import salome 
@@ -384,7 +408,7 @@ def computemesh(root, type, direction, theta, path):
     model = Anisotropy()
     model.db = Database(env["db_name"], path)
     model.load(type, direction, theta)
-
+    
     salome.salome_init()
     model.genmesh(path)
     salome.salome_close()
@@ -493,14 +517,14 @@ def show(params, path, printlist, export, fields, output):
     else:
         tables.append(df)
 
-    fig, ax = plt.subplots(nrows = 1, ncols = 1)
+    if output == "plot":
+        fig, ax = plt.subplots(nrows = 1, ncols = 1)
 
-    for table in tables:
-        table.plot(table.keys()[0], table.keys()[1], ax = ax, style = "o")
+        for table in tables:
+            table.plot(table.keys()[0], table.keys()[1], ax = ax, style = "o")
 
-    plt.legend()
-    plt.grid()
-    #plt.show()
+        plt.legend()
+        plt.grid()
     
     if export:
         supported = ["csv", "jpg"]
@@ -537,19 +561,19 @@ def show(params, path, printlist, export, fields, output):
 #   CLI entry
 ##
 if __name__ == "__main__":
-    try:
+    #try:
         anisotropy()
 
-    except KeyboardInterrupt:
-        click.echo("Interrupted!")
+    #except KeyboardInterrupt:
+    #    click.echo("Interrupted!")
 
-    finally:
-        from anisotropy.salomepl.utils import SalomeManager
-        click.echo("Exiting ...")
+    #finally:
+    #    from anisotropy.salomepl.utils import SalomeManager
+    #    click.echo("Exiting ...")
 
-        if os.path.exists("anisotropy.pid"):
-            os.remove("anisotropy.pid")
+    #    if os.path.exists("anisotropy.pid"):
+    #        os.remove("anisotropy.pid")
 
-        SalomeManager().killall()
+    #    SalomeManager().killall()
 
-        sys.exit(0)
+    #    sys.exit(0)

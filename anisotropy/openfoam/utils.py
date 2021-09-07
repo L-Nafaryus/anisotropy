@@ -4,12 +4,13 @@
 
 import os
 import shutil
+from .application import application
 
 def version() -> str:
     return os.environ["WM_PROJECT_VERSION"]
 
 
-def foamClean(case: str = None):
+def foamCleanCustom(case: str = None):
     rmDirs = ["0", "constant", "system", "postProcessing", "logs"]
     rmDirs.extend([ "processor{}".format(n) for n in range(os.cpu_count()) ])
     path = case if case else ""
@@ -18,6 +19,15 @@ def foamClean(case: str = None):
         if os.path.exists(os.path.join(path, d)):
             shutil.rmtree(os.path.join(path, d))
 
+def foamClean(case: str = None):
+    rmDirs = ["0", "constant", "system"]
+    path = case if case else ""
+
+    for d in rmDirs:
+        if os.path.exists(os.path.join(path, d)):
+            shutil.rmtree(os.path.join(path, d))
+
+    application("foamCleanTutorials", useMPI = False, case = case, stderr = True)
 
 def uniform(value) -> str:
     if type(value) == list or type(value) == tuple:

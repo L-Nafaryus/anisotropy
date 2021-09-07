@@ -129,6 +129,7 @@ class MeshResult(BaseModel):
     
     surfaceArea = FloatField(null = True)
     volume = FloatField(null = True)
+    volumeCell = FloatField(null = True)
     
     elements = IntegerField(null = True)
     edges = IntegerField(null = True)

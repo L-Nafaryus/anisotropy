@@ -15,6 +15,7 @@ class Simple(object):
         self.radius = kwargs.get("radius", self.r0 / (1 - self.theta)) 
         self.filletsEnabled = kwargs.get("filletsEnabled", False)
         self.fillets = kwargs.get("fillets", 0)
+        self.volumeCell = None
 
 
     def build(self):
@@ -68,6 +69,7 @@ class Simple(object):
                 vecflow = geompy.GetNormal(inletface)
                 poreCell = geompy.MakePrismVecH(inletface, vecflow, height)
 
+            [_, _, self.volumeCell] = geompy.BasicProperties(poreCell, theTolerance = 1e-06)
                 
             inletface = geompy.MakeScaleTransform(inletface, oo, scale)
             poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)
@@ -119,6 +121,8 @@ class Simple(object):
             inletface = geompy.MakeFaceWires([sk.wire()], False)
             vecflow = geompy.GetNormal(inletface)
             poreCell = geompy.MakePrismVecH(inletface, vecflow, self.L * sqrt(3))
+
+            [_, _, self.volumeCell] = geompy.BasicProperties(poreCell, theTolerance = 1e-06)
 
             inletface = geompy.MakeScaleTransform(inletface, oo, scale)
             poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)

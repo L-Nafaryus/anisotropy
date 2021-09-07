@@ -22,7 +22,7 @@ def transformPoints(scale, case: str = None):
 
 
 def checkMesh(case: str = None) -> str:
-    application("checkMesh", "-allGeometry", "-allTopology", case = case, stderr = True)
+    _, err, returncode = application("checkMesh", "-allGeometry", "-allTopology", case = case, stderr = True)
     out = ""
 
     with open("checkMesh.log", "r") as io:
@@ -34,7 +34,7 @@ def checkMesh(case: str = None) -> str:
         if warnings:
             out = "checkMesh:\n\t{}".format("\n\t".join(warnings))
 
-    return out
+    return out, err, returncode
 
 
 def renumberMesh(case: str = None):

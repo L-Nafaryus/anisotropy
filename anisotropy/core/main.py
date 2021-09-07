@@ -16,7 +16,7 @@ from anisotropy import (
     __version__, env,
     openfoam
 )
-from anisotropy.core.utils import setupLogger, timer
+from anisotropy.core.utils import setupLogger, Timer
 from anisotropy.core.database import Database
 from anisotropy import salomepl
 import anisotropy.salomepl.utils
@@ -38,7 +38,7 @@ class Anisotropy(object):
         """Constructor method"""
 
         self.env = env
-        self.db = Database(self.env["db_name"], self.env["db_path"])
+        self.db = None #Database(self.env["db_name"], self.env["db_path"])
         self.params = []
 
 
@@ -63,8 +63,8 @@ class Anisotropy(object):
     def version():
         """Returns versions of all used main programs
 
-        :return: Versions joined by next line symbol
-        :rtype: str
+        :return: 
+            Versions joined by next line symbol
         """
         versions = {
             "anisotropy": __version__,
@@ -86,8 +86,8 @@ class Anisotropy(object):
     def loadFromScratch(self, configpath: str = None) -> list:
         """Loads parameters from configuration file and expands special values
 
-        :return: List of dicts with parameters
-        :rtype: list
+        :return: 
+            List of dicts with parameters
         """
         config = configpath or self.env["CONFIG"]
 
@@ -131,8 +131,10 @@ class Anisotropy(object):
                         ),
                         "mesh": mesh,
                         "submesh": deepcopy(entry["submesh"]),
+                        "meshresult": dict(),
                         "flow": deepcopy(entry["flow"]),
-                        "flowapproximation": deepcopy(entry["flowapproximation"])
+                        "flowapproximation": deepcopy(entry["flowapproximation"]),
+                        "flowresult": dict(),
                     }
 
                     # For `type = fixedValue` only
@@ -251,13 +253,33 @@ class Anisotropy(object):
         manager = salomepl.utils.SalomeManager()
         casepath = self.getCasePath(path)
 
-        return manager.execute(
+        self.params["meshresult"]["meshStatus"] = "Computing"
+        self.update()
+        timer = Timer()
+
+        out, err, returncode = manager.execute(
             scriptpath, 
             *salomeargs, 
             timeout = self.env["salome_timeout"],
             root = self.env["ROOT"],
             logpath = casepath
         )
+        self.load(p["type"], p["direction"], p["theta"])
+
+        if not returncode:
+            self.params["meshresult"].update(
+                meshStatus = "Done",
+                meshCalculationTime = timer.elapsed()
+            )
+
+        else:
+            self.params["meshresult"].update(
+                meshStatus = "Failed"
+            )
+
+        self.update()
+
+        return out, err, returncode
 
 
     def genmesh(self, path):
@@ -280,7 +302,8 @@ class Anisotropy(object):
             bodyCentered = BodyCentered,
             faceCentered = FaceCentered
         )[p["structure"]["type"]]
-        shape, groups = structure(**p["structure"]).build()
+        shapeGeometry = structure(**p["structure"])
+        shape, groups = shapeGeometry.build()
 
         [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
 
@@ -312,6 +335,7 @@ class Anisotropy(object):
         if mp["viscousLayers"]:
             mesh.ViscousLayers(**mp, faces = faces)
 
+        #   Submesh
         smp = p["submesh"]
 
         for submesh in smp:
@@ -333,7 +357,7 @@ class Anisotropy(object):
         ###
         #   Results
         ##
-        p["meshresult"] = dict()
+        #p["meshresult"] = dict()
 
         if not returncode:
             mesh.removePyramids()
@@ -349,9 +373,9 @@ class Anisotropy(object):
 
             meshStats = mesh.stats()
             p["meshresult"].update(
-                status = "Done",
                 surfaceArea = surfaceArea,
                 volume = volume,
+                volumeCell = shapeGeometry.volumeCell,
                 **meshStats
             )
             self.update()
@@ -360,9 +384,9 @@ class Anisotropy(object):
             logger.error(err)
 
             p["meshresult"].update(
-                status = "Failed",
                 surfaceArea = surfaceArea,
-                volume = volume
+                volume = volume,
+                volumeCell = shapeGeometry.volumeCell
             )
             self.update()
 
@@ -370,23 +394,30 @@ class Anisotropy(object):
     def computeFlow(self, path):
         """Computes a flow on mesh via OpenFOAM
 
-        :return: Process output, error messages and returncode
-        :rtype: tuple(str, str, int)
+        :return: 
+            Process output, error messages and returncode
         """
         ###
         #   Case preparation
         ##
         foamCase = [ "0", "constant", "system" ]
+        #self.params["flowresult"] = dict()
+        self.params["flowresult"]["flowStatus"] = "Computing"
+        self.update()
+        timer = Timer()
 
         flow = self.params["flow"]
         flowapproximation = self.params["flowapproximation"]
 
         # ISSUE: ideasUnvToFoam cannot import mesh with '-case' flag so 'os.chdir' for that
-        casePath = self.getCasePath()
+        casePath = self.getCasePath(path)
 
         if not os.path.exists(casePath):
-            logger.warning(f"Cannot find case path. Skipping computation ...\n\t{ casePath }")
-            return "", "", 1
+            err = f"Cannot find case path { casePath }"
+            self.params["flowresult"]["flowStatus"] = "Failed"
+            self.update()
+
+            return "", err, 1
 
         os.chdir(casePath)
         openfoam.foamClean()
@@ -401,14 +432,22 @@ class Anisotropy(object):
         #   Mesh manipulations
         ##
         if not os.path.exists("mesh.unv"):
-            logger.error(f"missed 'mesh.unv'")
             os.chdir(path or self.env["ROOT"])
-            return "", "", 1
+
+            err = f"Missed 'mesh.unv'"
+            self.params["flowresult"]["flowStatus"] = "Failed"
+            self.update()
+
+            return "", err, 1
 
         out, err, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
         if returncode:
             os.chdir(path or self.env["ROOT"])
+
+            self.params["flowresult"]["flowStatus"] = "Failed"
+            self.update()
+            
             return out, err, returncode
         
         openfoam.createPatch(dictfile = "system/createPatchDict")
@@ -424,10 +463,9 @@ class Anisotropy(object):
             "1 (wall)"
         )
         
-        out = openfoam.checkMesh()
+        out, err, returncode = openfoam.checkMesh()
         
-        if out:
-            logger.info(out)
+        if out: logger.warning(out)
         
         openfoam.transformPoints(flow["scale"])
         
@@ -442,7 +480,7 @@ class Anisotropy(object):
             str(flow["transportProperties"]["nu"])
         )
 
-        #openfoam.decomposePar()
+        # openfoam.decomposePar()
 
         openfoam.renumberMesh()
 
@@ -499,33 +537,44 @@ class Anisotropy(object):
         
         out, err, returncode = openfoam.simpleFoam()
 
-        ###
-        #   Results
-        ##
-        self.params["flowresult"] = dict()
-
         if not returncode:
-            postProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
-
-            with open(os.path.join(casePath, postProcessing), "r") as io:
-                lastLine = io.readlines()[-1]
-                flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
-                
-            self.params["flowresult"].update(
-                status = "Done",
-                flowRate = flowRate
-            )
+            self.params["flowresult"]["flowCalculationTime"] = timer.elapsed()
+            self.params["flowresult"]["flowStatus"] = "Done"
 
         else:
-            self.params["flowresult"].update(
-                status = "Failed"
-            )
-
+            self.params["flowresult"]["flowStatus"] = "Failed"
 
         self.update()
-
-        os.chdir(self.env["ROOT"])
+        os.chdir(path or self.env["ROOT"])
         
         return out, str(err, "utf-8"), returncode
 
-    
+
+    def flowRate(self):
+        casePath = self.getCasePath()
+        foamPostProcessing = "postProcessing/flowRatePatch(name=outlet)/0/surfaceFieldValue.dat"
+        path = os.path.join(casePath, foamPostProcessing)
+
+        if not os.path.exists(path):
+            logger.warning(f"Unable to compute flow rate. Missed { path }")
+
+            return
+
+        with open(path, "r") as io:
+            lastLine = io.readlines()[-1]
+            flowRate = float(lastLine.replace(" ", "").replace("\n", "").split("\t")[1])
+
+        self.params["flowresult"]["flowRate"] = flowRate
+        self.update()
+
+        return flowRate
+
+
+    def porosity(self):
+        mr = self.params["meshresult"] 
+        fr = self.params["flowresult"]
+
+        fr["porosity"] = mr["volume"] / mr["volumeCell"]
+        self.update()
+
+        return fr["porosity"]

@@ -205,6 +205,13 @@ def timer(func: FunctionType) -> (tuple, float):
     return inner
 
 
+class Timer(object):
+    def __init__(self):
+        self.start = time.monotonic()
+
+    def elapsed(self):
+        return time.monotonic() - self.start
+
 
 def queue(cmd, qin, qout, *args):
     
