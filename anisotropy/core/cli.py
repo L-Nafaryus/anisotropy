@@ -46,6 +46,26 @@ class KeyValueOption(click.Option):
         else:
             return self._convert(ctx, value)
 
+class CliListOption(click.Option):
+    def _convert(self, ctx, value):
+        if not value:
+            return []
+
+        output = [ val for val in value.split(",") ]
+        
+        if "" in output:
+            raise click.BadParameter(f"{ value } (Trying to pass empty item)")
+
+        return output
+
+
+    def type_cast_value(self, ctx, value):
+        if isinstance(value, list):
+            return [ self._convert(ctx, val) for val in value ]
+
+        else:
+            return self._convert(ctx, value)
+
         
 def version():
     msg = "Missed package anisotropy"
@@ -105,7 +125,7 @@ def init(path):
     help = "Overwrite existing entries"
 )
 @click.option(
-    "-p", "--param", "params", 
+    "-p", "--params", "params", 
     metavar = "key=value", 
     multiple = True, 
     cls = KeyValueOption,
@@ -185,7 +205,7 @@ def update(force, params, path):
     help = "Overwrite existing entries"
 )
 @click.option(
-    "-p", "--param", "params", 
+    "-p", "--params", "params", 
     metavar = "key=value", 
     multiple = True, 
     cls = KeyValueOption,
@@ -349,9 +369,11 @@ def computemesh(root, type, direction, theta, path):
     ##
     import os, sys
 
+    pyversion = "{}.{}".format(*sys.version_info[:2])
     sys.path.extend([
         root,
-        os.path.join(root, "env/lib/python3.9/site-packages")
+        os.path.join(root, "env/lib/python{}/site-packages".format(pyversion)),
+        os.path.abspath(".local/lib/python{}/site-packages".format(pyversion))
     ])
 
     from anisotropy import env
@@ -368,86 +390,18 @@ def computemesh(root, type, direction, theta, path):
     salome.salome_close()
 
 
-@anisotropy.command(
-    help = "Post processing"
-)
-@click.option(
-    "-P", "--path", "path",
-    default = os.getcwd(),
-    help = "Specify directory to use (instead of cwd)"
-)
-@click.argument(
-    "plot",
-    type = click.Choice(["permeability"])
-)
-def postprocessing(path, plot):
-    from anisotropy import env
-    from anisotropy.core.main import Database
-    from pandas import Series
-    import matplotlib.pyplot as plt
-
-    env.update(
-        LOG = os.path.join(path, "logs"),
-        BUILD = os.path.join(path, "build"),
-        CONFIG = os.path.join(path, "anisotropy.toml"),
-        db_path = path
-    )
-
-    ###
-    db = Database(env["db_name"], env["db_path"]) 
-    db.setup()
-
-    params = db.loadGeneral()
-    paramsAll = []
-
-    for p in params:
-        s = p["structure"]
-        paramsAll.append(db.load(s["type"], s["direction"], s["theta"]))
-
-    paramsAll.sort(key = lambda src: f"{ src['structure']['type'] }{ src['structure']['direction'] }{ src['structure']['theta'] }")
-
-    def getTD(src, type, direction):
-        return src["structure"]["type"] == type and src["structure"]["direction"] == direction
-
-    if plot == "permeability":
-        for structure in ["simple", "faceCentered", "bodyCentered"]:
-            d1 = [ entry for entry in paramsAll if getTD(entry, structure, [1.0, 0.0, 0.0]) ]
-            d2 = [ entry for entry in paramsAll if getTD(entry, structure, [0.0, 0.0, 1.0]) ]
-            d3 = [ entry for entry in paramsAll if getTD(entry, structure, [1.0, 1.0, 1.0]) ]
-
-            theta = [ entry["structure"]["theta"] for entry in d1 ]
-            fr1 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d1 ], theta)
-            fr2 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d2 ], theta)
-            fr3 = Series([ entry.get("flowresult", {}).get("flowRate", None) for entry in d3 ], theta)
-
-            pm2 = 2 * fr2 / fr1
-            pm3 = 2 * fr3 / fr1
-
-            plt.figure(1)
-
-            ax1 = pm2.plot(style = "o")
-            ax1.set_label("k_2 / k_1")
-            ax2 = pm3.plot(style = "o")
-            ax2.set_label("k_3 / k_1")
-
-            plt.title(structure)
-            plt.xlabel("theta")
-            plt.ylabel("permeability")
-            plt.legend()
-            plt.grid()
-            plt.show()
-
 
 @anisotropy.command()
 @click.option(
-    "-p", "--param", "params", 
+    "-p", "--params", "params", 
     metavar = "key=value", 
     multiple = True, 
     cls = KeyValueOption,
-    help = "Select by control parameter (type, direction, theta)"
+    help = "Select by control parameters (type, direction, theta)"
 )
 @click.option(
     "-P", "--path", "path",
+    metavar = "PATH",
     default = os.getcwd(),
     help = "Specify directory to use (instead of cwd)"
 )
@@ -459,16 +413,26 @@ def postprocessing(path, plot):
 @click.option(
     "--export",
     metavar = "PATH",
-    help = "Export query result to CSV."
+    help = "Export output."
+)
+@click.option(
+    "--fields", "fields",
+    metavar = "f1,f2,...",
+    multiple = True,
+    cls = CliListOption,
+    help = "Select fields to use."
 )
 @click.argument(
-    "fields",
-    required = False
+    "output",
+    required = False,
+    type = click.Choice(["cli", "plot"]),
+    default = "cli"
 )
-def query(params, path, printlist, export, fields):
+def show(params, path, printlist, export, fields, output):
     from anisotropy import env
     from anisotropy.core.database import Database, Structure
-    from pandas import DataFrame
+    from pandas import DataFrame, Series
+    import matplotlib.pyplot as plt
 
     env.update(
         LOG = os.path.join(path, "logs"),
@@ -482,7 +446,6 @@ def query(params, path, printlist, export, fields):
     for param in params:
         args.update(param)
 
-    fields = [ field.strip() for field in fields.split(",") ] if fields else []
 
     ###
     db = Database(env["db_name"], env["db_path"]) 
@@ -516,21 +479,58 @@ def query(params, path, printlist, export, fields):
 
         return
 
-    
+    tables = []
+
     if fields:
-        for field in fields:
-            if field not in df_keys:
-                click.echo(f"Unknown field '{ field }'. Try to use '--list' flag to see all avaliable fields.")
+        for fieldslist in fields:
+            for field in fieldslist:
+                if field not in df_keys:
+                    click.echo(f"Unknown field '{ field }'. Try to use '--list' flag to see all avaliable fields.")
 
-                return
+                    return
         
-        df = df[fields]
+            tables.append(df[fieldslist])
+    else:
+        tables.append(df)
 
+    fig, ax = plt.subplots(nrows = 1, ncols = 1)
+
+    for table in tables:
+        table.plot(table.keys()[0], table.keys()[1], ax = ax, style = "o")
+
+    plt.legend()
+    plt.grid()
+    #plt.show()
+    
     if export:
-        df.to_csv(export, sep = ";")
+        supported = ["csv", "jpg"]
+        filepath, ext = os.path.splitext(export)
+        ext = ext.replace(".", "")
+
+        if ext not in supported:
+            click.echo(f"Unknown extension '{ ext }'.")
+
+            return
+
+        if ext == "csv":
+            if len(tables) == 1:
+                tables[0].to_csv(export, sep = ";")
+            
+            else:
+                for n, table in enumerate(tables):
+                    table.to_csv("{}.{}.{}".format(filepath, n, ext), sep = ";")
+
+        elif ext == "jpg":
+            plt.savefig(export)
 
     else:
-        click.echo(df.to_string())
+
+        if output == "cli":
+            res = "\n\n".join([ table.to_string() for table in tables ])
+            click.echo(res)
+
+        elif output == "plot":
+            plt.show()
 
     
 ###
