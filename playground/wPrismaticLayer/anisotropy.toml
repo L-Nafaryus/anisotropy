@@ -1,0 +1,281 @@
+# -*- coding: utf-8 -*-
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
+
+[logger]
+name = "anisotropy"
+format = "[ %(levelname)s ] %(message)s"
+
+[base]
+simple = true 
+bodyCentered = true 
+faceCentered = true 
+
+[[structures]]
+    [structures.structure]
+    type = "simple"
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.28, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
+    filletsEnabled = true
+    # auto # fillets: float
+
+    [structures.mesh]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.5
+    nbSegPerEdge = 2
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.01, 0.005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
+
+    [[structures.submesh]]
+    name = "strips"
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    [structures.flowapproximation]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with flow direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    [structures.flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+
+[[structures]]
+    [structures.structure]
+    type = "bodyCentered"
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.17, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
+    filletsEnabled = true
+    # auto # fillets: float
+
+    [structures.mesh]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.5
+    nbSegPerEdge = 2
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.005, 0.0005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
+
+    [[structures.submesh]]
+    name = "strips"
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    [structures.flowapproximation]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    [structures.flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+
+[[structures]]
+    [structures.structure]
+    type = "faceCentered"
+    # auto # from theta: list # theta: float
+    theta = [0.01, 0.12, 0.01]  # [min, max, step]
+    # auto # from directions:list # direction: list
+    directions = [  
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+    ]
+
+    # r0 = 
+    # L = 
+    # radius = 
+
+    filletsEnabled = true
+    # auto # fillets: float
+
+    [structures.mesh]
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.5
+    nbSegPerEdge = 2
+    nbSegPerRadius = 1
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    viscousLayers = true
+    thickness = [0.001, 0.0005]   # [min, max] # step is controlled by theta count
+    numberOfLayers = 1
+    stretchFactor = 1
+    isFacesToIgnore = true 
+    facesToIgnore = ["inlet", "outlet"]
+    # auto # faces: list
+    extrusionMethod = "SURF_OFFSET_SMOOTH"
+
+    [[structures.submesh]]
+    name = "strips"
+    maxSize = 0.5
+    minSize = 0.05
+
+    fineness = 5
+    growthRate = 0.2
+    nbSegPerEdge = 2
+    nbSegPerRadius = 3
+    
+    chordalErrorEnabled = true
+    chordalError = 0.25
+    
+    secondOrder = false
+    optimize = true
+    quadAllowed = false
+    useSurfaceCurvature = true
+    fuseEdges = true
+    checkChartBoundary = false
+
+    [structures.flowapproximation]
+    transportProperties.nu = 1e-6
+
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    # multiplication velocity value with direction vector
+    velocity.boundaryField.inlet = { type = "fixedValue", value = 6e-5 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+    [structures.flow]
+    scale = [ 1e-5, 1e-5, 1e-5 ]
+
+    transportProperties.nu = 1e-6
+    
+    pressure.boundaryField.inlet = { type = "fixedValue", value = 1e-3 }
+    pressure.boundaryField.outlet = { type = "fixedValue", value = 0.0 }
+
+    velocity.boundaryField.inlet = { type = "pressureInletVelocity", value = 0.0 }
+    velocity.boundaryField.outlet = { type = "zeroGradient", value = "None" }
+
+
+
