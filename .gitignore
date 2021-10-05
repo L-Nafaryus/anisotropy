@@ -18,3 +18,4 @@ env/
 *.toc
 *.out
 *.egg-info
+.ipynb_checkpoints/
