@@ -74,7 +74,8 @@ def main():
         python_requires = ">=3.6",
         install_requires = read("requirements.txt", True),
         extras_require = {
-            "documentation": ["Sphinx", "sphinx-rtd-theme", "pydeps", "peewee-erd" ]
+            "documentation": ["Sphinx", "sphinx-rtd-theme", "pydeps", "peewee-erd" ],
+            "extra": ["jupyterlab", "seaborn", "sklearn"]
         },
         entry_points = {
             "console_scripts": [
