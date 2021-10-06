@@ -303,9 +303,9 @@ class Anisotropy(object):
             faceCentered = FaceCentered
         )[p["structure"]["type"]]
         shapeGeometry = structure(**p["structure"])
-        shape, groups = shapeGeometry.build()
+        shapeGeometry.build()
 
-        [length, surfaceArea, volume] = geompy.BasicProperties(shape, theTolerance = 1e-06)
+        [length, surfaceArea, volume] = geompy.BasicProperties(shapeGeometry.shape, theTolerance = 1e-06)
 
 
         ###
@@ -316,7 +316,7 @@ class Anisotropy(object):
         mp = p["mesh"]
 
         lengths = [
-            geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shape, geompy.ShapeType["EDGE"]) 
+            geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shapeGeometry.shape, geompy.ShapeType["EDGE"]) 
         ]
         meanSize = sum(lengths) / len(lengths)
         mp["maxSize"] = meanSize
@@ -324,12 +324,12 @@ class Anisotropy(object):
         mp["chordalError"] = mp["maxSize"] / 2
 
         faces = []
-        for group in groups:
+        for group in shapeGeometry.groups:
             if group.GetName() in mp["facesToIgnore"]:
                 faces.append(group)
 
 
-        mesh = salomepl.mesh.Mesh(shape)
+        mesh = salomepl.mesh.Mesh(shapeGeometry.shape)
         mesh.Tetrahedron(**mp)
 
         if mp["viscousLayers"]:
@@ -339,7 +339,7 @@ class Anisotropy(object):
         smp = p["submesh"]
 
         for submesh in smp:
-            for group in groups:
+            for group in shapeGeometry.groups:
                 if submesh["name"] == group.GetName():
                     subshape = group
 

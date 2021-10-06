@@ -2,26 +2,22 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
+from anisotropy.samples.structure import StructureGeometry
 from math import pi, sqrt
-from anisotropy.salomepl import geometry
+import logging
 
-class BodyCentered(object):
-    def __init__(self, **kwargs):
-
-        self.direction = kwargs.get("direction", [1, 0, 0])
-        self.theta = kwargs.get("theta", 0.01)
-        self.L = kwargs.get("L", 1)
-        self.r0 = kwargs.get("r0", self.L * sqrt(3) / 4)
-        self.radius = kwargs.get("radius", self.r0 / (1 - self.theta)) 
-        self.filletsEnabled = kwargs.get("filletsEnabled", False)
-        self.fillets = kwargs.get("fillets", 0)
-        self.volumeCell = None
-
+class BodyCentered(StructureGeometry):
+    @property
+    def name(self):
+        """Shape name.
+        """
+        return "bodyCentered"
+    
+    @property
+    def L(self):
+        return self.r0 * 4 / sqrt(3)
 
     def build(self):
-
-        geompy = geometry.getGeom()
-
         ###
         #   Pore Cell
         ##
@@ -42,7 +38,7 @@ class BodyCentered(object):
             zh = height
 
             scale = 100
-            oo = geompy.MakeVertex(0, 0, 0)
+            oo = self.geo.MakeVertex(0, 0, 0)
             spos1 = (0, 0, 0)
             spos2 = (0, 0, 0)
 
@@ -50,40 +46,41 @@ class BodyCentered(object):
             #   Bounding box
             ##
             if self.direction == [1, 0, 0]:
-                sk = geompy.Sketcher3D()
+                sk = self.geo.Sketcher3D()
                 sk.addPointsAbsolute(xl, 0, 0)
                 sk.addPointsAbsolute(0, yw, 0)
                 sk.addPointsAbsolute(0, yw, zh)
                 sk.addPointsAbsolute(xl, 0, zh)
                 sk.addPointsAbsolute(xl, 0, 0)
 
-                inletface = geompy.MakeFaceWires([sk.wire()], True)
-                vecflow = geompy.GetNormal(inletface)
-                poreCell = geompy.MakePrismVecH(inletface, vecflow, diag)
+                inletface = self.geo.MakeFaceWires([sk.wire()], True)
+                vecflow = self.geo.GetNormal(inletface)
+                poreCell = self.geo.MakePrismVecH(inletface, vecflow, diag)
 
             elif self.direction == [0, 0, 1]:
-                sk = geompy.Sketcher3D()
+                sk = self.geo.Sketcher3D()
                 sk.addPointsAbsolute(0, yw, 0)
                 sk.addPointsAbsolute(xl, 0, 0)
                 sk.addPointsAbsolute(2 * xl, yw, 0)
                 sk.addPointsAbsolute(xl, 2 * yw, 0)
                 sk.addPointsAbsolute(0, yw, 0)
 
-                inletface = geompy.MakeFaceWires([sk.wire()], True)
-                vecflow = geompy.GetNormal(inletface)
-                poreCell = geompy.MakePrismVecH(inletface, vecflow, zh)
+                inletface = self.geo.MakeFaceWires([sk.wire()], True)
+                vecflow = self.geo.GetNormal(inletface)
+                poreCell = self.geo.MakePrismVecH(inletface, vecflow, zh)
 
-            [_, _, self.volumeCell] = geompy.BasicProperties(poreCell, theTolerance = 1e-06)
             
-            inletface = geompy.MakeScaleTransform(inletface, oo, scale)
-            poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)
+            self.shapeCell = poreCell
+            
+            inletface = self.geo.MakeScaleTransform(inletface, oo, scale)
+            poreCell = self.geo.MakeScaleTransform(poreCell, oo, scale)
 
-            faces = geompy.ExtractShapes(poreCell, geompy.ShapeType["FACE"], False)
+            faces = self.geo.ExtractShapes(poreCell, self.geo.ShapeType["FACE"], False)
             symetryface = []
 
             for face in faces:
-                norm = geompy.GetNormal(face)
-                angle = round(geompy.GetAngle(norm, vecflow), 0)
+                norm = self.geo.GetNormal(face)
+                angle = round(self.geo.GetAngle(norm, vecflow), 0)
 
                 if (angle == 0 or angle == 180) and not face == inletface:
                     outletface = face
@@ -113,33 +110,33 @@ class BodyCentered(object):
             point.append((self.L / 3 + xl, self.L / 3 + yw, 4 * self.L / 3 + zh))
 
             scale = 100
-            oo = geompy.MakeVertex(0, 0, 0)
+            oo = self.geo.MakeVertex(0, 0, 0)
             spos1 = (0, 0, 0)
             spos2 = (0, 0, 0)
 
             ###
             #   Bounding box
             ## 
-            sk = geompy.Sketcher3D()
+            sk = self.geo.Sketcher3D()
 
             for p in point:
                 sk.addPointsAbsolute(*p)
             
-            inletface = geompy.MakeFaceWires([sk.wire()], False)
-            vecflow = geompy.GetNormal(inletface)
-            poreCell = geompy.MakePrismVecH(inletface, vecflow, self.L * sqrt(3))
+            inletface = self.geo.MakeFaceWires([sk.wire()], False)
+            vecflow = self.geo.GetNormal(inletface)
+            poreCell = self.geo.MakePrismVecH(inletface, vecflow, self.L * sqrt(3))
 
-            [_, _, self.volumeCell] = geompy.BasicProperties(poreCell, theTolerance = 1e-06)
+            self.shapeCell = poreCell
 
-            inletface = geompy.MakeScaleTransform(inletface, oo, scale)
-            poreCell = geompy.MakeScaleTransform(poreCell, oo, scale)
+            inletface = self.geo.MakeScaleTransform(inletface, oo, scale)
+            poreCell = self.geo.MakeScaleTransform(poreCell, oo, scale)
 
-            faces = geompy.ExtractShapes(poreCell, geompy.ShapeType["FACE"], False)
+            faces = self.geo.ExtractShapes(poreCell, self.geo.ShapeType["FACE"], False)
             symetryface = []
 
             for face in faces:
-                norm = geompy.GetNormal(face)
-                angle = round(geompy.GetAngle(norm, vecflow), 0)
+                norm = self.geo.GetNormal(face)
+                angle = round(self.geo.GetAngle(norm, vecflow), 0)
 
                 if (angle == 0 or angle == 180) and not face == inletface:
                     outletface = face
@@ -153,78 +150,63 @@ class BodyCentered(object):
         ###
         #   Grains
         ##
-        ox = geompy.MakeVectorDXDYDZ(1, 0, 0)
-        oy = geompy.MakeVectorDXDYDZ(0, 1, 0)
-        oz = geompy.MakeVectorDXDYDZ(0, 0, 1)
-        xy = geompy.MakeVectorDXDYDZ(1, 1, 0)
-        xmy = geompy.MakeVectorDXDYDZ(1, -1, 0)
+        ox = self.geo.MakeVectorDXDYDZ(1, 0, 0)
+        oy = self.geo.MakeVectorDXDYDZ(0, 1, 0)
+        oz = self.geo.MakeVectorDXDYDZ(0, 0, 1)
+        xy = self.geo.MakeVectorDXDYDZ(1, 1, 0)
+        xmy = self.geo.MakeVectorDXDYDZ(1, -1, 0)
 
-        grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos1), self.radius)
-        lattice1 = geompy.MakeMultiTranslation2D(grain, ox, self.L, xn, oy, self.L, yn)
-        lattice1 = geompy.MakeMultiTranslation1D(lattice1, oz, self.L, zn)
+        grain = self.geo.MakeSpherePntR(self.geo.MakeVertex(*spos1), self.radius)
+        lattice1 = self.geo.MakeMultiTranslation2D(grain, ox, self.L, xn, oy, self.L, yn)
+        lattice1 = self.geo.MakeMultiTranslation1D(lattice1, oz, self.L, zn)
 
-        #grain = geompy.MakeSpherePntR(geompy.MakeVertex(*spos2), radius)
-        #lattice2 = geompy.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
-        #lattice2 = geompy.MakeMultiTranslation1D(lattice2, oz, L, zn)
-        lattice2 = geompy.MakeTranslation(lattice1, 0.5 * self.L, 0.5 * self.L, 0.5 * self.L)
+        #grain = self.geo.MakeSpherePntR(self.geo.MakeVertex(*spos2), radius)
+        #lattice2 = self.geo.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
+        #lattice2 = self.geo.MakeMultiTranslation1D(lattice2, oz, L, zn)
+        lattice2 = self.geo.MakeTranslation(lattice1, 0.5 * self.L, 0.5 * self.L, 0.5 * self.L)
         
-        grains = geompy.ExtractShapes(lattice1, geompy.ShapeType["SOLID"], True)
-        grains += geompy.ExtractShapes(lattice2, geompy.ShapeType["SOLID"], True)
-        grains = geompy.MakeFuseList(grains, False, False)
+        grains = self.geo.ExtractShapes(lattice1, self.geo.ShapeType["SOLID"], True)
+        grains += self.geo.ExtractShapes(lattice2, self.geo.ShapeType["SOLID"], True)
+        grains = self.geo.MakeFuseList(grains, False, False)
 
-        grains = geompy.MakeScaleTransform(grains, oo, scale)
+        grains = self.geo.MakeScaleTransform(grains, oo, scale)
         grainsOrigin = None
 
         if self.filletsEnabled:
-            grainsOrigin =  geompy.MakeScaleTransform(grains, oo, 1 / scale)
-            grains = geompy.MakeFilletAll(grains, self.fillets * scale)
+            grainsOrigin =  self.geo.MakeScaleTransform(grains, oo, 1 / scale)
+            grains = self.geo.MakeFilletAll(grains, self.fillets * scale)
 
+        self.shapeLattice = self.geo.MakeScaleTransform(grains, oo, 1 / scale)
+        
+        ###
+        #   Shape
+        ##
+        self.shape = self.geo.MakeCutList(poreCell, [grains])
+        self.shape = self.geo.MakeScaleTransform(self.shape, oo, 1 / scale, theName = self.name)
+        
+        isValid, _ = self.isValid()
+        
+        if not isValid:
+            self.heal()
+            
         ###
         #   Groups
+        #
+        #   inlet, outlet, simetry(N), strips(optional), wall
         ##
-        shape = geompy.MakeCutList(poreCell, [grains])
-        shape = geompy.MakeScaleTransform(shape, oo, 1 / scale, theName = "bodyCentered")
-
-        sall = geompy.CreateGroup(shape, geompy.ShapeType["FACE"])
-        geompy.UnionIDs(sall,
-            geompy.SubShapeAllIDs(shape, geompy.ShapeType["FACE"]))
-
-        inlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "inlet")
-        inletshape = geompy.MakeCutList(inletface, [grains])
-        inletshape = geompy.MakeScaleTransform(inletshape, oo, 1 / scale)
-        geompy.UnionList(inlet, geompy.SubShapeAll(
-            geompy.GetInPlace(shape, inletshape, True), geompy.ShapeType["FACE"]))
-
-        outlet = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "outlet")
-        outletshape = geompy.MakeCutList(outletface, [grains])
-        outletshape = geompy.MakeScaleTransform(outletshape, oo, 1 / scale)
-        geompy.UnionList(outlet, geompy.SubShapeAll(
-            geompy.GetInPlace(shape, outletshape, True), geompy.ShapeType["FACE"]))
+        self.groups = []
+        groupAll = self.createGroupAll(self.shape)
         
-        symetry = []
-        for (n, face) in enumerate(symetryface):
-            name = "symetry" + str(n)
-            symetry.append(geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = name))
-            symetryshape = geompy.MakeCutList(face, [grains])
-            symetryshape = geompy.MakeScaleTransform(symetryshape, oo, 1 / scale)
-            geompy.UnionList(symetry[n], geompy.SubShapeAll(
-                geompy.GetInPlace(shape, symetryshape, True), geompy.ShapeType["FACE"]))
+        self.groups.append(self.createGroup(self.shape, inletface, "inlet", [grains], 1 / scale))
+        self.groups.append(self.createGroup(self.shape, outletface, "outlet", [grains], 1 / scale))
 
-        groups = []
-        groups.append(inlet)
-        groups.append(outlet)
-        groups.extend(symetry)
-
+        for n, face in enumerate(symetryface):
+            self.groups.append(self.createGroup(self.shape, face, f"symetry{ n }", [grains], 1 / scale))
+ 
         if self.filletsEnabled:
-            strips = geompy.CreateGroup(shape, geompy.ShapeType["FACE"], theName = "strips")
-            shapeShell = geompy.ExtractShapes(shape, geompy.ShapeType["SHELL"], True)
-            stripsShape = geompy.MakeCutList(shapeShell[0], groups + [grainsOrigin])
-            geompy.UnionList(strips, geompy.SubShapeAll(
-                geompy.GetInPlace(shape, stripsShape, True), geompy.ShapeType["FACE"]))
-            groups.append(strips)
-        
-        wall = geompy.CutListOfGroups([sall], groups, theName = "wall")
-        groups.append(wall)
+            shapeShell = self.geo.ExtractShapes(self.shape, self.geo.ShapeType["SHELL"], True)[0]
+            self.groups.append(self.createGroup(self.shape, shapeShell, "strips", self.groups + [grainsOrigin]))
 
-        return shape, groups
+        self.groups.append(self.geo.CutListOfGroups([groupAll], self.groups, theName = "wall"))
+ 
 
