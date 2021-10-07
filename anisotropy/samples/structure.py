@@ -157,3 +157,44 @@ class StructureGeometry(object):
         )
         
         return group
+    
+    def export(
+        filename: str,
+        deflection: float = 0.001
+    ):
+        """Export a shape.
+        
+        Supported formats: step, vtk.
+        
+        :param filename:
+            Name of the file to store the given shape in.
+        
+        :param deflection:
+            vtk: Deflection of the given shape.
+        
+        :return:
+            Output, error messages and returncode
+        """
+        out, err, returncode = "", "", 0
+        ext = os.path.splitext(filename)[1][1: ]
+        
+        try:
+            if ext == "step":
+                self.geo.ExportSTEP(self.shape, filename) # theUnit = GEOM.LU_METER)
+            
+            elif ext == "vtk":
+                self.geo.ExportVTK(self.shape, filename, theDeflection = deflection)
+            
+            else:
+                raise NotImplementedError(f"{ ext } is not supported")
+            
+        except NotImplementedError as e:
+            err = e
+            returncode = 1
+        
+        except Exception as e:
+            err = e.details.text
+            returncode = 1
+        
+        return out, err, returncode
+        
