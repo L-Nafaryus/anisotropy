@@ -8,7 +8,7 @@ from peewee import (
     AutoField, ForeignKeyField, 
     TextField, FloatField, 
     IntegerField, BooleanField, 
-    TimeField
+    TimeField, DateTimeField
 )
 import json
 
@@ -49,6 +49,17 @@ class JSONField(TextField):
     def python_value(self, value):
         if value is not None:
             return json.loads(value)
+
+
+class Execution(Model):
+    execution_id = AutoField()
+
+    date = DateTimeField()
+    executionTime = TimeField()
+
+    class Meta:
+        database = db
+        db_table = "executions"
 
 
 class Structure(BaseModel):

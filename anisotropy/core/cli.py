@@ -171,8 +171,11 @@ def update(force, params, path):
         if args.get("theta"):
             paramsAll = [ entry for entry in paramsAll if args["theta"] == entry["structure"]["theta"] ]
 
+        from anisotropy.core.models import Structure, Mesh
+        from numpy 
         for entry in paramsAll:
             database.update(entry)
+
 
         click.echo("{} entries was updated.".format(len(paramsAll)))
 

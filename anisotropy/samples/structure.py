@@ -9,11 +9,11 @@ class StructureGeometry(object):
         self,
         direction: list = None,
         theta: float = None,
-        r0: float = None,
+        r0: float = 1,
         #L: float = None,
         #radius: float = None,
         filletsEnabled: bool = False,
-        fillets: float = None,
+        #fillets: float = None,
         **kwargs
     ):
         """Constructor method.
@@ -29,16 +29,13 @@ class StructureGeometry(object):
         
         :param filletsEnabled:
             Enable fillets beetween spheres.
-        
-        :param fillets:
-            Fillets radius.
         """
         #    Geometry parameters
         self.direction = direction
         self.theta = theta
         self.r0 = r0
         self.filletsEnabled = filletsEnabled
-        self.fillets = fillets
+        #self.fillets = fillets
         
         #    General attributes
         self.geo = geometry.getGeom()

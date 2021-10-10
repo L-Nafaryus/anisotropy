@@ -17,6 +17,30 @@ class BodyCentered(StructureGeometry):
     def L(self):
         return self.r0 * 4 / sqrt(3)
 
+    @property
+    def thetaMin(self):
+        return 0.01
+    
+    @property
+    def thetaMax(self):
+        return 0.18
+    
+    @property
+    def fillets(self):
+        if self.direction == [1.0, 1.0, 1.0]:
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            delta = 0.02
+            
+            return delta - Cf * (self.radius - self.r0)
+        
+        else:
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            delta = 0.02
+            
+            return delta - Cf * (self.radius - self.r0)
+        
     def build(self):
         ###
         #   Pore Cell

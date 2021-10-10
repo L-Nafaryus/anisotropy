@@ -550,6 +550,8 @@ NETGEN_3D_1 = Mesh_2.Tetrahedron()
 status = Mesh_2.RemoveHypothesis(NETGEN_3D_Parameters_1_1)
 isDone = Mesh_2.Compute()
 [ Group_1_2, inlet_2, Group_3_2, outlet_2, Group_5_2, symetry0_2, Group_7_2, symetry1_2, Group_9, symetry2_2, Group_11, symetry3_2, Group_13, Group_14, strips_2, Group_16, wall_2 ] = Mesh_2.GetGroups()
+
+
 Mesh_3 = smesh.Mesh(simple_1)
 status = Mesh_3.AddHypothesis(Automatic_Length_3)
 Regular_1D_4 = Mesh_3.Segment()
@@ -573,10 +575,12 @@ symetry3_3 = Mesh_3.GroupOnGeom(symetry3_1,'symetry3',SMESH.FACE)
 strips_3 = Mesh_3.GroupOnGeom(strips_1,'strips',SMESH.FACE)
 #Group_16_1 = Mesh_3.GroupOnGeom(__NOT__Published__Object__,'',SMESH.FACE)
 wall_3 = Mesh_3.GroupOnGeom(wall_1,'wall',SMESH.FACE)
+
 Regular_1D_5 = Mesh_3.Segment(geom=strips_1)
 status = Mesh_3.AddHypothesis(Automatic_Length_2,strips_1)
 NETGEN_2D_5 = Mesh_3.Triangle(algo=smeshBuilder.NETGEN_2D,geom=strips_1)
 status = Mesh_3.AddHypothesis(Length_From_Edges_4,strips_1)
+
 [ Group_1_3, inlet_3, Group_3_3, outlet_3, Group_5_3, symetry0_3, Group_7_3, symetry1_3, Group_9_1, symetry2_3, Group_11_1, symetry3_3, Group_13_1, Group_14_1, strips_3, Group_16_1, wall_3 ] = Mesh_3.GetGroups()
 isDone = Mesh_3.Compute()
 [ Group_1_3, inlet_3, Group_3_3, outlet_3, Group_5_3, symetry0_3, Group_7_3, symetry1_3, Group_9_1, symetry2_3, Group_11_1, symetry3_3, Group_13_1, Group_14_1, strips_3, Group_16_1, wall_3 ] = Mesh_3.GetGroups()

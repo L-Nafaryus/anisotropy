@@ -16,6 +16,41 @@ class FaceCentered(StructureGeometry):
     def L(self):
         return self.r0 * 4 / sqrt(2)
         
+    @property
+    def thetaMin(self):
+        return 0.01
+    
+    @property
+    def thetaMax(self):
+        self.Cscale = 0.8
+        return 0.13
+    
+    @property
+    def fillets(self):
+        if self.direction == [1.0, 1.0, 1.0]:
+            #C1, C2 = 0.3, 0.2
+            #Cscale = 0.9 #C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            #delta = 0.thetaMin = 0.01
+            thetaMax = 0.13
+
+            L = 1.0
+            r0 = L * sqrt(2) / 4
+            radius = r0 / (1 - structure["theta"])
+
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
+            delta = 0.012
+            fillets = delta - Cf * (radius - r0)012
+            
+            return self.Cscale * (2 - 1 / (1 - self.theta)) * self.r0 #delta - Cf * (self.radius - self.r0)
+        
+        else:
+            C1, C2 = 0.3, 0.2
+            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            delta = 0.012
+            
+            return delta - Cf * (self.radius - self.r0)
+        
     def build(self):
         ###
         #   Pore Cell

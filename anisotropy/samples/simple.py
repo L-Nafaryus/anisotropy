@@ -15,6 +15,31 @@ class Simple(StructureGeometry):
     @property
     def L(self):
         return 2 * self.r0
+    
+    @property
+    def thetaMin(self):
+        return 0.01
+    
+    @property
+    def thetaMax(self):
+        return 0.28
+    
+    @property
+    def fillets(self):
+        if self.direction == [1.0, 1.0, 1.0]:
+            C1, C2 = 0.8, 0.5
+            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            delta = 0.2
+            
+            return delta - Cf * (self.radius - self.r0)
+        
+        else:
+            C1, C2 = 0.8, 0.5
+            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
+            delta = 0.2
+            
+            return delta - Cf * (self.radius - self.r0)
+            
 
     def build(self):
         ###

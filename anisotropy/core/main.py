@@ -312,7 +312,25 @@ class Anisotropy(object):
         #   Mesh
         ##
         logger.info("Prepairing mesh ...")
-
+        
+        params = db.Mesh()
+        mesh = mesh.Mesh(shapeGeometry)
+        algo3d = mesh.algo3d(Netgen3D)
+        algo3d.apply(**params)
+        
+        mesh = smesh.Mesh(shape)
+        algo3d = mesh.Tetrahedron(algo = smeshBuilder.NETGEN_3D)
+        algo2d = mesh.Triangle(algo = smeshBuilder.NETGEN_2D)
+        hypo2d = algo2d.MaxElementArea(0.197375)
+        algo1d = mesh.Segment()
+        hypo1d = algo1d.AutomaticLength(1)
+        
+        algo2d = mesh.Triangle(algo = smeshBuilder.NETGEN_2D, geom = strips)
+        hypo2d = algo2d.LengthFromEdges()
+        algo1d = mesh.Segment(algo = smeshBuilder.COMPOSITE, geom = strips)
+        hypo1d = algo1d.AutomaticLength(0.633882)
+        hypo1d.SetFineness( 1 )
+        
         mp = p["mesh"]
 
         lengths = [
