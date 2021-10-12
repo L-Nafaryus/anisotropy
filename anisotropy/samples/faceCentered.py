@@ -4,6 +4,7 @@
 
 from anisotropy.samples.structure import StructureGeometry
 from math import pi, sqrt
+import logging
 
 class FaceCentered(StructureGeometry):
     @property
@@ -22,34 +23,15 @@ class FaceCentered(StructureGeometry):
     
     @property
     def thetaMax(self):
-        self.Cscale = 0.8
         return 0.13
     
     @property
     def fillets(self):
         if self.direction == [1.0, 1.0, 1.0]:
-            #C1, C2 = 0.3, 0.2
-            #Cscale = 0.9 #C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
-            #delta = 0.thetaMin = 0.01
-            thetaMax = 0.13
-
-            L = 1.0
-            r0 = L * sqrt(2) / 4
-            radius = r0 / (1 - structure["theta"])
-
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
-            delta = 0.012
-            fillets = delta - Cf * (radius - r0)012
-            
-            return self.Cscale * (2 - 1 / (1 - self.theta)) * self.r0 #delta - Cf * (self.radius - self.r0)
+            return self.filletsScale * (2 * sqrt(3) / 3 - 1 / (1 - self.theta)) * self.r0 
         
         else:
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
-            delta = 0.012
-            
-            return delta - Cf * (self.radius - self.r0)
+            return self.filletsScale * (2 * sqrt(3) / 3 - 1 / (1 - self.theta)) * self.r0 
         
     def build(self):
         ###
@@ -213,12 +195,16 @@ class FaceCentered(StructureGeometry):
         ###
         #   Shape
         ##
+        #poreCell = self.geo.LimitTolerance(poreCell, 1e-12)
+        #grains = self.geo.LimitTolerance(grains, 1e-12)
+
         self.shape = self.geo.MakeCutList(poreCell, [grains])
         self.shape = self.geo.MakeScaleTransform(self.shape, oo, 1 / scale, theName = self.name)
         
-        isValid, _ = self.isValid()
+        isValid, msg = self.isValid()
         
         if not isValid:
+            logging.warning(msg)
             self.heal()
             
         ###
