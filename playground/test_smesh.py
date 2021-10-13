@@ -17,3 +17,6 @@ mesh = smesh.Mesh(SHAPE)
 
 algo = mesh.Tetrahedron(algo = ALGO)
 
+###
+#   fc 111 0.12 N3D N2D(0.1, 0.0001, Mod)
+#   3min 321k

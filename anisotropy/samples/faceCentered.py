@@ -2,8 +2,8 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
-from anisotropy.samples.structure import StructureGeometry
-from math import pi, sqrt
+from anisotropy.salomepl.geometry import StructureGeometry
+from numpy import pi, sqrt, fix
 import logging
 
 class FaceCentered(StructureGeometry):
@@ -27,11 +27,13 @@ class FaceCentered(StructureGeometry):
     
     @property
     def fillets(self):
-        if self.direction == [1.0, 1.0, 1.0]:
-            return self.filletsScale * (2 * sqrt(3) / 3 - 1 / (1 - self.theta)) * self.r0 
-        
-        else:
-            return self.filletsScale * (2 * sqrt(3) / 3 - 1 / (1 - self.theta)) * self.r0 
+        analytical = self.r0 * (2 * sqrt(3) / 3 - 1 / (1 - self.theta))
+        # ISSUE: MakeFilletAll : Fillet can't be computed on the given shape with the given radius.
+        # Temporary solution: degrade the precision (minRound <= analytical).
+        rTol = 3
+        minRound = fix(10 ** rTol * analytical) * 10 ** -rTol
+
+        return minRound
         
     def build(self):
         ###

@@ -20,7 +20,7 @@ class Netgen3D(MeshAlgorithm):
         self.hypo.SetMinSize(value)
 
 class MEFISTO(MeshAlgorithm):
-    
+    pass 
     
 class Mesh(object):
     def __init__(self, geom):

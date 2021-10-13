@@ -2,8 +2,8 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
-from anisotropy.samples.structure import StructureGeometry
-from math import pi, sqrt
+from anisotropy.salomepl.geometry import StructureGeometry
+from numpy import pi, sqrt, cos, arccos, fix 
 import logging
 
 class BodyCentered(StructureGeometry):
@@ -27,19 +27,14 @@ class BodyCentered(StructureGeometry):
     
     @property
     def fillets(self):
-        if self.direction == [1.0, 1.0, 1.0]:
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
-            delta = 0.02
-            
-            return delta - Cf * (self.radius - self.r0)
-        
-        else:
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (self.thetaMax - self.thetaMin) * (self.theta - self.thetaMin)
-            delta = 0.02
-            
-            return delta - Cf * (self.radius - self.r0)
+        analytical = self.r0 * (sqrt(2) / sqrt(1 - cos(pi - 2 * arccos(sqrt(2 / 3)))) - 
+            1 / (1 - self.theta))
+        # ISSUE: MakeFilletAll : Fillet can't be computed on the given shape with the given radius.
+        # Temporary solution: degrade the precision (minRound <= analytical).
+        rTol = 3
+        minRound = fix(10 ** rTol * analytical) * 10 ** -rTol
+
+        return minRound
         
     def build(self):
         ###
@@ -172,7 +167,7 @@ class BodyCentered(StructureGeometry):
             raise Exception(f"Direction { self.direction } is not implemented")
         
         ###
-        #   Grains
+        #   Lattice
         ##
         ox = self.geo.MakeVectorDXDYDZ(1, 0, 0)
         oy = self.geo.MakeVectorDXDYDZ(0, 1, 0)
@@ -184,10 +179,7 @@ class BodyCentered(StructureGeometry):
         lattice1 = self.geo.MakeMultiTranslation2D(grain, ox, self.L, xn, oy, self.L, yn)
         lattice1 = self.geo.MakeMultiTranslation1D(lattice1, oz, self.L, zn)
 
-        #grain = self.geo.MakeSpherePntR(self.geo.MakeVertex(*spos2), radius)
-        #lattice2 = self.geo.MakeMultiTranslation2D(grain, xy, length, xn + 1, xmy, length, yn + 1)
-        #lattice2 = self.geo.MakeMultiTranslation1D(lattice2, oz, L, zn)
-        lattice2 = self.geo.MakeTranslation(lattice1, 0.5 * self.L, 0.5 * self.L, 0.5 * self.L)
+        lattice2 = self.geo.MakeTranslation(lattice1, -0.5 * self.L, -0.5 * self.L, -0.5 * self.L)
         
         grains = self.geo.ExtractShapes(lattice1, self.geo.ShapeType["SOLID"], True)
         grains += self.geo.ExtractShapes(lattice2, self.geo.ShapeType["SOLID"], True)
