@@ -33,7 +33,7 @@ class Simple(StructureGeometry):
         rTol = 3
         minRound = fix(10 ** rTol * analytical) * 10 ** -rTol
 
-        return minRound
+        return minRound * self.filletScale
 
     def build(self):
         ###

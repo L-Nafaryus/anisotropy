@@ -48,6 +48,7 @@ class StructureGeometry(object):
         self.r0 = r0
         self.filletsEnabled = filletsEnabled
         #self.fillets = fillets
+        self.filletScale = 0.8
         
         #   General attributes
         self.shape = None
