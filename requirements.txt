@@ -7,3 +7,4 @@ pandas
 Click
 matplotlib
 pyqt5
+PyFoam

@@ -58,7 +58,7 @@ class StructureGeometry(object):
 
         #   Geometry module
         if not GEOM_IMPORTED:
-            raise ImportError("Cannot find the salome modules.")
+            raise ImportError("Cannot find the salome geometry modules.")
 
         else:
             self.geo = geomBuilder.New() 

@@ -226,3 +226,26 @@ class BodyCentered(StructureGeometry):
         self.groups.append(self.geo.CutListOfGroups([groupAll], self.groups, theName = "wall"))
  
 
+class BodyCenteredMesh(Mesh):
+    def build(self):
+        algo2d = self.mesh.Triangle(algo = self.smeshBuilder.NETGEN_1D2D)
+        hypo2d = algo2d.Parameters()
+        hypo2d.SetMaxSize(0.1)
+        hypo2d.SetMinSize(0.001)
+        hypo2d.SetFineness(5)
+        hypo2d.SetGrowthRate(0.3)
+        hypo2d.SetNbSegPerEdge(2)
+        hypo2d.SetNbSegPerRadius(3)
+        hypo2d.SetChordalErrorEnabled(True)
+        hypo2d.SetChordalError(0.05)
+        hypo2d.SetOptimize(True)
+        hypo2d.SetUseSurfaceCurvature(True)
+
+        algo3d = self.mesh.Tetrahedron(algo = self.smeshBuilder.NETGEN_3D)
+        #hypo3d = algo3d.Parameters()
+
+        #faces = [ group for group in self.geom.groups if group.GetName() in ["inlet", "outlet"] ]
+        #hypo3dVL = algo3d.ViscousLayers(...)
+
+
+    

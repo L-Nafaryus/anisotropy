@@ -7,7 +7,7 @@ import shutil
 from .application import application
 
 def version() -> str:
-    return os.environ["WM_PROJECT_VERSION"]
+    return os.environ.get("WM_PROJECT_VERSION")
 
 
 def foamCleanCustom(case: str = None):

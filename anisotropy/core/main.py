@@ -291,104 +291,39 @@ class Anisotropy(object):
         setupLogger(logger, logging.INFO, self.env["LOG"])
         p = self.params
 
-        ###
-        #   Shape
-        ##
-        logger.info("Constructing shape ...")
-
-        geompy = salomepl.geometry.getGeom()
-        structure = dict(
-            simple = Simple,
-            bodyCentered = BodyCentered,
-            faceCentered = FaceCentered
+        sGeometry, sMesh = dict(
+            simple = (Simple, SimpleMesh),
+            bodyCentered = (BodyCentered, BodyCenteredMesh),
+            faceCentered = (FaceCentered, FaceCenteredMesh)
         )[p["structure"]["type"]]
-        shapeGeometry = structure(**p["structure"])
-        shapeGeometry.build()
 
-        [length, surfaceArea, volume] = geompy.BasicProperties(shapeGeometry.shape, theTolerance = 1e-06)
+        #   Shape
+        logger.info("Constructing shape ...")
+        geometry = sGeometry(**p["structure"])
+        geometry.build()
 
-
-        ###
         #   Mesh
-        ##
         logger.info("Prepairing mesh ...")
+        mesh = sMesh(geometry)
+        mesh.build()
         
-        params = db.Mesh()
-        mesh = mesh.Mesh(shapeGeometry)
-        algo3d = mesh.algo3d(Netgen3D)
-        algo3d.apply(**params)
-        
-        mesh = smesh.Mesh(shape)
-        algo3d = mesh.Tetrahedron(algo = smeshBuilder.NETGEN_3D)
-        algo2d = mesh.Triangle(algo = smeshBuilder.NETGEN_2D)
-        hypo2d = algo2d.MaxElementArea(0.197375)
-        algo1d = mesh.Segment()
-        hypo1d = algo1d.AutomaticLength(1)
-        
-        algo2d = mesh.Triangle(algo = smeshBuilder.NETGEN_2D, geom = strips)
-        hypo2d = algo2d.LengthFromEdges()
-        algo1d = mesh.Segment(algo = smeshBuilder.COMPOSITE, geom = strips)
-        hypo1d = algo1d.AutomaticLength(0.633882)
-        hypo1d.SetFineness( 1 )
-        
-        mp = p["mesh"]
-
-        lengths = [
-            geompy.BasicProperties(edge)[0] for edge in geompy.SubShapeAll(shapeGeometry.shape, geompy.ShapeType["EDGE"]) 
-        ]
-        meanSize = sum(lengths) / len(lengths)
-        mp["maxSize"] = meanSize
-        mp["minSize"] = meanSize * 1e-1
-        mp["chordalError"] = mp["maxSize"] / 2
-
-        faces = []
-        for group in shapeGeometry.groups:
-            if group.GetName() in mp["facesToIgnore"]:
-                faces.append(group)
-
-
-        mesh = salomepl.mesh.Mesh(shapeGeometry.shape)
-        mesh.Tetrahedron(**mp)
-
-        if mp["viscousLayers"]:
-            mesh.ViscousLayers(**mp, faces = faces)
-
-        #   Submesh
-        smp = p["submesh"]
-
-        for submesh in smp:
-            for group in shapeGeometry.groups:
-                if submesh["name"] == group.GetName():
-                    subshape = group
-
-                    submesh["maxSize"] = meanSize * 1e-1
-                    submesh["minSize"] = meanSize * 1e-3
-                    submesh["chordalError"] = submesh["minSize"] * 1e+1
-
-                    mesh.Triangle(subshape, **submesh)
-
-
-        self.update()
         logger.info("Computing mesh ...")
         out, err, returncode = mesh.compute()
 
-        ###
-        #   Results
-        ##
-        #p["meshresult"] = dict()
 
         if not returncode:
             mesh.removePyramids()
-            mesh.assignGroups()
+            mesh.createGroups()
 
             casePath = self.getCasePath(path)
             os.makedirs(casePath, exist_ok = True)
             logger.info("Exporting mesh ...")
-            returncode, err = mesh.exportUNV(os.path.join(casePath, "mesh.unv"))
+            out, err, returncode = mesh.export(os.path.join(casePath, "mesh.unv"))
     
             if returncode:
                 logger.error(err)
 
+        # NOTE: edit from here
             meshStats = mesh.stats()
             p["meshresult"].update(
                 surfaceArea = surfaceArea,
