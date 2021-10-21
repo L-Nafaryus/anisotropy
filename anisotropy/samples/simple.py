@@ -236,7 +236,7 @@ class SimpleMesh(Mesh):
         #hypo3dVL = algo3d.ViscousLayers(...)
     
 
-from anisotropy.openfoam.foamcase import ControlDict
+from anisotropy.openfoam.presets import ControlDict
 
 class SimpleFlow(object): # FoamCase
     def __init__(self):

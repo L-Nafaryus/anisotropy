@@ -17,12 +17,12 @@ class FoamFile(object):
             _object = None
         ):
 
-        self.path = os.path.abspath(filename)
+        self.filename = filename
         self.header = { 
             "version": _version,
             "format": _format,
             "class": _class,
-            "object": _object or os.path.split(filename)[1]
+            "object": _object or os.path.split(self.filename)[1]
         }
         self.content = {}
 
@@ -46,7 +46,7 @@ class FoamFile(object):
             yield key
 
     def read(self):
-        ppf = ParsedParameterFile(self.path)
+        ppf = ParsedParameterFile(os.path.abspath(self.filename))
 
         self.header = ppf.header
         self.content = ppf.content
@@ -70,7 +70,7 @@ class FoamFile(object):
         return "\n".join([*desc, header, afterheader, content, endfile])
 
 
-    def write(self):
+    def write(self, casepath: str = None):
         header = FoamFileGenerator({}, header = self.header)
         header = header.makeString()[ :-2]
         header = header.replace("\n  ", "\n" + 4 * " ")
@@ -82,9 +82,15 @@ class FoamFile(object):
 
         prepared = self._template(header, content)
 
-        os.makedirs(os.path.split(self.path)[0], exist_ok = True)
+        if casepath:
+            path = os.path.join(casepath, self.filename)
 
-        with open(self.path, "w") as io:
+        else:
+            path = os.path.abspath(self.filename)
+
+        os.makedirs(os.path.split(path)[0], exist_ok = True)
+
+        with open(path, "w") as io:
             _ = io.write(prepared)
 
 
