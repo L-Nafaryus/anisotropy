@@ -6,11 +6,10 @@ from anisotropy.openfoam.foamfile import FoamFile
 
 class ControlDict(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "system/controlDict",
             _location = "system"
         )
-        self.header = ff.header
         self.content = {
             "application": "simpleFoam",
             "startFrom": "startTime",
@@ -31,11 +30,10 @@ class ControlDict(FoamFile):
 
 class FvSolution(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "system/fvSolution",
             _location = "system"
         )
-        self.header = ff.header
         self.content = {
             "solvers": {
                 "p": {
@@ -71,26 +69,25 @@ class FvSolution(FoamFile):
 
 class FvSchemes(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "system/fvSchemes",
             _location = "system"
         )
-        self.header = ff.header
         self.content = {
             "ddtSchemes": {
                 "default": "steadyState"
             }, 
             "gradSchemes": {
-                "default": ["Gauss", "linear"]
+                "default": ("Gauss", "linear")
             }, 
             "divSchemes": {
                 "default": "none", 
-                "div(phi,U)": ["bounded", "Gauss", "linearUpwind", "grad(U)"], 
-                "div((nuEff*dev2(T(grad(U)))))": ["Gauss", "linear"], 
-                "div(nonlinearStress)": ["Gauss", "linear"]
+                "div(phi,U)": ("bounded", "Gauss", "linearUpwind", "grad(U)"), 
+                "div((nuEff*dev2(T(grad(U)))))": ("Gauss", "linear"), 
+                "div(nonlinearStress)": ("Gauss", "linear")
             }, 
             "laplacianSchemes": {
-                "default": ["Gauss", "linear", "corrected"]
+                "default": ("Gauss", "linear", "corrected")
             }, 
             "interpolationSchemes": {
                 "default": "linear"
@@ -102,11 +99,10 @@ class FvSchemes(FoamFile):
 
 class TransportProperties(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "constant/transportProperties",
             _location = "constant"
         )
-        self.header = ff.header
         self.content = {
             "transportModel": "Newtonian",
             "nu": 1e-05
@@ -114,11 +110,10 @@ class TransportProperties(FoamFile):
 
 class TurbulenceProperties(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "constant/turbulenceProperties",
             _location = "constant"
         )
-        self.header = ff.header
         self.content = {
             "simulationType": "RAS", 
             "RAS": {
@@ -130,12 +125,11 @@ class TurbulenceProperties(FoamFile):
 
 class P(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "0/p",
             _location = "0",
             _class = "volScalarField"
         )
-        self.header = ff.header
         self.content = {
             "dimensions": "[0 2 -2 0 0 0 0]",
             "internalField": "uniform 0",
@@ -156,12 +150,11 @@ class P(FoamFile):
 
 class U(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "0/U",
             _location = "0",
             _class = "volVectorField"
         )
-        self.header = ff.header
         self.content = {
             "dimensions": "[0 1 -1 0 0 0 0]",
             "internalField": "uniform (0 0 0)",
@@ -182,11 +175,10 @@ class U(FoamFile):
 
 class CreatePatchDict(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "system/createPatchDict",
             _location = "system",
         )
-        self.header = ff.header
         self.content = {
             "pointSync": False,
             "patches": [
@@ -222,11 +214,10 @@ class CreatePatchDict(FoamFile):
 
 class DecomposeParDict(FoamFile):
     def __init__(self):
-        ff = FoamFile(
+        FoamFile.__init__(self,
             "system/decomposeParDict",
             _location = "system",
         )
-        self.header = ff.header
         self.content = {
             "numberOfSubdomains": 4,
             "method": "simple",

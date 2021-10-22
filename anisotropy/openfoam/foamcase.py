@@ -23,12 +23,12 @@ class FoamCase(object):
         os.chdir(self.__curpath)
         self.__curpath = None
 
-    def append(self, foamfile: FoamFile):
-        if isinstance(foamfile, FoamFile):
-            setattr(self, foamfile.header["object"], foamfile)
+    def append(self, ff: FoamFile):
+        #if isinstance(foamfile, FoamFile):
+        setattr(self, ff.header["object"], ff)
 
-        else:
-            raise Exception("Trying to append not a FoamFile.")
+        #else:
+        #    raise Exception("Trying to append not a FoamFile.")
 
     def extend(self, foamfiles: list):
         for ff in foamfiles:

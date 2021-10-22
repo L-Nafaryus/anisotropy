@@ -38,6 +38,9 @@ class FoamFile(object):
     def __delitem__(self, key):
         del self.content[key]
 
+    def update(self, **kwargs):
+        self.content.update(**kwargs)
+
     def __len__(self):
         return len(self.content)
 
@@ -73,7 +76,7 @@ class FoamFile(object):
     def write(self, casepath: str = None):
         header = FoamFileGenerator({}, header = self.header)
         header = header.makeString()[ :-2]
-        header = header.replace("\n  ", "\n" + 4 * " ")
+        header = header.replace("\n ", "\n" + 4 * " ")
 
         content = FoamFileGenerator(self.content)
         content = content.makeString()[ :-1]
