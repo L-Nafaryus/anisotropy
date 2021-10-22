@@ -5,6 +5,7 @@
 from anisotropy.openfoam.foamfile import FoamFile
 import os, shutil
 import re
+from copy import deepcopy
 
 class FoamCase(object):
     def __init__(self, foamfiles: list = None, path: str = None):
@@ -24,27 +25,27 @@ class FoamCase(object):
         self.__curpath = None
 
     def append(self, ff: FoamFile):
-        #if isinstance(foamfile, FoamFile):
-        setattr(self, ff.header["object"], ff)
+        if FoamFile in ff.__class__.mro():
+            setattr(self, ff.header["object"], deepcopy(ff))
 
-        #else:
-        #    raise Exception("Trying to append not a FoamFile.")
+        else:
+            raise Exception("Trying to put not a FoamFile to FoamCase.")
 
     def extend(self, foamfiles: list):
         for ff in foamfiles:
             self.append(ff)
 
     def write(self):
-        for v in self.__dict__.values():
-            if isinstance(v, FoamFile):
-                v.write(self.path)
+        for value in self.__dict__.values():
+            if FoamFile in value.__class__.mro():
+                value.write(self.path)
 
     def read(self):
-        for v in self.__dict__.values():
-            if isinstance(v, FoamFile):
-                v.read()
+        for value in self.__dict__.values():
+            if FoamFile in value.__class__.mro():
+                value.read()
 
-    def clean(self):
+    def clean(self, included: list = ["0", "constant", "system"]):
         regxs = [
             r"^\d+.\d+$",
             r"^\d+$",
@@ -55,7 +56,6 @@ class FoamCase(object):
             r"^postProcessing$",
             r"^polyMesh$"
         ]
-        included = ["0", "constant", "system"]
         excluded = []
 
         for root, dirs, files in os.walk(os.path.abspath("")):

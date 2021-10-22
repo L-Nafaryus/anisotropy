@@ -2,12 +2,21 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
-from anisotropy.salomepl.geometry import StructureGeometry
-from anisotropy.salomepl.mesh import Mesh
 from numpy import pi, sqrt, fix
 import logging
 
-class Simple(StructureGeometry):
+from anisotropy.salomepl.geometry import StructureGeometry
+from anisotropy.salomepl.mesh import Mesh
+
+from anisotropy.openfoam.presets import (
+    ControlDict, FvSchemes, FvSolution, 
+    TransportProperties, TurbulenceProperties, CreatePatchDict,
+    P, U
+)
+from anisotropy.openfoam.foamcase import FoamCase
+import anisotropy.openfoam as openfoam
+
+class _Geometry(StructureGeometry):
     @property
     def name(self):
         """Shape name.
@@ -214,7 +223,7 @@ class Simple(StructureGeometry):
         self.groups.append(self.geo.CutListOfGroups([groupAll], self.groups, theName = "wall"))
 
 
-class SimpleMesh(Mesh):
+class _Mesh(Mesh):
     def build(self):
         algo2d = self.mesh.Triangle(algo = self.smeshBuilder.NETGEN_1D2D)
         hypo2d = algo2d.Parameters()
@@ -236,20 +245,15 @@ class SimpleMesh(Mesh):
         #hypo3dVL = algo3d.ViscousLayers(...)
     
 
-from anisotropy.openfoam.presets import (
-    ControlDict, FvSchemes, FvSolution, 
-    TransportProperties, TurbulenceProperties, CreatePatchDict,
-    P, U
-)
-from anisotropy.openfoam.foamcase import FoamCase
 
-class SimpleFlow(object): # FoamCase
+class _Flow(object): 
     def __init__(self):
         controlDict = ControlDict()
         controlDict.update(
             startFrom = "latestTime",
             endTime = 5000,
-            writeInterval = 100
+            writeInterval = 100,
+            runTimeModifiable = "true"
         )
 
         fvSchemes = FvSchemes()
@@ -329,16 +333,17 @@ class SimpleFlow(object): # FoamCase
         u = U()
         u["boundaryField"] = {}
 
+        # ISSUE: add proxy from geometry direction to outlet boundaryField.
         for boundary in boundaries:
             match boundary:
                 case "inlet":
                     p["boundaryField"][boundary] = dict(
                         type = "fixedValue",
-                        value = "uniform 0.001"
+                        value = "uniform 1e-3"
                     )
                     u["boundaryField"][boundary] = dict(
                         type = "fixedValue",
-                        value = "uniform (0 0 -6e-5)"
+                        value = "uniform (0 0 -6e-5)" # * direction
                     )
 
                 case "outlet":
@@ -359,9 +364,34 @@ class SimpleFlow(object): # FoamCase
                         value = "uniform (0 0 0)"
                     ) 
 
-
-        self.approximation = FoamCase([
+        self.solution = FoamCase([
             controlDict, fvSchemes, fvSolution, createPatchDict,
             transportProperties, turbulenceProperties,
             p, u
         ])
+
+    def build(self):
+        self.solution.write()
+
+        openfoam.ideasUnvToFoam("mesh.unv")
+        openfoam.createPatch()
+        openfoam.checkMesh()
+        openfoam.transformPoints((1e-5, 1e-5, 1e-5))
+        openfoam.renumberMesh()
+        openfoam.potentialFoam()
+        
+        self.solution.read()
+
+        self.solution.U["boundaryField"]["outlet"] = dict(
+            type = "pressureInletVelocity",
+            value = "uniform (0 0 0)" # * direction
+        )
+        self.solution.write()
+        
+        openfoam.simpleFoam()
+
+
+class Simple(object):
+    geometry = _Geometry
+    mesh = _Mesh
+    flow = _Flow

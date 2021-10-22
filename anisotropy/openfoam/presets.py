@@ -25,7 +25,7 @@ class ControlDict(FoamFile):
             "writeCompression": "off",
             "timeFormat": "general",
             "timePrecision": 6,
-            "runTimeModifiable": True
+            "runTimeModifiable": "true"
         }
 
 class FvSolution(FoamFile):
