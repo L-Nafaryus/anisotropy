@@ -224,7 +224,9 @@ class _Geometry(StructureGeometry):
 
 
 class _Mesh(Mesh):
-    def build(self):
+    def __init__(self, shape):
+        Mesh.__init__(self, shape)
+
         algo2d = self.mesh.Triangle(algo = self.smeshBuilder.NETGEN_1D2D)
         hypo2d = algo2d.Parameters()
         hypo2d.SetMaxSize(0.1)
@@ -244,9 +246,15 @@ class _Mesh(Mesh):
         #faces = [ group for group in self.geom.groups if group.GetName() in ["inlet", "outlet"] ]
         #hypo3dVL = algo3d.ViscousLayers(...)
     
+    def build(self):
+        out, err, returncode = self.mesh.compute()
+
+        if not returncode:
+            self.mesh.removePyramids()
+            self.mesh.createGroups()
 
 
-class _Flow(object): 
+class _OnePhaseFlow(object): 
     def __init__(self):
         controlDict = ControlDict()
         controlDict.update(
@@ -394,4 +402,4 @@ class _Flow(object):
 class Simple(object):
     geometry = _Geometry
     mesh = _Mesh
-    flow = _Flow
+    onephaseflow = _OnePhaseFlow

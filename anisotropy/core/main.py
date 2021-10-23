@@ -137,77 +137,13 @@ class Anisotropy(object):
                         "flowresult": dict(),
                     }
 
-                    # For `type = fixedValue` only
-                    _velocity = entryNew["flowapproximation"]["velocity"]["boundaryField"]["inlet"]["value"]
-                    entryNew["flowapproximation"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
-                        val * _velocity for val in entryNew["structure"]["direction"] 
-                    ]
-
-                    _velocity = entryNew["flow"]["velocity"]["boundaryField"]["inlet"]["value"]
-                    entryNew["flow"]["velocity"]["boundaryField"]["inlet"]["value"] = [ 
-                        val * _velocity for val in entryNew["structure"]["direction"] 
-                    ]
 
                     
                     paramsAll.append(entryNew)
 
         return paramsAll
 
-    
-    def evalParams(self):
-        """Evals specific geometry(structure) parameters"""
-
-        structure = self.params.get("structure")
-
-        if not structure:
-            logger.error("Trying to eval empty parameters")
-            return
-        
-        if structure["type"] == "simple":
-            thetaMin = 0.01
-            thetaMax = 0.28
-
-            r0 = 1
-            L = 2 * r0
-            radius = r0 / (1 - structure["theta"])
-
-            C1, C2 = 0.8, 0.5
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
-            delta = 0.2
-            fillets = delta - Cf * (radius - r0)
-
-        elif structure["type"] == "faceCentered":
-            thetaMin = 0.01
-            thetaMax = 0.13
-
-            L = 1.0
-            r0 = L * sqrt(2) / 4
-            radius = r0 / (1 - structure["theta"])
-
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
-            delta = 0.012
-            fillets = delta - Cf * (radius - r0)
-
-        elif structure["type"] == "bodyCentered":
-            thetaMin = 0.01
-            thetaMax = 0.18
-    
-            L = 1.0
-            r0 = L * sqrt(3) / 4
-            radius = r0 / (1 - structure["theta"])
-
-            C1, C2 = 0.3, 0.2
-            Cf = C1 + (C2 - C1) / (thetaMax - thetaMin) * (structure["theta"] - thetaMin)
-            delta = 0.02
-            fillets = delta - Cf * (radius - r0)
-
-        self.params["structure"].update(
-            L = L,
-            r0 = r0,
-            radius = radius,
-            fillets = fillets 
-        )
+  
 
     def getCasePath(self, path: str = None) -> str:
         """Constructs case path from control parameters
@@ -395,99 +331,10 @@ class Anisotropy(object):
 
         out, err, returncode = openfoam.ideasUnvToFoam("mesh.unv")
 
-        if returncode:
-            os.chdir(path or self.env["ROOT"])
-
-            self.params["flowresult"]["flowStatus"] = "Failed"
-            self.update()
-            
-            return out, err, returncode
-        
-        openfoam.createPatch(dictfile = "system/createPatchDict")
-
-        openfoam.foamDictionary(
-            "constant/polyMesh/boundary", 
-            "entry0.defaultFaces.type", 
-            "wall"
-        )
-        openfoam.foamDictionary(
-            "constant/polyMesh/boundary", 
-            "entry0.defaultFaces.inGroups", 
-            "1 (wall)"
-        )
-        
         out, err, returncode = openfoam.checkMesh()
         
         if out: logger.warning(out)
-        
-        openfoam.transformPoints(flow["scale"])
-        
-        ###
-        #   Decomposition and initial approximation
-        #
-        #   NOTE: Temporary without decomposition
-        ##
-        openfoam.foamDictionary(
-            "constant/transportProperties",
-            "nu",
-            str(flow["transportProperties"]["nu"])
-        )
 
-        # openfoam.decomposePar()
-
-        openfoam.renumberMesh()
-
-        pressureBF = flowapproximation["pressure"]["boundaryField"]
-        velocityBF = flowapproximation["velocity"]["boundaryField"]
-
-        openfoam.foamDictionary(
-            "0/p", 
-            "boundaryField.inlet.value", 
-            openfoam.uniform(pressureBF["inlet"]["value"])
-        )
-        openfoam.foamDictionary(
-            "0/p", 
-            "boundaryField.outlet.value", 
-            openfoam.uniform(pressureBF["outlet"]["value"])
-        )
-        
-        openfoam.foamDictionary(
-            "0/U", 
-            "boundaryField.inlet.value", 
-            openfoam.uniform(velocityBF["inlet"]["value"])
-        )
-        
-        openfoam.potentialFoam()
-        
-        ###
-        #   Main computation
-        ##
-        pressureBF = flow["pressure"]["boundaryField"]
-        velocityBF = flow["velocity"]["boundaryField"]
-
-        openfoam.foamDictionary(
-            "0/U",
-            "boundaryField.inlet.type",
-            velocityBF["inlet"]["type"] 
-        )
-        openfoam.foamDictionary(
-            "0/U",
-            "boundaryField.inlet.value",
-            openfoam.uniform(velocityBF["inlet"]["value"])
-        )
-
-        #for n in range(os.cpu_count()):
-        #    openfoam.foamDictionary(
-        #        f"processor{n}/0/U", 
-        #        "boundaryField.inlet.type", 
-        #        velocityBF.inlet.type
-        #    )
-        #    openfoam.foamDictionary(
-        #        f"processor{n}/0/U", 
-        #        "boundaryField.inlet.value", 
-        #        openfoam.uniform(velocityBF.inlet.value[direction])
-        #    )
-        
         out, err, returncode = openfoam.simpleFoam()
 
         if not returncode:
