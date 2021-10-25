@@ -19,8 +19,12 @@ class UltimateRunner(object):
         pass
 
     def _computeMesh(self):
-        """Function for Salome"""
-        
+        """Function for Salome
+
+        Resolution pipeline:
+        cli(UR -> computeMesh) -> salomeRunner(salome -> cli) -> computemesh(UR -> _computeMesh)
+        """
+        # TODO: add logger configuration here 
         sample = samples.__dict__[..]
 
         #   Build a shape

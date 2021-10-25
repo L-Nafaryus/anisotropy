@@ -7,6 +7,59 @@ import ast
 import os, sys, shutil
 import logging
 
+@anisotropy.command()
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+@click.option(
+    "-C", "--conf", "configFile"
+)
+@click.option(
+    "-N", "--nprocs", "nprocs",
+    type = click.INT,
+    default = 1,
+    help = "Count of parallel processes"
+)
+@click.option(
+    "-s", "--stage", "stage", 
+    type = click.Choice(["all", "mesh", "flow", "postProcessing"]), 
+    default = "all",
+    help = "Current computation stage"
+)
+@click.option(
+    "-f", "--force", "overwrite",
+    is_flag = True,
+    default = False,
+    help = "Overwrite existing entries"
+)
+@click.option(
+    "-p", "--params", "params", 
+    metavar = "key=value", 
+    multiple = True, 
+    cls = KeyValueOption,
+    help = "Overwrite existing parameter (except control variables)"
+)
+def compute(path, configFile, nprocs, stage, overwrite):
+    from anisotropy.core.runner import UltimateRunner
+    from anisotropy.core.config import Config, DefaultConfig
+
+    config = DefaultConfig() 
+
+    if configFile:
+        config.load(configFile)
+
+    config.update(
+        nprocs = nprocs,
+        stage = stage,
+        overwrite = overwrite 
+    )
+    config.expand()
+
+    runner = UltimateRunner()
+
+
 class LiteralOption(click.Option):
     def type_cast_value(self, ctx, value):
         try:
