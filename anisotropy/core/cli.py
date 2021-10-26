@@ -43,7 +43,8 @@ import logging
 )
 def compute(path, configFile, nprocs, stage, overwrite):
     from anisotropy.core.runner import UltimateRunner
-    from anisotropy.core.config import Config, DefaultConfig
+    from anisotropy.core.config import DefaultConfig
+    from copy import deepcopy
 
     config = DefaultConfig() 
 
@@ -57,7 +58,18 @@ def compute(path, configFile, nprocs, stage, overwrite):
     )
     config.expand()
 
-    runner = UltimateRunner()
+    baseRunner = UltimateRunner(config = config, exec_id = True)
+    queue = []
+
+    for case in config.cases:
+        caseConfig = deepcopy(config)
+        caseConfig.cases = [ case ]
+
+        caseRunner = UltimateRunner(config = caseConfig)
+        caseRunner._exec_id = baseRunner._exec_id
+        queue.append(caseRunner)
+
+    baseRunner.parallel(queue)
 
 
 class LiteralOption(click.Option):

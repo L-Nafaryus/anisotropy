@@ -87,7 +87,9 @@ class DefaultConfig(Config):
                 "nprocs": 1,
                 "stage": "all",
                 "overwrite": False,
-
+                "database": "anisotropy.db",
+                "build": "build",
+                "logs": "logs"
             },
             "structures": []
         }

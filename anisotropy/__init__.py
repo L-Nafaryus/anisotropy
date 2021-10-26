@@ -24,6 +24,9 @@ env = dict(
     ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
 env.update(
+    CLI = os.path.join(env["ROOT"], "anisotropy/core/cli.py")
+)
+env.update(
     BUILD = os.path.join(env["ROOT"], "build"),
     LOG = os.path.join(env["ROOT"], "logs"),
     CONFIG = os.path.join(env["ROOT"], "anisotropy/config/default.toml"),
