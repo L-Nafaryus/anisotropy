@@ -4,6 +4,7 @@ logs/
 storage/
 temp/
 env/
+*output/
 *.gz
 *.xz
 *.fls
