@@ -38,6 +38,11 @@ class TestShaping(unittest.TestCase):
         bodyCentered001.export(os.path.join(self.outputPath, "bodyCentered001.step"))
         bodyCentered111.export(os.path.join(self.outputPath, "bodyCentered111.step"))
 
+    def test_faceCentered_lattice(self):
+        fc = self.shaping.FaceCentered([1, 0, 0], alpha = 0.01, filletsEnabled = True)
+        fc.build()
+        fc.lattice.WriteStep(os.path.join(self.outputPath, "fc_lattice.step"))
+
     def test_faceCentered(self):
         faceCentered100 = self.shaping.FaceCentered(direction = [1, 0, 0], alpha = 0.01)
         faceCentered001 = self.shaping.FaceCentered(direction = [0, 0, 1], alpha = 0.01)

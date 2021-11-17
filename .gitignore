@@ -20,3 +20,6 @@ env/
 *.out
 *.egg-info
 .ipynb_checkpoints/
+.coverage
+.venv
+.pytest_cache
