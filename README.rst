@@ -1,4 +1,4 @@
-.. image:: https://circleci.com/gh/L-Nafaryus/anisotropy/tree/devel.svg?style=svg&circle-token=423bc964a997ded671ebd4ceacc25f9967acdffa
+.. image:: https://circleci.com/gh/L-Nafaryus/anisotropy/tree/devel.svg?style=shield&circle-token=423bc964a997ded671ebd4ceacc25f9967acdffa
     :target: https://circleci.com/gh/L-Nafaryus/anisotropy/tree/devel
 
 anisotropy

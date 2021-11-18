@@ -73,6 +73,7 @@ class Simple(Periodic):
             yw = xl
             zh = height
 
+            # TODO: correct compasion for arrays
             if self.direction == [1, 0, 0]:
                 vertices = numpy.array([
                     (xl, 0, 0),

@@ -3,11 +3,14 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 from datetime import datetime
+from os import path
 
 from anisotropy.core.config import DefaultConfig
 from anisotropy.database import *
-from anisotropy.salomepl.runner import SalomeRunner
-import anisotropy.samples as samples
+from anisotropy.shaping import Simple, BodyCentered, FaceCentered
+from anisotropy.meshing import Mesh
+from anisotropy.openfoam.presets import CreatePatchDict
+from anisotropy.solving.onephase import OnePhaseFlow
 
 class UltimateRunner(object):
     def __init__(self, config = None, exec_id = False):
@@ -15,101 +18,134 @@ class UltimateRunner(object):
         self.config = config or DefaultConfig()
 
         self.database = Database(self.config["database"])
-        self.datebase.setup()
+        self.database.setup()
 
         if exec_id:
             self._exec_id = Execution(date = datetime.now())
             self._exec_id.save()
 
+        self.shape = None
+        self.mesh = None
+        self.flow = None
+
     def casePath(self):
         case = self.config.cases[0]
 
-        return os.path.join(
+        return path.join(
             self.config["build"], 
             case["label"], 
-            "direction-{}".format(str(case["direction"]).replace(" ", "")), 
+            "direction-[{},{},{}]".format(*[ str(d) for d in case["direction"] ]), 
             "theta-{}".format(case["theta"])
         )
 
-    def computeMesh(self):
-
+    def computeShape(self):
         case = self.config.cases[0]
-        runner = SalomeRunner()
-        cliArgs = [
-            "computemesh",
-            case["label"],
-            case["direction"],
-            case["theta"],
-            path
-        ]
+        filename = "shape.step"
 
-        out, err, returncode = runner.execute(
-            env["CLI"],
-            *cliArgs,
-            timeout = self.config["salome_timeout"],
-            root = env["ROOT"],
-            logpath = self.casePath()
-        )
+        match case["label"]:
+            case "simple":
+                self.shape = Simple(case["direction"])
 
-        return out, err, returncode
+            case "bodyCentered":
+                self.shape = BodyCentered(case["direction"])
 
+            case "faceCentered":
+                self.shape = FaceCentered(case["direction"])
 
-    def _computeMesh(self):
-        """Function for Salome
+        self.shape.build()
+        self.shape.export(path.join(case, filename))
 
-        Resolution pipeline:
-        cli(UR -> computeMesh) -> salomeRunner(salome -> cli) -> computemesh(UR -> _computeMesh)
-        """
-        
-        # TODO: add logger configuration here 
-        sample = samples.__dict__[..]
+    def computeMesh(self):
+        case = self.config.cases[0]
+        filename = "mesh.mesh"
 
-        #   Build a shape
-        shape = sample.geometry(..)
-        shape.build()
-        shape.export(..)
-
-        #   Build a mesh
-        mesh = sample.mesh(shape)
-        mesh.build()
-        mesh.export(..)
-
-        #   Fill database
-
+        self.mesh = Mesh(self.shape.shape)
+        self.mesh.build()
+        self.mesh.export(path.join(case, filename))
         
     def computeFlow(self):
+        case = self.config.cases[0]
+        flow = OnePhaseFlow()
 
-        sample = samples.__dict__[..]
+        # initial 43 unnamed patches -> 
+        # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
+        # 4 inGroups (inlet, outlet, wall, symetry)
+        createPatchDict = CreatePatchDict()
+        createPatchDict["patches"] = []
+        patches = {}
+
+        for n, patch in enumerate(self.shape.shape.faces):
+            name = patch.name
+
+            if patches.get(name):
+                patches[name].append(n)
+            
+            else:
+                patches[name] = [n]
+
+        for name in patches.keys():
+            match name:
+                case "inlet":
+                    patchGroup = "inlet"
+                    patchType = "patch"
+
+                case "outlet":
+                    patchGroup = "outlet"
+                    patchType = "patch"
+
+                case "wall":
+                    patchGroup = "wall"
+                    patchType = "wall"
+
+                case _:
+                    patchGroup = "symetry"
+                    patchType = "symetryPlane"
+
+            createPatchDict["patches"].append({
+                "name": name,
+                "patchInfo": {
+                    "type": patchType,
+                    "inGroups": [patchGroup]
+                },
+                "constructFrom": "patches",
+                "patches": patches[name]
+            })
+
+        flow.append(createPatchDict)
 
         #   Build a flow
-        flow = sample.onephaseflow(..)
         flow.build()
 
 
     def pipeline(self, stage: str = None):
-        stage = stage or config["stage"]
+        stage = stage or self.config["stage"]
 
         match stage:
-            case "mesh" | "all":
+            case "shape" | "all":
                 with self.database.atomic():
                     Shape.create(self._exec_id, **self.config.cases[0])
+
+                self.computeShape()
+
+            case "mesh" | "all":
+                with self.database.atomic():
                     Mesh.create(self._exec_id)
 
-                self.computeMesh(..)
+                self.computeMesh()
 
             case "flow" | "all":
                 with self.database.atomic():
                     Flow.create(self._exec_id)
 
-                self.computeFlow(..)
+                self.computeFlow()
 
             case "postProcess" | "all":
-                self.postProcess(..)
+                self.postProcess()
 
 
     
     def parallel(queue: list, nprocs = None):
-        nprocs = nprocs or config["nprocs"]
+        nprocs = nprocs or self.config["nprocs"]
 
         parallel(nprocs, [()] * len(queue), [ runner.pipeline for runner in queue ])
 

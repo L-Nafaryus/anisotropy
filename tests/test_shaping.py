@@ -15,12 +15,13 @@ class TestShaping(unittest.TestCase):
         if not NETGEN_MODULE:
             self.skipTest("Missing Netgen.")
 
-        from anisotropy import shaping
+        else:
+            from anisotropy import shaping
 
-        self.shaping = shaping
+            self.shaping = shaping
 
-        self.outputPath = os.path.join(os.path.abspath("."), "tests/test_shaping_output")
-        os.makedirs(self.outputPath, exist_ok = True)
+            self.outputPath = os.path.join(os.path.abspath("."), "tests/test_shaping_output")
+            os.makedirs(self.outputPath, exist_ok = True)
 
     def test_simple(self):
         simple100 = self.shaping.Simple(direction = [1, 0, 0], alpha = 0.01)

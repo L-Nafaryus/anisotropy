@@ -3,12 +3,12 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 import anisotropy.openfoam as openfoam
-from openfoam.presets import (
+from anisotropy.openfoam.presets import (
     ControlDict, FvSchemes, FvSolution, 
     TransportProperties, TurbulenceProperties, CreatePatchDict,
     P, U
 )
-from openfoam.foamcase import FoamCase
+from anisotropy.openfoam.foamcase import FoamCase
 
 class OnePhaseFlow(FoamCase):
     def __init__(self):
@@ -66,34 +66,7 @@ class OnePhaseFlow(FoamCase):
             simulationType = "laminar"
         )
 
-        createPatchDict = CreatePatchDict()
-        createPatchDict["patches"] = []
-        
-        for patch in ["inlet", "outlet", "wall", "strips", *[ f"symetry{ n }" for n in range(6) ]]:
-            newPatch = dict(
-                name = patch,
-                patchInfo = dict(
-                    type = "patch",
-                    inGroups = [patch]
-                ),
-                constructFrom = "patches",
-                patches = [ f"smesh_{ patch }" ]
-            )
-
-            match patch:
-                case "wall" | "strips":
-                    newPatch["patchInfo"].update(
-                        type = "wall",
-                        inGroups = [ "wall" ]
-                    )
-
-                case patch if patch.find("symetry") == 0:
-                    newPatch["patchInfo"]["inGroups"] = [ "symetryPlane" ]
-
-            createPatchDict["patches"].append(newPatch)
-
-
-        boundaries = [ "inlet", "outlet", "symetryPlane", "wall", "strips" ]
+        boundaries = [ "inlet", "outlet", "symetry", "wall"]
         p = P()
         p["boundaryField"] = {}
         u = U()
@@ -131,28 +104,33 @@ class OnePhaseFlow(FoamCase):
                     ) 
 
         self.extend([
-            controlDict, fvSchemes, fvSolution, createPatchDict,
-            transportProperties, turbulenceProperties,
-            p, u
+            controlDict, 
+            fvSchemes, 
+            fvSolution,
+            transportProperties, 
+            turbulenceProperties,
+            p, 
+            u
         ])
 
     def build(self):
         # TODO: configure working directory (FoamCase)
-        self.write()
+        with self:
+            self.write()
 
-        openfoam.ideasUnvToFoam("mesh.unv")
-        openfoam.createPatch()
-        openfoam.checkMesh()
-        openfoam.transformPoints((1e-5, 1e-5, 1e-5))
-        openfoam.renumberMesh()
-        openfoam.potentialFoam()
-        
-        self.read()
+            openfoam.netgenNeutralToFoam("mesh.mesh")
+            openfoam.createPatch()
+            openfoam.checkMesh()
+            openfoam.transformPoints((1e-5, 1e-5, 1e-5))
+            openfoam.renumberMesh()
+            openfoam.potentialFoam()
+            
+            self.read()
 
-        self.solution.U["boundaryField"]["outlet"] = dict(
-            type = "pressureInletVelocity",
-            value = "uniform (0 0 0)" # * direction
-        )
-        self.write()
-        
-        openfoam.simpleFoam()
+            self.solution.U["boundaryField"]["outlet"] = dict(
+                type = "pressureInletVelocity",
+                value = "uniform (0 0 0)" # * direction
+            )
+            self.write()
+            
+            openfoam.simpleFoam()
