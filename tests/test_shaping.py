@@ -5,6 +5,16 @@ unittest.TestLoader.sortTestMethodsUsing = None
 
 class TestShaping(unittest.TestCase):
     def setUp(self):
+        try:
+            import netgen
+            NETGEN_MODULE = False
+
+        except ImportError:
+            NETGEN_MODULE = True
+
+        if not NETGEN_MODULE:
+            self.skipTest("Missing Netgen.")
+
         from anisotropy import shaping
 
         self.shaping = shaping

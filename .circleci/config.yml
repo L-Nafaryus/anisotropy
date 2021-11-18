@@ -22,7 +22,7 @@ jobs:
           name: run tests
           command: |
             mkdir test-reports
-            poetry run pytest --cov=anisotropy tests > test-reports/pytest.log 2>&1 
+            poetry run pytest --cov=anisotropy --json-report --json-report-file test-reports/pytest.json -v tests
       - store_artifacts:
           path: test-reports
 
