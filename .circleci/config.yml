@@ -1,0 +1,26 @@
+version: 2.1
+
+workflows:
+  test:
+    jobs:
+      - test-3.10
+
+jobs:
+  test-3.10:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run:
+          name: install packages
+          command: |
+            pip install poetry
+            poetry config virtualenvs.in-project true
+            poetry install
+      - run:
+          name: run tests
+          command: |
+            poetry run pytest --cov=anisotropy tests
+      - store_artifacts:
+          path: test-reports
+

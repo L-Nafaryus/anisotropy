@@ -1,3 +1,6 @@
+.. image:: https://circleci.com/gh/L-Nafaryus/anisotropy/tree/master.svg?style=svg&circle-token=423bc964a997ded671ebd4ceacc25f9967acdffa
+    :target: https://circleci.com/gh/L-Nafaryus/anisotropy/tree/master
+
 anisotropy
 ==========
 
