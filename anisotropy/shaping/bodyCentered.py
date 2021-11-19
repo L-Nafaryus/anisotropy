@@ -70,7 +70,7 @@ class BodyCentered(Periodic):
         self.lattice = lattice.Scale(zero, self.minimize)
         
         #   Inlet face
-        if self.direction in [[1, 0, 0], [0, 0, 1]]:
+        if (self.direction == numpy.array([1., 0., 0.])).prod():
             length = 2 * self.r0
             width = self.L / 2
             diag = self.L * sqrt(2)
@@ -80,25 +80,33 @@ class BodyCentered(Periodic):
             yw = xl
             zh = height
 
-            if self.direction == [1, 0, 0]:
-                vertices = numpy.array([
-                    (xl, 0, 0),
-                    (0, yw, 0),
-                    (0, yw, zh),
-                    (xl, 0, zh)
-                ])
-                extr = diag
+            vertices = numpy.array([
+                (xl, 0, 0),
+                (0, yw, 0),
+                (0, yw, zh),
+                (xl, 0, zh)
+            ])
+            extr = diag
 
-            elif self.direction == [0, 0, 1]:
-                vertices = numpy.array([
-                    (0, yw, 0),
-                    (xl, 0, 0),
-                    (2 * xl, yw, 0),
-                    (xl, 2 * yw, 0)
-                ])
-                extr = height
+        elif (self.direction == numpy.array([0., 0., 1.])).prod():
+            length = 2 * self.r0
+            width = self.L / 2
+            diag = self.L * sqrt(2)
+            height = self.L
 
-        elif self.direction == [1, 1, 1]:
+            xl = sqrt(diag ** 2 + diag ** 2) * 0.5
+            yw = xl
+            zh = height
+
+            vertices = numpy.array([
+                (0, yw, 0),
+                (xl, 0, 0),
+                (2 * xl, yw, 0),
+                (xl, 2 * yw, 0)
+            ])
+            extr = height
+
+        elif (self.direction == numpy.array([1., 1., 1.])).prod():
             length = 2 * self.r0
             width = self.L / 2
             diag = self.L * sqrt(2)

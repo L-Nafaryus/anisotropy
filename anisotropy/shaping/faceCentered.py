@@ -77,7 +77,7 @@ class FaceCentered(Periodic):
         self.lattice = lattice.Scale(zero, self.minimize)
 
         #   Inlet face
-        if self.direction in [[1, 0, 0], [0, 0, 1]]:
+        if (self.direction == numpy.array([1., 0., 0.])).prod():
             length = 2 * self.r0
             width = self.L / 2
             diag = self.L * sqrt(3)
@@ -87,25 +87,33 @@ class FaceCentered(Periodic):
             yw = xl
             zh = width
 
-            if self.direction == [1, 0, 0]:
-                vertices = numpy.array([
-                    (0, 0, -zh),
-                    (-xl, yw, -zh),
-                    (-xl, yw, zh),
-                    (0, 0, zh)
-                ])
-                extr = length
+            vertices = numpy.array([
+                (0, 0, -zh),
+                (-xl, yw, -zh),
+                (-xl, yw, zh),
+                (0, 0, zh)
+            ])
+            extr = length
 
-            elif self.direction == [0, 0, 1]:
-                vertices = numpy.array([
-                    (0, 0, -zh),
-                    (xl, yw, -zh),
-                    (0, 2 * yw, -zh),
-                    (-xl, yw, -zh)
-                ])
-                extr = 2 * width
+        elif (self.direction == numpy.array([0., 0., 1.])).prod():
+            length = 2 * self.r0
+            width = self.L / 2
+            diag = self.L * sqrt(3)
+            height = diag / 3
 
-        elif self.direction == [1, 1, 1]:
+            xl = sqrt(length ** 2 + length ** 2) * 0.5
+            yw = xl
+            zh = width
+
+            vertices = numpy.array([
+                (0, 0, -zh),
+                (xl, yw, -zh),
+                (0, 2 * yw, -zh),
+                (-xl, yw, -zh)
+            ])
+            extr = 2 * width
+
+        elif (self.direction == numpy.array([1., 1., 1.])).prod():
             length = 2 * self.r0
             width = self.L / 2
             diag = self.L * sqrt(3)
@@ -139,6 +147,7 @@ class FaceCentered(Periodic):
         #   Boundaries
         symetryId = 0
 
+        # ISSUE: inlet and outlet faces have the same name and normal vector after extrusion
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)

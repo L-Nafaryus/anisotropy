@@ -20,13 +20,13 @@ class Database(object):
 
     def setup(self):
         path = os.path.abspath(self.filename)
-        os.makedirs(path, exist_ok = True)
+        #os.makedirs(path, exist_ok = True)
 
         self.database.init(path)
         
         if not os.path.exists(path):
+            self.database.create_tables([Execution])
             self.database.create_tables([
-                Execution,
                 Physics,
                 Shape,
                 Mesh,

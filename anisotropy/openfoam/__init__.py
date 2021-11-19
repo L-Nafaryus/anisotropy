@@ -3,7 +3,7 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 
-from .meshConversion import ideasUnvToFoam
+from .meshConversion import ideasUnvToFoam, netgenNeutralToFoam
 from .meshManipulation import createPatch, transformPoints, checkMesh, renumberMesh
 from .miscellaneous import foamDictionary
 from .parallelProcessing import decomposePar

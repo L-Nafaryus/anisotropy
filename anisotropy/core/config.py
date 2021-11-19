@@ -96,14 +96,14 @@ class DefaultConfig(Config):
         self.options = deepcopy(self.content["options"])
 
         labels = ["simple", "bodyCentered", "faceCentered"]
-        thetas = array([[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]], dtype = float)
+        thetas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]
 
         for label, theta in zip(labels, thetas):
             self.content["structures"].append({
                 "label": label,
                 "theta": theta,
                 "thetaStep": 0.01,
-                "directions": array([[1, 0, 0], [0, 0, 1], [1, 1, 1]], dtype = float),
+                "directions": [[1, 0, 0], [0, 0, 1], [1, 1, 1]],
                 "r0": 1,
                 "filletsEnabled": True
             })

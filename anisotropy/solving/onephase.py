@@ -11,8 +11,8 @@ from anisotropy.openfoam.presets import (
 from anisotropy.openfoam.foamcase import FoamCase
 
 class OnePhaseFlow(FoamCase):
-    def __init__(self):
-        FoamCase.__init__(self)
+    def __init__(self, path: str = None):
+        FoamCase.__init__(self, path = path)
 
         controlDict = ControlDict()
         controlDict.update(
@@ -127,7 +127,7 @@ class OnePhaseFlow(FoamCase):
             
             self.read()
 
-            self.solution.U["boundaryField"]["outlet"] = dict(
+            self.U["boundaryField"]["outlet"] = dict(
                 type = "pressureInletVelocity",
                 value = "uniform (0 0 0)" # * direction
             )

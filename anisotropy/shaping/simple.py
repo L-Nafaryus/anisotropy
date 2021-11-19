@@ -6,7 +6,25 @@ from netgen.occ import *
 import numpy
 from numpy import pi, sqrt
 
+from .occExtended import *
 from . import Periodic
+
+def reconstruct(solid):
+    solidNew = []
+
+    for face in solid.faces:
+        vertices = numpy.array([ v.p.pos() for v in face.vertices ])
+        # TODO: correct following vertices
+        vertices = numpy.unique(vertices, axis = 0)
+
+        circuit = Wire([ Segment(Pnt(*v1), Pnt(*v2)) for v1, v2 in zip(vertices, numpy.roll(vertices, -1, axis = 0)) ])
+        faceNew = Face(circuit)
+        faceNew.name = face.name
+
+        solidNew.append(faceNew)
+
+    return numpy.array(solidNew).sum()
+
 
 class Simple(Periodic):
     def __init__(
@@ -64,7 +82,7 @@ class Simple(Periodic):
         self.lattice = lattice.Scale(zero, self.minimize)
         
         #   Inlet face
-        if self.direction in [[1, 0, 0], [0, 0, 1]]:
+        if (self.direction == numpy.array([1., 0., 0.])).prod():
             length = self.L * numpy.sqrt(2)
             width = self.L * numpy.sqrt(2)
             height = self.L
@@ -73,26 +91,32 @@ class Simple(Periodic):
             yw = xl
             zh = height
 
-            # TODO: correct compasion for arrays
-            if self.direction == [1, 0, 0]:
-                vertices = numpy.array([
-                    (xl, 0, 0),
-                    (0, yw, 0),
-                    (0, yw, zh),
-                    (xl, 0, zh)
-                ])
-                extr = width
+            vertices = numpy.array([
+                (xl, 0, 0),
+                (0, yw, 0),
+                (0, yw, zh),
+                (xl, 0, zh)
+            ])
+            extr = width
 
-            elif self.direction == [0, 0, 1]:
-                vertices = numpy.array([
-                    (0, yw, 0),
-                    (xl, 0, 0),
-                    (2 * xl, yw, 0),
-                    (xl, 2 * yw, 0)
-                ])
-                extr = height
+        elif (self.direction == numpy.array([0., 0., 1.])).prod():
+            length = self.L * numpy.sqrt(2)
+            width = self.L * numpy.sqrt(2)
+            height = self.L
 
-        elif self.direction == [1, 1, 1]:
+            xl = numpy.sqrt(length ** 2 * 0.5)
+            yw = xl
+            zh = height
+
+            vertices = numpy.array([
+                (0, yw, 0),
+                (xl, 0, 0),
+                (2 * xl, yw, 0),
+                (xl, 2 * yw, 0)
+            ])
+            extr = height
+
+        elif (self.direction == numpy.array([1., 1., 1.])).prod():
             length = self.L * numpy.sqrt(2)
             width = self.L * numpy.sqrt(2)
             height = self.L
@@ -114,23 +138,33 @@ class Simple(Periodic):
         else:
             raise Exception(f"Direction { self.direction } is not implemented")
         
+        #
+        
+
         #   Cell
         circuit = Wire([ Segment(Pnt(*v1), Pnt(*v2)) for v1, v2 in zip(vertices, numpy.roll(vertices, -1, axis = 0)) ])
         inletface = Face(circuit)
         inletface.name = "inlet"
 
         vecFlow = self.normal(inletface)
+        # ISSUE: netgen.occ.Face.Extrude: the opposite face has the same name and normal vector as an initial face.
         self.cell = inletface.Extrude(extr)
-
+        self.cell = reconstruct(self.cell)
+        print([ f.name for f in self.cell.faces ])
         #   Boundaries
         symetryId = 0
 
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
+            print((face.center.pos() == inletface.center.pos()))
+            print(fAngle)
+            if fAngle == 0:
+                if (face.center.pos() == inletface.center.pos()).prod():
+                    face.name = "inlet"
 
-            if fAngle == 0 and not face.center == inletface.center:
-                face.name = "outlet"
+                else:
+                    face.name = "outlet"
 
             else:
                 face.name = f"symetry{ symetryId }"

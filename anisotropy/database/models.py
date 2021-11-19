@@ -26,7 +26,7 @@ class Execution(Model):
 
     class Meta:
         database = sqliteDB 
-        db_table = "executions"
+        table_name = "executions"
 
 
 class Physics(Model):
@@ -43,7 +43,7 @@ class Physics(Model):
 
     class Meta:
         database = sqliteDB 
-        db_table = "physics"
+        table_name = "physics"
         depends_on = Execution
 
 
@@ -64,7 +64,7 @@ class Shape(Model):
 
     class Meta:
         database = sqliteDB 
-        db_table = "shapes"
+        table_name = "shapes"
         depends_on = Execution
 
 
@@ -85,7 +85,7 @@ class Mesh(Model):
 
     class Meta:
         database = sqliteDB 
-        db_table = "meshes"
+        table_name = "meshes"
         depends_on = Execution
 
 
@@ -98,7 +98,7 @@ class Flow(Model):
 
     class Meta:
         database = sqliteDB 
-        db_table = "flows"
+        table_name = "flows"
         depends_on = Execution
 
 

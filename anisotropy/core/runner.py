@@ -28,44 +28,48 @@ class UltimateRunner(object):
         self.mesh = None
         self.flow = None
 
-    def casePath(self):
-        case = self.config.cases[0]
+    def casepath(self):
+        params = self.config.cases[0]
 
-        return path.join(
+        return path.abspath(path.join(
             self.config["build"], 
-            case["label"], 
-            "direction-[{},{},{}]".format(*[ str(d) for d in case["direction"] ]), 
-            "theta-{}".format(case["theta"])
-        )
+            params["label"], 
+            "direction-[{},{},{}]".format(*[ str(d) for d in params["direction"] ]), 
+            "theta-{}".format(params["theta"])
+        ))
 
     def computeShape(self):
-        case = self.config.cases[0]
+        params = self.config.cases[0]
         filename = "shape.step"
 
-        match case["label"]:
+        match params["label"]:
             case "simple":
-                self.shape = Simple(case["direction"])
+                self.shape = Simple(params["direction"])
 
             case "bodyCentered":
-                self.shape = BodyCentered(case["direction"])
+                self.shape = BodyCentered(params["direction"])
 
             case "faceCentered":
-                self.shape = FaceCentered(case["direction"])
+                self.shape = FaceCentered(params["direction"])
 
         self.shape.build()
-        self.shape.export(path.join(case, filename))
+
+        os.makedirs(self.casepath(), exist_ok = True)
+        self.shape.export(path.join(self.casepath(), filename))
 
     def computeMesh(self):
-        case = self.config.cases[0]
+        params = self.config.cases[0]
         filename = "mesh.mesh"
 
         self.mesh = Mesh(self.shape.shape)
         self.mesh.build()
-        self.mesh.export(path.join(case, filename))
+
+        os.makedirs(self.casepath(), exist_ok = True)
+        self.mesh.export(path.join(self.casepath(), filename))
         
     def computeFlow(self):
-        case = self.config.cases[0]
-        flow = OnePhaseFlow()
+        params = self.config.cases[0]
+        flow = OnePhaseFlow(path = self.casepath())
 
         # initial 43 unnamed patches -> 
         # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
@@ -75,13 +79,15 @@ class UltimateRunner(object):
         patches = {}
 
         for n, patch in enumerate(self.shape.shape.faces):
+            #   shifted index 
+            n += 1
             name = patch.name
 
             if patches.get(name):
-                patches[name].append(n)
+                patches[name].append(f"patch{ n }")
             
             else:
-                patches[name] = [n]
+                patches[name] = [ f"patch{ n }" ]
 
         for name in patches.keys():
             match name:

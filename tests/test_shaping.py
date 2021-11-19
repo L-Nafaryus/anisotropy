@@ -7,10 +7,10 @@ class TestShaping(unittest.TestCase):
     def setUp(self):
         try:
             import netgen
-            NETGEN_MODULE = False
+            NETGEN_MODULE = True 
 
         except ImportError:
-            NETGEN_MODULE = True
+            NETGEN_MODULE = False
 
         if not NETGEN_MODULE:
             self.skipTest("Missing Netgen.")
