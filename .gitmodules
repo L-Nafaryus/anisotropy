@@ -1,3 +1,12 @@
 [submodule "external-dependencies/netgen"]
 	path = external-dependencies/netgen
 	url = http://github.com/L-Nafaryus/netgen.git
+[submodule "external-dependencies/oce"]
+	path = external-dependencies/oce
+	url = http://github.com/L-Nafaryus/oce.git
+[submodule "external-dependencies/OpenFOAM"]
+	path = external-dependencies/OpenFOAM
+	url = https://github.com/OpenFOAM/OpenFOAM-9.git
+[submodule "external-dependencies/ThirdParty"]
+	path = external-dependencies/ThirdParty
+	url = https://github.com/OpenFOAM/ThirdParty-9.git
