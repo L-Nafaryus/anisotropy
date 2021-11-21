@@ -25,3 +25,25 @@ def add_method(cls):
 def pos(self) -> numpy.array:
     return numpy.array([self.x, self.y, self.z])
 
+
+# ISSUE: netgen.occ.Face.Extrude: the opposite face has the same name and normal vector as an initial face.
+def reconstruct(shape):
+    """Reconstruct shape with new objects. 
+
+    Warning: not works with curved edges.
+    """
+    facesNew = []
+
+    for face in shape.faces:
+        edgesNew = []
+        for edge in face.edges:
+            v = edge.vertices
+            edgesNew.append(occ.Segment(v[0].p, v[1].p))
+
+        faceNew = occ.Face(occ.Wire(edgesNew))
+        faceNew.name = face.name
+        facesNew.append(faceNew)
+
+    return numpy.array(facesNew).sum()
+
+

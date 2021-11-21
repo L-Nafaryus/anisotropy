@@ -6,6 +6,7 @@ from netgen.occ import *
 import numpy
 from numpy import pi, sqrt
 
+from .occExtended import *
 from . import Periodic
 
 class FaceCentered(Periodic):
@@ -143,17 +144,21 @@ class FaceCentered(Periodic):
 
         vecFlow = self.normal(inletface)
         self.cell = inletface.Extrude(extr)
-
+        self.cell = reconstruct(self.cell)
+        
         #   Boundaries
         symetryId = 0
 
-        # ISSUE: inlet and outlet faces have the same name and normal vector after extrusion
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
+            
+            if fAngle == 0:
+                if (face.center.pos() == inletface.center.pos()).prod():
+                    face.name = "inlet"
 
-            if fAngle == 0 and not face.center == inletface.center:
-                face.name = "outlet"
+                else:
+                    face.name = "outlet"
 
             else:
                 face.name = f"symetry{ symetryId }"

@@ -9,22 +9,6 @@ from numpy import pi, sqrt
 from .occExtended import *
 from . import Periodic
 
-def reconstruct(solid):
-    solidNew = []
-
-    for face in solid.faces:
-        vertices = numpy.array([ v.p.pos() for v in face.vertices ])
-        # TODO: correct following vertices
-        vertices = numpy.unique(vertices, axis = 0)
-
-        circuit = Wire([ Segment(Pnt(*v1), Pnt(*v2)) for v1, v2 in zip(vertices, numpy.roll(vertices, -1, axis = 0)) ])
-        faceNew = Face(circuit)
-        faceNew.name = face.name
-
-        solidNew.append(faceNew)
-
-    return numpy.array(solidNew).sum()
-
 
 class Simple(Periodic):
     def __init__(
@@ -147,18 +131,16 @@ class Simple(Periodic):
         inletface.name = "inlet"
 
         vecFlow = self.normal(inletface)
-        # ISSUE: netgen.occ.Face.Extrude: the opposite face has the same name and normal vector as an initial face.
-        self.cell = inletface.Extrude(extr)
-        self.cell = reconstruct(self.cell)
-        print([ f.name for f in self.cell.faces ])
+        self.cell = inletface.Extrude(extr * Vec(*vecFlow))
+        #self.cell = reconstruct(self.cell)
+        
         #   Boundaries
         symetryId = 0
 
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
-            print((face.center.pos() == inletface.center.pos()))
-            print(fAngle)
+            
             if fAngle == 0:
                 if (face.center.pos() == inletface.center.pos()).prod():
                     face.name = "inlet"
