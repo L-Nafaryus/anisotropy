@@ -1,0 +1,3 @@
+[submodule "external-dependencies/netgen"]
+	path = external-dependencies/netgen
+	url = http://github.com/L-Nafaryus/netgen.git
