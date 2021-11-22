@@ -132,7 +132,7 @@ class Simple(Periodic):
 
         vecFlow = self.normal(inletface)
         self.cell = inletface.Extrude(extr * Vec(*vecFlow))
-        #self.cell = reconstruct(self.cell)
+        self.cell = reconstruct(self.cell)
         
         #   Boundaries
         symetryId = 0
