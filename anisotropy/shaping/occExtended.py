@@ -32,18 +32,38 @@ def reconstruct(shape):
 
     Warning: not works with curved edges.
     """
+
     facesNew = []
 
     for face in shape.faces:
-        edgesNew = []
-        for edge in face.edges:
-            v = edge.vertices
-            edgesNew.append(occ.Segment(v[0].p, v[1].p))
+        vs = numpy.array([ v.p.pos() for v in face.vertices ])
+        mass = []
 
-        faceNew = occ.Face(occ.Wire(edgesNew))
-        faceNew.name = face.name
-        facesNew.append(faceNew)
+        for nroll in range(len(vs)):
+            vs_roll = numpy.roll(vs, nroll, axis = 0)
+            face_roll = occ.Face(occ.Wire([ occ.Segment(occ.Pnt(*vs_roll[nv]), occ.Pnt(*vs_roll[nv + 1])) for nv in range(0, len(vs_roll), 2) ]))
+            mass.append(face_roll.mass)
 
-    return numpy.array(facesNew).sum()
+        max_roll = mass.index(max(mass))
+        vs_roll = numpy.roll(vs, max_roll, axis = 0)
+        facesNew.append(occ.Face(occ.Wire([ occ.Segment(occ.Pnt(*vs_roll[nv]), occ.Pnt(*vs_roll[nv + 1])) for nv in range(0, len(vs_roll), 2) ])))
+
+    shapeNew = occ.Solid(occ.Compound.ToShell(facesNew))
+
+    return shapeNew
+
+    #facesNew = []
+
+    #for face in shape.faces:
+    #    edgesNew = []
+    #    for edge in face.edges:
+    #        v = edge.vertices
+    #        edgesNew.append(occ.Segment(v[0].p, v[1].p))
+
+    #    faceNew = occ.Face(occ.Wire(edgesNew))
+    #    faceNew.name = face.name
+    #    facesNew.append(faceNew)
+
+    #return numpy.array(facesNew).sum()
 
 
