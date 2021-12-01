@@ -146,7 +146,7 @@ class BodyCentered(Periodic):
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
             
-            if fAngle == 0:
+            if fAngle == 0 or fAngle == numpy.pi:
                 if (face.center.pos() == inletface.center.pos()).prod():
                     face.name = "inlet"
 

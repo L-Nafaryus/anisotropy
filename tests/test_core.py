@@ -21,7 +21,8 @@ class TestCore(unittest.TestCase):
 
             self.core = core
 
-            self.outputPath = os.path.join(os.path.abspath("."), "tests/test_core_output")
+            self.currentPath = os.path.abspath(".")
+            self.outputPath = os.path.join(self.currentPath, "tests/test_core_output")
             os.makedirs(self.outputPath, exist_ok = True)
 
     def test_config(self):
@@ -54,12 +55,12 @@ class TestCore(unittest.TestCase):
         self.assertTrue(path.isfile(path.join(runner.casepath(), "mesh.mesh")))
 
         runner.computeFlow()
-        #self.assertTrue(path.isfile(path.join(runner.casepath(), "mesh.mesh")))
+        self.assertTrue(path.isfile(path.join(runner.casepath(), "mesh.mesh")))
 
         os.chdir(pathOld)
 
     def tearDown(self):
-        pass
+        os.chdir(self.currentPath)
 
 if __name__ == "__main__":
     unittest.main()

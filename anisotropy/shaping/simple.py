@@ -140,11 +140,11 @@ class Simple(Periodic):
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
-            
-            if fAngle == 0:
+
+            if fAngle == 0 or fAngle == numpy.pi:
                 if (face.center.pos() == inletface.center.pos()).prod():
                     face.name = "inlet"
-
+                
                 else:
                     face.name = "outlet"
 
