@@ -34,7 +34,14 @@ Dependencies
 
 .. Installation
 
-.. include:: INSTALL.rst
+.. code-block:: bash
+
+   $ git clone https://github.com/L-Nafaryus/anisotropy.git
+   $ cd anisotropy
+   $ conda env create
+   $ conda activate anisotropy
+   $ poetry install
+   $ anisotropy --help
 
 Getting Started
 ===============
