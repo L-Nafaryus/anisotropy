@@ -1,0 +1,97 @@
+digraph G {
+    rankdir = LR;
+    edge[arrowhead = vee; arrowtail = vee; arrowsize = 0.8];
+    #compound = true;
+    
+    subgraph anisotropy {
+    
+
+    subgraph cluster_cae {
+        label = <<b>Pipeline</b>>;
+        #graph [ranksep=1];
+        node [shape = box; style = rounded];
+        
+        geometry [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>CAD geometry</b></td></tr>
+             <tr><td align="left">- <font color="darkred">Salome</font></td></tr>
+             <tr><td align="left">- <font color="darkgreen">OpenCascade</font></td></tr>
+           </table>>
+        ];
+        
+        mesh [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>Meshing</b></td></tr>
+             <tr><td align="left">- <font color="darkred">Salome</font></td></tr>
+             <tr><td align="left">- <font color="darkgreen">Netgen</font></td></tr>
+           </table>>
+        ];
+        
+        solving [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>Solving</b></td></tr>
+             <tr><td align="left">- <font color="darkgreen">OpenFoam</font></td></tr>
+           </table>>
+           
+        ];
+        
+        database [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>Database</b></td></tr>
+             <tr><td align="left">- <font color="darkgreen">Sqlite</font></td></tr>
+           </table>>;
+           width = 1;
+           shape = cylinder;
+        ];
+        
+        postprocess [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>Post-processing</b></td></tr>
+            <!-- <tr><td align="left">- <font color="darkgreen">Sqlite</font></td></tr> -->
+           </table>>;
+        ];
+        
+        ml [ 
+            label=<<table border="0" cellborder="0" cellspacing="1">
+             <tr><td align="center"><b>Machine learning</b></td></tr>
+            <!-- <tr><td align="left">- <font color="darkgreen">Sqlite</font></td></tr> -->
+           </table>>;
+           color = goldenrod;
+        ];
+        
+        geometry -> mesh -> solving -> postprocess -> ml [weight = 10];
+        
+        {
+            edge[dir = both; arrowhead = box; arrowtail = box];
+            database -> geometry;
+            database -> mesh;
+            database -> solving;
+            database -> postprocess;
+            { rank = same; mesh; database }
+        }
+        
+        {
+            
+            edge[dir = normal; color = goldenrod]
+            ml -> geometry;
+            ml -> mesh;
+            ml -> solving;
+            { rank = same; mesh; ml }
+            
+        }
+    }
+
+    subgraph cluster_caeN {
+        label = <<b>Pipeline</b>>;
+        empty1 [label = "..."; shape = plaintext; width = 1];
+
+    }   
+    subgraph cluster_caeN2 {
+        label = <<b>Pipeline2</b>>;
+        empty2 [label = "..."; shape = plaintext; width = 1];
+
+    }  
+}
+
+    
+}
