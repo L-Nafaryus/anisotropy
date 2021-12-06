@@ -13,16 +13,16 @@ from anisotropy.openfoam.presets import CreatePatchDict
 from anisotropy.solving.onephase import OnePhaseFlow
 
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id = False):
+    def __init__(self, config = None, exec_id = None):
         
         self.config = config or DefaultConfig()
 
         self.database = Database(self.config["database"])
         self.database.setup()
 
-        if exec_id:
-            self._exec_id = Execution(date = datetime.now())
-            self._exec_id.save()
+        if not exec_id:
+            self.exec_id = Execution(date = datetime.now())
+            self.exec_id.save()
 
         self.shape = None
         self.mesh = None

@@ -109,7 +109,9 @@ def anisotropy():
 def compute(path, configFile, nprocs, stage, overwrite):
     from anisotropy.core.runner import UltimateRunner
     from anisotropy.core.config import DefaultConfig
+    from anisotropy.database.models import Execution
     from copy import deepcopy
+    from datetime import datetime
 
     config = DefaultConfig() 
 
@@ -123,15 +125,19 @@ def compute(path, configFile, nprocs, stage, overwrite):
     )
     config.expand()
 
-    baseRunner = UltimateRunner(config = config, exec_id = True)
+    exec_id = Execution(date = datetime.now())
+    exec_id.save()
+    baseRunner = UltimateRunner(config = config, exec_id = exec_id)
     queue = []
 
     for case in config.cases:
         caseConfig = deepcopy(config)
-        caseConfig.cases = [ case ]
+        caseConfig.purge()
 
-        caseRunner = UltimateRunner(config = caseConfig)
-        caseRunner._exec_id = baseRunner._exec_id
+        m_shape = Shape(exec_id = exec_id, **case)
+        m_shape.save()
+
+        caseRunner = UltimateRunner(config = caseConfig, exec_id = exec_id)
         queue.append(caseRunner)
 
     baseRunner.parallel(queue)

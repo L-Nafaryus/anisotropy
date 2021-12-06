@@ -51,9 +51,9 @@ class Shape(Model):
     structure_id = AutoField()
     exec_id = ForeignKeyField(Execution, backref = "physics")
 
-    type = TextField()
-    direction = ListField()
-    theta = FloatField()
+    label = TextField(null = True)
+    direction = ListField(null = True)
+    theta = FloatField(null = True)
 
     r0 = FloatField(null = True)
     L = FloatField(null = True)

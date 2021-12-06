@@ -54,6 +54,10 @@ class Config(object):
         with open(path, "w") as io:
             toml.dump(self.content, io, encoder = toml.TomlNumpyEncoder())
 
+    def purge(self):
+        self.content = {}
+        self.cases = {}
+
     def expand(self):
         self.cases = []
 
