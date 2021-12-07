@@ -42,15 +42,11 @@ class UltimateRunner(object):
         params = self.config.cases[0]
         filename = "shape.step"
 
-        match params["label"]:
-            case "simple":
-                self.shape = Simple(params["direction"])
-
-            case "bodyCentered":
-                self.shape = BodyCentered(params["direction"])
-
-            case "faceCentered":
-                self.shape = FaceCentered(params["direction"])
+        self.shape = {
+            "simple": Simple,
+            "bodyCentered": BodyCentered,
+            "faceCentered": FaceCentered
+        }[params["label"]](params["direction"])
 
         self.shape.build()
 
@@ -90,22 +86,21 @@ class UltimateRunner(object):
                 patches[name] = [ f"patch{ n }" ]
 
         for name in patches.keys():
-            match name:
-                case "inlet":
-                    patchGroup = "inlet"
-                    patchType = "patch"
+            if name == "inlet":
+                patchGroup = "inlet"
+                patchType = "patch"
 
-                case "outlet":
-                    patchGroup = "outlet"
-                    patchType = "patch"
+            elif name == "outlet":
+                patchGroup = "outlet"
+                patchType = "patch"
 
-                case "wall":
-                    patchGroup = "wall"
-                    patchType = "wall"
+            elif name == "wall":
+                patchGroup = "wall"
+                patchType = "wall"
 
-                case _:
-                    patchGroup = "symetry"
-                    patchType = "symetryPlane"
+            else:
+                patchGroup = "symetry"
+                patchType = "symetryPlane"
 
             createPatchDict["patches"].append({
                 "name": name,
@@ -118,35 +113,34 @@ class UltimateRunner(object):
             })
 
         flow.append(createPatchDict)
-
+        flow.write()
         #   Build a flow
-        flow.build()
+        #flow.build()
 
 
     def pipeline(self, stage: str = None):
         stage = stage or self.config["stage"]
 
-        match stage:
-            case "shape" | "all":
-                with self.database.atomic():
-                    Shape.create(self._exec_id, **self.config.cases[0])
+        if stage in ["shape", "all"]:
+            with self.database.atomic():
+                Shape.create(self._exec_id, **self.config.cases[0])
 
-                self.computeShape()
+            self.computeShape()
 
-            case "mesh" | "all":
-                with self.database.atomic():
-                    Mesh.create(self._exec_id)
+        elif stage in ["mesh", "all"]:
+            with self.database.atomic():
+                Mesh.create(self._exec_id)
 
-                self.computeMesh()
+            self.computeMesh()
 
-            case "flow" | "all":
-                with self.database.atomic():
-                    Flow.create(self._exec_id)
+        elif stage in ["flow", "all"]:
+            with self.database.atomic():
+                Flow.create(self._exec_id)
 
-                self.computeFlow()
+            self.computeFlow()
 
-            case "postProcess" | "all":
-                self.postProcess()
+        elif stage in ["postProcess", "all"]:
+            self.postProcess()
 
 
     

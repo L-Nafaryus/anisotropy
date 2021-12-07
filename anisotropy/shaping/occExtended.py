@@ -27,15 +27,15 @@ def pos(self) -> numpy.array:
 
 
 # ISSUE: netgen.occ.Face.Extrude: the opposite face has the same name and normal vector as an initial face.
-def reconstruct(shape):
-    """Reconstruct shape with new objects. 
-    """
-    faces = []
-
-    for face in shape.faces:
-        faceNew = occ.Face(face.wires[0])
-        faceNew.name = face.name
-        faces.append(faceNew)
-
-    return occ.Solid(faces)
+#def reconstruct(shape):
+#    """Reconstruct shape with new objects. 
+#    """
+#    faces = []
+#
+#    for face in shape.faces:
+#        faceNew = occ.Face(face.wires[0])
+#        faceNew.name = face.name
+#        faces.append(faceNew)
+#
+#    return occ.Solid(faces)
 

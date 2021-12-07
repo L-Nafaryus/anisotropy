@@ -28,7 +28,7 @@ def checkMesh(case: str = None) -> str:
     with open("checkMesh.log", "r") as io:
         warnings = []
         for line in io:
-            if re.search("\*\*\*", line):
+            if re.search(r"***", line):
                 warnings.append(line.replace("***", "").strip())
 
         if warnings:

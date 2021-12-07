@@ -136,8 +136,8 @@ class BodyCentered(Periodic):
         inletface.name = "inlet"
 
         vecFlow = self.normal(inletface)
-        self.cell = inletface.Extrude(extr)
-        self.cell = reconstruct(self.cell)
+        # ISSUE: don't use face.Extrude(length), only face.Extrude(length, vector) 
+        self.cell = inletface.Extrude(extr, Vec(*vecFlow))
         
         #   Boundaries
         symetryId = 0

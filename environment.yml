@@ -1,7 +1,10 @@
 name: anisotropy 
 channels:
+  - local
   - conda-forge 
 dependencies:
   - python>=3.9
   - poetry
   - sqlite
+  - occt
+  - netgen

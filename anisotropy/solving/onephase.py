@@ -74,34 +74,33 @@ class OnePhaseFlow(FoamCase):
 
         # ISSUE: add proxy from geometry direction to outlet boundaryField.
         for boundary in boundaries:
-            match boundary:
-                case "inlet":
-                    p["boundaryField"][boundary] = dict(
-                        type = "fixedValue",
-                        value = "uniform 1e-3"
-                    )
-                    u["boundaryField"][boundary] = dict(
-                        type = "fixedValue",
-                        value = "uniform (0 0 -6e-5)" # * direction
-                    )
+            if boundary == "inlet":
+                p["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = "uniform 1e-3"
+                )
+                u["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = "uniform (0 0 -6e-5)" # * direction
+                )
 
-                case "outlet":
-                    p["boundaryField"][boundary] = dict(
-                        type = "fixedValue",
-                        value = "uniform 0"
-                    )
-                    u["boundaryField"][boundary] = dict(
-                        type = "zeroGradient",
-                    )
+            elif boundary == "outlet":
+                p["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = "uniform 0"
+                )
+                u["boundaryField"][boundary] = dict(
+                    type = "zeroGradient",
+                )
 
-                case _:
-                    p["boundaryField"][boundary] = dict(
-                        type = "zeroGradient"
-                    )
-                    u["boundaryField"][boundary] = dict(
-                        type = "fixedValue",
-                        value = "uniform (0 0 0)"
-                    ) 
+            else:
+                p["boundaryField"][boundary] = dict(
+                    type = "zeroGradient"
+                )
+                u["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = "uniform (0 0 0)"
+                ) 
 
         self.extend([
             controlDict, 

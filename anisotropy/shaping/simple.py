@@ -131,8 +131,8 @@ class Simple(Periodic):
         inletface.name = "inlet"
 
         vecFlow = self.normal(inletface)
-        self.cell = inletface.Extrude(extr * Vec(*vecFlow))
-        self.cell = reconstruct(self.cell)
+        # ISSUE: don't use face.Extrude(length), only face.Extrude(length, vector) 
+        self.cell = inletface.Extrude(extr, Vec(*vecFlow))
         
         #   Boundaries
         symetryId = 0
@@ -140,11 +140,11 @@ class Simple(Periodic):
         for face in self.cell.faces:
             fNorm = self.normal(face)
             fAngle = self.angle(vecFlow, fNorm)
-
+            
             if fAngle == 0 or fAngle == numpy.pi:
                 if (face.center.pos() == inletface.center.pos()).prod():
                     face.name = "inlet"
-                
+                    
                 else:
                     face.name = "outlet"
 
@@ -152,6 +152,7 @@ class Simple(Periodic):
                 face.name = f"symetry{ symetryId }"
                 symetryId += 1
 
+        
         #   Main shape
         self.shape = self.cell - self.lattice
 
