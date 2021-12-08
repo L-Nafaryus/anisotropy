@@ -6,10 +6,9 @@ import os
 from .models import (
     sqliteDB,
     Execution, 
-    Physics, 
     Shape, 
     Mesh, 
-    Flow
+    FlowOnephase
 )
 
 
@@ -21,16 +20,21 @@ class Database(object):
     def setup(self):
         path = os.path.abspath(self.filename)
         #os.makedirs(path, exist_ok = True)
-
-        self.database.init(path)
+        
+        self.database.init(
+            path,
+            pragmas = { "foreign_keys": 1 },
+            field_types = { "list": "text" },
+            autoconnect = False
+        )
         
         if not os.path.exists(path):
-            self.database.create_tables([Execution])
-            self.database.create_tables([
-                Physics,
-                Shape,
-                Mesh,
-                Flow
-            ])
+            with self.database:
+                self.database.create_tables([Execution])
+                self.database.create_tables([
+                    Shape,
+                    Mesh,
+                    FlowOnephase
+                ])
 
 

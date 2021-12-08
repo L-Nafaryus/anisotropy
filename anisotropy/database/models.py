@@ -10,12 +10,13 @@ from peewee import (
     IntegerField, BooleanField, 
     TimeField, DateTimeField
 )
-from anisotropy.database.utils import ListField, JSONField
+from anisotropy.database.utils import JSONField
 
 sqliteDB = SqliteDatabase(
     None,
     pragmas = { "foreign_keys": 1 },
-    field_types = { "list": "text" }
+    field_types = { "list": "text" },
+    autoconnect = False
 )
 
 class Execution(Model):
@@ -29,30 +30,15 @@ class Execution(Model):
         table_name = "executions"
 
 
-class Physics(Model):
-    physics_id = AutoField()
-    exec_id = ForeignKeyField(Execution, backref = "physics")
-
-    volumeCell = FloatField(null = True)
-    volume = FloatField(null = True)
-    volumeRounded = FloatField(null = True)
-    porosity = FloatField(null = True)
-    porosityRounded = FloatField(null = True)
-    flowRate = FloatField(null = True)
-    permeability = FloatField(null = True)
-
-    class Meta:
-        database = sqliteDB 
-        table_name = "physics"
-        depends_on = Execution
-
-
 class Shape(Model):
-    structure_id = AutoField()
-    exec_id = ForeignKeyField(Execution, backref = "physics")
+    shape_id = AutoField()
+    exec_id = ForeignKeyField(Execution, backref = "executions")
 
+    shapeStatus = TextField(null = True, default = "Idle")
+    shapeCalculationTime = TimeField(null = True)   
+    
     label = TextField(null = True)
-    direction = ListField(null = True)
+    direction = JSONField(null = True)
     theta = FloatField(null = True)
 
     r0 = FloatField(null = True)
@@ -62,6 +48,12 @@ class Shape(Model):
     filletsEnabled = BooleanField(null = True)
     fillets = FloatField(null = True)
 
+    volumeCell = FloatField(null = True)
+    volume = FloatField(null = True)
+    volumeRounded = FloatField(null = True)
+    porosity = FloatField(null = True)
+    porosityRounded = FloatField(null = True)
+
     class Meta:
         database = sqliteDB 
         table_name = "shapes"
@@ -70,7 +62,10 @@ class Shape(Model):
 
 class Mesh(Model):
     mesh_id = AutoField()
-    exec_id = ForeignKeyField(Execution, backref = "meshes")
+    shape_id = ForeignKeyField(Shape, backref = "shapes")
+ 
+    meshStatus = TextField(null = True, default = "Idle")
+    meshCalculationTime = TimeField(null = True)   
     
     elements = IntegerField(null = True)
     edges = IntegerField(null = True)
@@ -80,8 +75,6 @@ class Mesh(Model):
     prisms = IntegerField(null = True)
     pyramids = IntegerField(null = True)
 
-    meshStatus = TextField(null = True, default = "Idle")
-    meshCalculationTime = TimeField(null = True)
 
     class Meta:
         database = sqliteDB 
@@ -89,12 +82,15 @@ class Mesh(Model):
         depends_on = Execution
 
 
-class Flow(Model):
+class FlowOnephase(Model):
     flow_id = AutoField()
-    exec_id = ForeignKeyField(Execution, backref = "flows")
+    mesh_id = ForeignKeyField(Mesh, backref = "meshes")
 
     flowStatus = TextField(null = True, default = "Idle")
     flowCalculationTime = TimeField(null = True)
+
+    flowRate = FloatField(null = True)
+    permeability = FloatField(null = True)
 
     class Meta:
         database = sqliteDB 

@@ -5,7 +5,7 @@
 import os
 import toml
 from copy import deepcopy
-from numpy import arange, array
+from numpy import arange, array, round
 
 
 class Config(object):
@@ -63,11 +63,12 @@ class Config(object):
 
         #   Expand structures for each direction and each theta
         for structure in self.content["structures"]:
-            thetaA = arange(
+            # ISSUE: precision error 0.06999999999999999
+            thetaA = round(arange(
                 structure["theta"][0], 
                 structure["theta"][1] + structure["thetaStep"], 
                 structure["thetaStep"]
-            )
+            ), 9)
             directionA = array(structure["directions"], dtype = float) 
 
             for direction in directionA:

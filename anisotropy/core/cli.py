@@ -89,7 +89,7 @@ def anisotropy():
 )
 @click.option(
     "-s", "--stage", "stage", 
-    type = click.Choice(["all", "mesh", "flow", "postProcessing"]), 
+    type = click.Choice(["all", "shape", "mesh", "flow", "postProcessing"]), 
     default = "all",
     help = "Current computation stage"
 )
@@ -106,12 +106,9 @@ def anisotropy():
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(path, configFile, nprocs, stage, overwrite):
+def compute(path, configFile, nprocs, stage, overwrite, params):
     from anisotropy.core.runner import UltimateRunner
     from anisotropy.core.config import DefaultConfig
-    from anisotropy.database.models import Execution
-    from copy import deepcopy
-    from datetime import datetime
 
     config = DefaultConfig() 
 
@@ -123,27 +120,13 @@ def compute(path, configFile, nprocs, stage, overwrite):
         stage = stage,
         overwrite = overwrite 
     )
-    config.expand()
-
-    exec_id = Execution(date = datetime.now())
-    exec_id.save()
-    baseRunner = UltimateRunner(config = config, exec_id = exec_id)
-    queue = []
-
-    for case in config.cases:
-        caseConfig = deepcopy(config)
-        caseConfig.purge()
-
-        m_shape = Shape(exec_id = exec_id, **case)
-        m_shape.save()
-
-        caseRunner = UltimateRunner(config = caseConfig, exec_id = exec_id)
-        queue.append(caseRunner)
-
-    baseRunner.parallel(queue)
+    
+    runner = UltimateRunner(config = config)
+    runner.fill()
+    runner.start()
 
 ##############
-
+"""
 def version():
     msg = "Missed package anisotropy"
 
@@ -261,10 +244,10 @@ def update(force, params, path):
 
 
 @anisotropy.command(
-    help = """Compute cases by chain (mesh -> flow)
-    
-    Control parameters: type, direction, theta (each parameter affects on a queue)
-    """
+#    help = """#Compute cases by chain (mesh -> flow)
+#    
+#    Control parameters: type, direction, theta (each parameter affects on a queue)
+"""
 )
 @click.option(
     "-s", "--stage", "stage", 
@@ -636,7 +619,7 @@ def show(params, path, printlist, export, fields, output):
         elif output == "plot":
             plt.show()
 
-    
+"""    
 ###
 #   CLI entry
 ##

@@ -4,54 +4,122 @@
 
 from datetime import datetime
 from os import path
+import logging
 
 from anisotropy.core.config import DefaultConfig
+from anisotropy.core.utils import parallel, ParallelRunner, setupLogger
 from anisotropy.database import *
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
 from anisotropy.openfoam.presets import CreatePatchDict
 from anisotropy.solving.onephase import OnePhaseFlow
 
+logger = logging.getLogger("anisotropy")
+setupLogger(logger, logging.INFO)
+
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id = None):
+    def __init__(self, config = None, exec_id = None, m_shape = None):
         
         self.config = config or DefaultConfig()
 
-        self.database = Database(self.config["database"])
-        self.database.setup()
+        if not m_shape:
+            self.database = Database(self.config["database"])
+            self.database.setup()
 
         if not exec_id:
-            self.exec_id = Execution(date = datetime.now())
-            self.exec_id.save()
+            with self.database.database:
+                self.exec_id = Execution(date = datetime.now())
+                self.exec_id.save()
+            self.type = "master"
+            self.m_shape = None
+
+        else:
+            self.exec_id = exec_id
+            self.type = "worker"
+            self.m_shape = m_shape
 
         self.shape = None
         self.mesh = None
         self.flow = None
-
+        
+        self.queue = []
+        
+    def fill(self):
+        self.config.expand()
+        
+        for case in self.config.cases:
+            with self.database.database:
+                m_shape = Shape(
+                    exec_id = self.exec_id,
+                    **case
+                )
+                m_shape.save()
+            
+            self.queue.append(UltimateRunner(
+                config = self.config,
+                exec_id = self.exec_id,
+                m_shape = m_shape
+            ))
+        
+                
+        
+    def start(self, queue: list = None, nprocs: int = None):
+        nprocs = nprocs or self.config["nprocs"]
+        runners = [ runner.pipeline for runner in self.queue ]
+        args = [[self.config["stage"]]] * len(self.queue)
+        
+        parallel = ParallelRunner(nprocs = nprocs)
+        parallel.start()
+        
+        for runner in self.queue:
+            parallel.append(runner.pipeline, args = [self.config["stage"]])
+        
+        parallel.wait()
+        #parallel(nprocs, args, runners)
+        # TODO: if runner done - remove from queue; results from parallel function
+        
     def casepath(self):
-        params = self.config.cases[0]
+        
+        with self.database.database:
+            params = Shape.get(
+                Shape.exec_id == self.exec_id, 
+                Shape.shape_id == self.m_shape.shape_id
+            )
 
         return path.abspath(path.join(
             self.config["build"], 
-            params["label"], 
-            "direction-[{},{},{}]".format(*[ str(d) for d in params["direction"] ]), 
-            "theta-{}".format(params["theta"])
+            params.label, 
+            "direction-[{},{},{}]".format(*[ str(d) for d in params.direction ]), 
+            "theta-{}".format(params.theta)
         ))
 
     def computeShape(self):
-        params = self.config.cases[0]
+        if not self.type == "worker":
+            return
+        self.database = Database(self.config["database"])
+        self.database.setup()
+        with self.database.database:
+            params = Shape.get(
+                Shape.exec_id == self.exec_id, 
+                Shape.shape_id == self.m_shape.shape_id
+            )
         filename = "shape.step"
 
+        logger.info([params.label, params.direction, params.theta])
         self.shape = {
             "simple": Simple,
             "bodyCentered": BodyCentered,
             "faceCentered": FaceCentered
-        }[params["label"]](params["direction"])
+        }[params.label](params.direction)
 
         self.shape.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         self.shape.export(path.join(self.casepath(), filename))
+        
+        with self.database.database:
+            params.shapeStatus = "Done"
+            params.save()
 
     def computeMesh(self):
         params = self.config.cases[0]
@@ -122,30 +190,17 @@ class UltimateRunner(object):
         stage = stage or self.config["stage"]
 
         if stage in ["shape", "all"]:
-            with self.database.atomic():
-                Shape.create(self._exec_id, **self.config.cases[0])
-
             self.computeShape()
 
         elif stage in ["mesh", "all"]:
-            with self.database.atomic():
-                Mesh.create(self._exec_id)
-
             self.computeMesh()
 
         elif stage in ["flow", "all"]:
-            with self.database.atomic():
-                Flow.create(self._exec_id)
-
             self.computeFlow()
 
         elif stage in ["postProcess", "all"]:
             self.postProcess()
 
 
-    
-    def parallel(queue: list, nprocs = None):
-        nprocs = nprocs or self.config["nprocs"]
 
-        parallel(nprocs, [()] * len(queue), [ runner.pipeline for runner in queue ])
 

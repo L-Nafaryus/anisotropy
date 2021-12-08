@@ -4,7 +4,7 @@
 
 from peewee import TextField
 import json
-
+from numpy import ndarray
 
 class ListField(TextField):
     field_type = "list"
@@ -27,7 +27,13 @@ class ListField(TextField):
 
 class JSONField(TextField):
     def db_value(self, value):
-        return json.dumps(value)
+        if isinstance(value, ndarray):
+            formatted = list(value)
+        
+        else:
+            formatted = value
+            
+        return json.dumps(formatted)
 
     def python_value(self, value):
         if value is not None:
