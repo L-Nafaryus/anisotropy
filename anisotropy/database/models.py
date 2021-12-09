@@ -11,13 +11,10 @@ from peewee import (
     TimeField, DateTimeField
 )
 from anisotropy.database.utils import JSONField
+from .database import Database
 
-sqliteDB = SqliteDatabase(
-    None,
-    pragmas = { "foreign_keys": 1 },
-    field_types = { "list": "text" },
-    autoconnect = False
-)
+
+__database__ = Database()
 
 class Execution(Model):
     exec_id = AutoField()
@@ -26,7 +23,7 @@ class Execution(Model):
     executionTime = TimeField(null = True)
 
     class Meta:
-        database = sqliteDB 
+        database = __database__ 
         table_name = "executions"
 
 
@@ -55,9 +52,9 @@ class Shape(Model):
     porosityRounded = FloatField(null = True)
 
     class Meta:
-        database = sqliteDB 
+        database = __database__ 
         table_name = "shapes"
-        depends_on = Execution
+        #depends_on = Execution
 
 
 class Mesh(Model):
@@ -77,9 +74,9 @@ class Mesh(Model):
 
 
     class Meta:
-        database = sqliteDB 
+        database = __database__ 
         table_name = "meshes"
-        depends_on = Execution
+        #depends_on = Execution
 
 
 class FlowOnephase(Model):
@@ -93,8 +90,14 @@ class FlowOnephase(Model):
     permeability = FloatField(null = True)
 
     class Meta:
-        database = sqliteDB 
+        database = __database__ 
         table_name = "flows"
-        depends_on = Execution
+        #depends_on = Execution
 
 
+__models__ = [
+    Execution,
+    Shape,
+    Mesh,
+    FlowOnephase
+]

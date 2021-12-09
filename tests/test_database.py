@@ -14,26 +14,21 @@ class TestDatabase(unittest.TestCase):
 
     def test_setup(self):
         filepath = os.path.join(self.outputPath, "test_database.db")
-        tables = [
-            self.database.Execution,
-            self.database.Physics,
-            self.database.Shape,
-            self.database.Mesh,
-            self.database.Flow
-        ]
-        db = self.database.Database(filepath)
-        db.setup()
+        
+        db = self.database.database
+        db.setup(filepath)
 
         self.assertTrue(
             os.path.exists(filepath) and os.path.isfile(filepath), 
             "database wasn't created"
         )
         
-        for table in tables:
-            self.assertTrue(table.table_exists())
+        with db:
+            for table in db.tables:
+                self.assertTrue(table.table_exists())
 
     def tearDown(self):
-        pass
+        os.removedirs(os.outputPath)
 
 if __name__ == "__main__":
     unittest.main()

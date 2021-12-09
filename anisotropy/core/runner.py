@@ -65,8 +65,6 @@ class UltimateRunner(object):
         
     def start(self, queue: list = None, nprocs: int = None):
         nprocs = nprocs or self.config["nprocs"]
-        runners = [ runner.pipeline for runner in self.queue ]
-        args = [[self.config["stage"]]] * len(self.queue)
         
         parallel = ParallelRunner(nprocs = nprocs)
         parallel.start()

@@ -3,38 +3,42 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 import os
-from .models import (
-    sqliteDB,
-    Execution, 
-    Shape, 
-    Mesh, 
-    FlowOnephase
-)
+from peewee import SqliteDatabase
 
-
-class Database(object):
-    def __init__(self, filename: str):
-        self.filename = filename
-        self.database = sqliteDB
-
-    def setup(self):
-        path = os.path.abspath(self.filename)
-        #os.makedirs(path, exist_ok = True)
+class Database(SqliteDatabase):
+    def __init__(self, *args, **kwargs):
+        self.filepath = None
+        self.pragmas_ = kwargs.get("pragmas", { "foreign_keys": 1 })
+        self.field_types_ = kwargs.get("field_types", { "list": "text" })
+        self.autoconnect_ = kwargs.get("autoconnect", False)
         
-        self.database.init(
-            path,
-            pragmas = { "foreign_keys": 1 },
-            field_types = { "list": "text" },
-            autoconnect = False
+        SqliteDatabase.__init__(
+            self,
+            None,
+            pragmas = kwargs.get("pragmas", { "foreign_keys": 1 }),
+            field_types = kwargs.get("field_types", { "list": "text" }),
+            autoconnect = kwargs.get("autoconnect", False)
         )
-        
-        if not os.path.exists(path):
-            with self.database:
-                self.database.create_tables([Execution])
-                self.database.create_tables([
-                    Shape,
-                    Mesh,
-                    FlowOnephase
-                ])
+
+    @property
+    def tables(self):
+        return models.__models__
+    
+    def setup(self, filename: str):
+        if not self.filepath:
+            self.filepath = os.path.abspath(filename) if filename else None
+            self.init(
+                self.filepath,
+                pragmas = self.pragmas_,
+                #field_types = self.field_types_,
+                #autoconnect = self.autoconnect_
+            )
+            
+        print(self.tables)
+        self.connect()
+        self.create_tables(self.tables)
+        self.close()
 
 
+# NOTE: avoid circular or partial import
+from . import models
