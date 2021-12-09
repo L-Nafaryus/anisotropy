@@ -9,7 +9,6 @@ from numpy import pi, sqrt
 from .occExtended import *
 from . import Periodic
 
-
 class Simple(Periodic):
     def __init__(
         self,

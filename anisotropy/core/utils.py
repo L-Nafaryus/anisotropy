@@ -19,27 +19,29 @@ class CustomFormatter(logging.Formatter):
         red = "\x1b[31;21m"
         bold_red = "\x1b[31;1m"
         reset = "\x1b[0m"
-        format = "[ %(asctime)s ] [ %(processName)s ] [ %(levelname)s ] %(message)s"
-
+        
+        info = "[%(levelname)s %(processName)s %(asctime)s %(funcName)s]" # [ %(processName)s ]
+        msg = " %(message)s"
+        
         formats = {
-            logging.DEBUG: grey + format + reset,
-            logging.INFO: grey + format + reset,
-            logging.WARNING: yellow + format + reset,
-            logging.ERROR: red + format + reset,
-            logging.CRITICAL: bold_red + format + reset
+            logging.DEBUG: grey + info + reset + msg,
+            logging.INFO: grey + info + reset + msg,
+            logging.WARNING: yellow + info + reset + msg,
+            logging.ERROR: red + info + reset + msg,
+            logging.CRITICAL: bold_red + info + reset + msg
         }
 
         return formats.get(level)
 
     def format(self, record):
         log_fmt = self._getFormat(record.levelno)
-        time_fmt = "%H:%M:%S %d-%m-%y"
+        time_fmt = "%d-%m-%y %H:%M:%S"
         formatter = logging.Formatter(log_fmt, time_fmt)
 
         return formatter.format(record)
 
 
-def setupLogger(logger, level: int, filepath: str = None):
+def setupLogger(level: int, filepath: str = None):
     """Applies settings to logger
 
     :param logger: 
@@ -51,14 +53,22 @@ def setupLogger(logger, level: int, filepath: str = None):
     :param filepath: 
         Path to directory
     """
-    logger.handlers = []
-    logger.setLevel(level)
+    #logger.handlers = []
+    #logger.setLevel(level)
 
+    logging.addLevelName(logging.INFO, "II")
+    logging.addLevelName(logging.WARNING, "WW")
+    logging.addLevelName(logging.ERROR, "EE")
+    logging.addLevelName(logging.CRITICAL, "CC")
+    
     streamhandler = logging.StreamHandler()
     streamhandler.setLevel(level)
     streamhandler.setFormatter(CustomFormatter())
-    logger.addHandler(streamhandler)
-
+    #logger.addHandler(streamhandler)
+    
+    logging.root.setLevel(level)
+    logging.root.addHandler(streamhandler)
+    
     if filepath:
         if not os.path.exists(filepath):
             os.makedirs(filepath, exist_ok = True)
@@ -68,7 +78,9 @@ def setupLogger(logger, level: int, filepath: str = None):
         )
         filehandler.setLevel(level)
         filehandler.setFormatter(CustomFormatter())
-        logger.addHandler(filehandler)
+        #logger.addHandler(filehandler)
+    
+        logging.root.addHandler(filehandler)
 
 
 class struct:
@@ -313,7 +325,8 @@ class ParallelRunner(object):
         for n in range(self.nprocs):
             self.processes.append(Process(
                 target = self.queueRelease, 
-                args = (self.queueInput, self.queueOutput)
+                args = (self.queueInput, self.queueOutput),
+                name = f"PP-{ n + 1 }"
             ))
         
         for proc in self.processes:

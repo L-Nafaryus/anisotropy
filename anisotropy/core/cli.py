@@ -67,11 +67,46 @@ class CliListOption(click.Option):
         else:
             return self._convert(ctx, value)
 
+        
+def verboseLevel(level: int):
+    return {
+        0: logging.ERROR,
+        1: logging.INFO,
+        2: logging.DEBUG
+    }.get(level, logging.ERROR)
+
 
 @click.group()
 def anisotropy():
     pass
 
+@anisotropy.command(
+    help = "Initialize new anisotropy project."
+)
+@click.option(
+    "-P", "--path", "path",
+    default = os.getcwd(),
+    help = "Specify directory to use (instead of cwd)"
+)
+@click.option(
+    "-v", "--verbose", "verbose",
+    count = True,
+    help = "Increase verbose level"
+)
+def init(path, verbose):
+    from anisotropy.core.config import DefaultConfig
+    from anisotropy.core.utils import setupLogger
+    
+    setupLogger(verboseLevel(verbose))
+    logger = logging.getLogger(__name__)
+    
+    config = DefaultConfig() 
+    filepath = os.path.abspath(os.path.join(path, "anisotropy.toml"))
+    
+    logger.info(f"Saving file at { filepath }")
+    config.dump(filepath)
+    
+    
 @anisotropy.command()
 @click.option(
     "-P", "--path", "path",
@@ -106,13 +141,24 @@ def anisotropy():
     cls = KeyValueOption,
     help = "Overwrite existing parameter (except control variables)"
 )
-def compute(path, configFile, nprocs, stage, overwrite, params):
+@click.option(
+    "-v", "--verbose", "verbose",
+    count = True,
+    help = "Increase verbose level"
+)
+def compute(path, configFile, nprocs, stage, overwrite, params, verbose):
     from anisotropy.core.runner import UltimateRunner
     from anisotropy.core.config import DefaultConfig
-
+    from anisotropy.core.utils import setupLogger
+    
+    setupLogger(verboseLevel(verbose))
+    logger = logging.getLogger(__name__)
+    
     config = DefaultConfig() 
 
     if configFile:
+        filepath = os.path.abspath(configFile)
+        logger.info(f"Loading file from { filepath }")
         config.load(configFile)
 
     config.update(

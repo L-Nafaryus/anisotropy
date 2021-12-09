@@ -3,40 +3,46 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 from datetime import datetime
+import os
 from os import path
-import logging
 
 from anisotropy.core.config import DefaultConfig
+
+import logging
 from anisotropy.core.utils import parallel, ParallelRunner, setupLogger
-from anisotropy.database import *
+
+logger = logging.getLogger(__name__)
+
+from anisotropy.database import database, tables
+
+T = tables
+
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
 from anisotropy.openfoam.presets import CreatePatchDict
 from anisotropy.solving.onephase import OnePhaseFlow
 
-logger = logging.getLogger("anisotropy")
-setupLogger(logger, logging.INFO)
 
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id = None, m_shape = None):
+    def __init__(self, config = None, exec_id = None, t_shape = None):
         
         self.config = config or DefaultConfig()
 
-        if not m_shape:
-            self.database = Database(self.config["database"])
-            self.database.setup()
+        self.type = "master" if not exec_id else "worker"
+        
+        if self.type == "master":
+            self.prepareDatabase()
 
-        if not exec_id:
-            with self.database.database:
-                self.exec_id = Execution(date = datetime.now())
+        if self.type == "master":
+            with self.database:
+                self.exec_id = T.Execution(date = datetime.now())
                 self.exec_id.save()
-            self.type = "master"
-            self.m_shape = None
+                
+            self.t_shape = None
 
         else:
             self.exec_id = exec_id
-            self.type = "worker"
-            self.m_shape = m_shape
+            self.t_shape = t_shape
 
         self.shape = None
         self.mesh = None
@@ -44,28 +50,34 @@ class UltimateRunner(object):
         
         self.queue = []
         
+    
+    def prepareDatabase(self):
+        # NOTE: separate function in cause of unpicklability of connections
+        self.database = database
+        self.database.setup(self.config["database"])
+        
     def fill(self):
         self.config.expand()
+        logger.info(f"Preparing queue: { len(self.config.cases) }")
         
         for case in self.config.cases:
-            with self.database.database:
-                m_shape = Shape(
+            with self.database:
+                t_shape = T.Shape(
                     exec_id = self.exec_id,
                     **case
                 )
-                m_shape.save()
+                t_shape.save()
             
             self.queue.append(UltimateRunner(
                 config = self.config,
                 exec_id = self.exec_id,
-                m_shape = m_shape
+                t_shape = t_shape
             ))
-        
-                
         
     def start(self, queue: list = None, nprocs: int = None):
         nprocs = nprocs or self.config["nprocs"]
         
+        logger.info(f"Starting subprocesses: { nprocs }")
         parallel = ParallelRunner(nprocs = nprocs)
         parallel.start()
         
@@ -73,54 +85,66 @@ class UltimateRunner(object):
             parallel.append(runner.pipeline, args = [self.config["stage"]])
         
         parallel.wait()
-        #parallel(nprocs, args, runners)
         # TODO: if runner done - remove from queue; results from parallel function
         
     def casepath(self):
-        
-        with self.database.database:
-            params = Shape.get(
-                Shape.exec_id == self.exec_id, 
-                Shape.shape_id == self.m_shape.shape_id
+        with self.database:
+            params = T.Shape.get(
+                T.Shape.exec_id == self.exec_id, 
+                T.Shape.shape_id == self.t_shape.shape_id
             )
 
-        return path.abspath(path.join(
-            self.config["build"], 
-            params.label, 
-            "direction-[{},{},{}]".format(*[ str(d) for d in params.direction ]), 
-            "theta-{}".format(params.theta)
-        ))
+        direction = "direction-[{},{},{}]".format(*[ str(d) for d in params.direction ])
+        theta = "theta-{}".format(params.theta)
+        dirpath = path.join(self.config["build"], params.label, direction, theta)
+        
+        return path.abspath(dirpath)
 
     def computeShape(self):
         if not self.type == "worker":
             return
-        self.database = Database(self.config["database"])
-        self.database.setup()
-        with self.database.database:
-            params = Shape.get(
-                Shape.exec_id == self.exec_id, 
-                Shape.shape_id == self.m_shape.shape_id
+        
+        with self.database:
+            params = T.Shape.get(
+                T.Shape.exec_id == self.exec_id, 
+                T.Shape.shape_id == self.t_shape.shape_id
             )
+            
+        logger.info("Computing shape for {} with direction = {} and theta = {}".format(params.label, params.direction, params.theta))
         filename = "shape.step"
 
-        logger.info([params.label, params.direction, params.theta])
         self.shape = {
             "simple": Simple,
             "bodyCentered": BodyCentered,
             "faceCentered": FaceCentered
-        }[params.label](params.direction)
+        }[params.label]
 
+        self.shape(params.direction)
         self.shape.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         self.shape.export(path.join(self.casepath(), filename))
         
-        with self.database.database:
+        with self.database:
             params.shapeStatus = "Done"
             params.save()
 
     def computeMesh(self):
-        params = self.config.cases[0]
+        if not self.type == "worker":
+            return
+        
+        with self.database:
+            params = (T.Mesh.select(T.Shape, T.Mesh)
+            .join(
+                T.Mesh, 
+                JOIN.INNER, 
+                on = (T.Mesh.shape_id == T.Shape.shape_id)
+            ).where(
+                T.Shape.exec_id == self.exec_id, 
+                T.Shape.shape_id == self.t_shape.shape_id
+            ))
+            
+        logger.info("Computing mesh for {} with direction = {} and theta = {}".format(params.label, params.direction, params.theta))
         filename = "mesh.mesh"
 
         self.mesh = Mesh(self.shape.shape)
@@ -185,6 +209,8 @@ class UltimateRunner(object):
 
 
     def pipeline(self, stage: str = None):
+        self.prepareDatabase()
+        
         stage = stage or self.config["stage"]
 
         if stage in ["shape", "all"]:

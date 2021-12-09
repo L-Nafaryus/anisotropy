@@ -34,7 +34,6 @@ class Database(SqliteDatabase):
                 #autoconnect = self.autoconnect_
             )
             
-        print(self.tables)
         self.connect()
         self.create_tables(self.tables)
         self.close()

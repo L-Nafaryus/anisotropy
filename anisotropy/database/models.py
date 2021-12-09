@@ -10,8 +10,8 @@ from peewee import (
     IntegerField, BooleanField, 
     TimeField, DateTimeField
 )
-from anisotropy.database.utils import JSONField
-from .database import Database
+from .utils import JSONField
+from .db import Database
 
 
 __database__ = Database()

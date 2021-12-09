@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import unittest
 
 unittest.TestLoader.sortTestMethodsUsing = None
@@ -28,7 +28,7 @@ class TestDatabase(unittest.TestCase):
                 self.assertTrue(table.table_exists())
 
     def tearDown(self):
-        os.removedirs(os.outputPath)
+        shutil.rmtree(self.outputPath)
 
 if __name__ == "__main__":
     unittest.main()
