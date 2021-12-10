@@ -220,74 +220,14 @@ def timer(func: FunctionType) -> (tuple, float):
 
 class Timer(object):
     def __init__(self):
-        self.start = time.monotonic()
+        self.update()
 
+    def update(self):
+        self.start = time.monotonic()
+        
     def elapsed(self):
         return time.monotonic() - self.start
 
-
-def queue(cmd, qin, qout, *args):
-    
-    while True:
-        # Get item from the queue
-        pos, var = qin.get()
-        
-        # Exit point 
-        if pos is None:
-            break
-
-        # Execute command
-        res = cmd(*var, *args)
-
-        # Put results to the queue
-        qout.put((pos, res))
-
-    return
-
-
-def parallel(np, var, cmd):
-
-    varcount = len(var)
-
-    processes = []
-    nprocs = np if np <= cpu_count() else cpu_count()
-    
-    qin = Queue(1)
-    qout = Queue()
-    
-    # Create processes
-    for n in range(nprocs):
-        pargs = [cmd, qin, qout]
-
-        p = Process(target = queue, args = tuple(pargs))
-
-        processes.append(p)
-    
-    # Start processes
-    for p in processes:
-        p.daemon = True
-        p.start()
-
-    # Fill queue
-    for n in range(varcount):
-        qin.put((n, var[n]))
-
-    for _ in range(nprocs):
-        qin.put((None, None))
-    
-    # Get results
-    results = [[] for n in range(varcount)]
-
-    for n in range(varcount):
-        index, res = qout.get()
-        
-        results[index] = res
-    
-    # Wait until each processor has finished
-    for p in processes:
-        p.join()
-
-    return results
 
 class ParallelRunner(object):
     def __init__(self, nprocs: int = 1, daemon: bool = True):
@@ -326,7 +266,7 @@ class ParallelRunner(object):
             self.processes.append(Process(
                 target = self.queueRelease, 
                 args = (self.queueInput, self.queueOutput),
-                name = f"PP-{ n + 1 }"
+                name = f"worker-{ n + 1 }"
             ))
         
         for proc in self.processes:
@@ -349,10 +289,6 @@ class ParallelRunner(object):
         self.__pos = -1
         
 
-def portIsFree(address, port):
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex((address, port)) == 0
 
 
 

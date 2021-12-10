@@ -31,12 +31,12 @@ class Shape(Model):
     shape_id = AutoField()
     exec_id = ForeignKeyField(Execution, backref = "executions")
 
-    shapeStatus = TextField(null = True, default = "Idle")
-    shapeCalculationTime = TimeField(null = True)   
+    shapeStatus = TextField(null = True, default = "idle")
+    shapeExecutionTime = TimeField(null = True)   
     
     label = TextField(null = True)
     direction = JSONField(null = True)
-    theta = FloatField(null = True)
+    alpha = FloatField(null = True)
 
     r0 = FloatField(null = True)
     L = FloatField(null = True)
@@ -61,8 +61,8 @@ class Mesh(Model):
     mesh_id = AutoField()
     shape_id = ForeignKeyField(Shape, backref = "shapes")
  
-    meshStatus = TextField(null = True, default = "Idle")
-    meshCalculationTime = TimeField(null = True)   
+    meshStatus = TextField(null = True, default = "idle")
+    meshExecutionTime = TimeField(null = True)   
     
     elements = IntegerField(null = True)
     edges = IntegerField(null = True)
@@ -83,8 +83,8 @@ class FlowOnephase(Model):
     flow_id = AutoField()
     mesh_id = ForeignKeyField(Mesh, backref = "meshes")
 
-    flowStatus = TextField(null = True, default = "Idle")
-    flowCalculationTime = TimeField(null = True)
+    flowStatus = TextField(null = True, default = "idle")
+    flowExecutionTime = TimeField(null = True)
 
     flowRate = FloatField(null = True)
     permeability = FloatField(null = True)

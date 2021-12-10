@@ -9,7 +9,7 @@ from os import path
 from anisotropy.core.config import DefaultConfig
 
 import logging
-from anisotropy.core.utils import parallel, ParallelRunner, setupLogger
+from anisotropy.core.utils import ParallelRunner, Timer
 
 logger = logging.getLogger(__name__)
 
@@ -21,29 +21,34 @@ from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
 from anisotropy.openfoam.presets import CreatePatchDict
 from anisotropy.solving.onephase import OnePhaseFlow
-
+from multiprocessing import current_process, parent_process
 
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id = None, t_shape = None):
-        
+    def __init__(self, config = None, t_exec = None, t_shape = None):
+        # Configuration file
         self.config = config or DefaultConfig()
 
-        self.type = "master" if not exec_id else "worker"
+        # Process recognition
+        typo = True if not t_exec else False
+        #if current_process().name == "MainProcess" and parent_process() == None:
+        #    current_process().name = "master"
         
-        if self.type == "master":
+        # Database preparation
+        if typo: #current_process().name == "master":
             self.prepareDatabase()
 
-        if self.type == "master":
+        if typo: #current_process().name == "master":
             with self.database:
-                self.exec_id = T.Execution(date = datetime.now())
-                self.exec_id.save()
+                self.t_exec = T.Execution(date = datetime.now())
+                self.t_exec.save()
                 
             self.t_shape = None
 
         else:
-            self.exec_id = exec_id
+            self.t_exec = t_exec
             self.t_shape = t_shape
 
+        # Parameters
         self.shape = None
         self.mesh = None
         self.flow = None
@@ -52,10 +57,19 @@ class UltimateRunner(object):
         
     
     def prepareDatabase(self):
-        # NOTE: separate function in cause of unpicklability of connections
+        # NOTE: separate function in cause of unpicklability of connections (use after process is started)
         self.database = database
         self.database.setup(self.config["database"])
         
+    def createRow(self):
+        # create a row in each table for the current case
+        with self.database:
+            
+            self.t_mesh = T.Mesh(t_exec = self.t_exec, shape_id = self.t_shape)
+            self.t_mesh.save()
+            self.t_flow = T.FlowOnephase(t_exec = self.t_exec, mesh_id = self.t_mesh)
+            self.t_flow.save()
+            
     def fill(self):
         self.config.expand()
         logger.info(f"Preparing queue: { len(self.config.cases) }")
@@ -63,16 +77,17 @@ class UltimateRunner(object):
         for case in self.config.cases:
             with self.database:
                 t_shape = T.Shape(
-                    exec_id = self.exec_id,
+                    exec_id = self.t_exec,
                     **case
                 )
                 t_shape.save()
             
             self.queue.append(UltimateRunner(
                 config = self.config,
-                exec_id = self.exec_id,
+                t_exec = self.t_exec,
                 t_shape = t_shape
             ))
+    
         
     def start(self, queue: list = None, nprocs: int = None):
         nprocs = nprocs or self.config["nprocs"]
@@ -90,68 +105,88 @@ class UltimateRunner(object):
     def casepath(self):
         with self.database:
             params = T.Shape.get(
-                T.Shape.exec_id == self.exec_id, 
+                T.Shape.exec_id == self.t_exec, 
                 T.Shape.shape_id == self.t_shape.shape_id
             )
 
         direction = "direction-[{},{},{}]".format(*[ str(d) for d in params.direction ])
-        theta = "theta-{}".format(params.theta)
-        dirpath = path.join(self.config["build"], params.label, direction, theta)
+        alpha = "alpha-{}".format(params.alpha)
+        dirpath = path.join(self.config["build"], params.label, direction, alpha)
         
         return path.abspath(dirpath)
 
     def computeShape(self):
-        if not self.type == "worker":
-            return
+        #if current_process().name == "master":
+        #    return
         
         with self.database:
             params = T.Shape.get(
-                T.Shape.exec_id == self.exec_id, 
+                T.Shape.exec_id == self.t_exec, 
                 T.Shape.shape_id == self.t_shape.shape_id
             )
             
-        logger.info("Computing shape for {} with direction = {} and theta = {}".format(params.label, params.direction, params.theta))
+        logger.info("Computing shape for {} with direction = {} and alpha = {}".format(params.label, params.direction, params.alpha))
+        out, err, returncode = "", "", 0
         filename = "shape.step"
-
-        self.shape = {
+        timer = Timer()
+        
+        shape = {
             "simple": Simple,
             "bodyCentered": BodyCentered,
             "faceCentered": FaceCentered
         }[params.label]
-
-        self.shape(params.direction)
+        
+        self.shape = shape(
+            direction = params.direction, 
+            alpha = params.alpha, 
+            r0 = params.r0, 
+            filletsEnabled = params.filletsEnabled
+        )
         self.shape.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
-        self.shape.export(path.join(self.casepath(), filename))
+        out, err, returncode = self.shape.export(path.join(self.casepath(), filename))
+        
+        if returncode == 0:
+            params.shapeStatus = "done"
+            params.shapeExecutionTime = timer.elapsed()
+        
+        else:
+            logger.error(err)
+            
+            params.shapeStatus = "failed"
+            params.shapeExecutionTime = timer.elapsed()
         
         with self.database:
-            params.shapeStatus = "Done"
             params.save()
 
     def computeMesh(self):
-        if not self.type == "worker":
-            return
+        #if not self.type == "worker":
+        #    return
         
         with self.database:
-            params = (T.Mesh.select(T.Shape, T.Mesh)
-            .join(
-                T.Mesh, 
-                JOIN.INNER, 
-                on = (T.Mesh.shape_id == T.Shape.shape_id)
-            ).where(
-                T.Shape.exec_id == self.exec_id, 
+            t_params = T.Shape.get(
+                T.Shape.exec_id == self.t_exec, 
                 T.Shape.shape_id == self.t_shape.shape_id
-            ))
+            )
+            params = T.Mesh.get(
+                T.Mesh.shape_id == self.t_shape.shape_id
+            )
             
-        logger.info("Computing mesh for {} with direction = {} and theta = {}".format(params.label, params.direction, params.theta))
+        logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(t_params.label, t_params.direction, t_params.alpha))
         filename = "mesh.mesh"
+        timer = Timer()
 
         self.mesh = Mesh(self.shape.shape)
         self.mesh.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         self.mesh.export(path.join(self.casepath(), filename))
+        
+        with self.database:
+            params.meshStatus = "done"
+            params.meshExecutionTime = timer.elapsed()
+            params.save()
         
     def computeFlow(self):
         params = self.config.cases[0]
@@ -210,20 +245,21 @@ class UltimateRunner(object):
 
     def pipeline(self, stage: str = None):
         self.prepareDatabase()
+        self.createRow()
         
         stage = stage or self.config["stage"]
-
+        
         if stage in ["shape", "all"]:
             self.computeShape()
 
-        elif stage in ["mesh", "all"]:
+        if stage in ["mesh", "all"]:
             self.computeMesh()
 
-        elif stage in ["flow", "all"]:
-            self.computeFlow()
+        #elif stage in ["flow", "all"]:
+        #    self.computeFlow()
 
-        elif stage in ["postProcess", "all"]:
-            self.postProcess()
+        #elif stage in ["postProcess", "all"]:
+        #    self.postProcess()
 
 
 

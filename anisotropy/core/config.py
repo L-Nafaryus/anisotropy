@@ -61,22 +61,22 @@ class Config(object):
     def expand(self):
         self.cases = []
 
-        #   Expand structures for each direction and each theta
+        #   Expand structures for each direction and each alpha
         for structure in self.content["structures"]:
             # ISSUE: precision error 0.06999999999999999
-            thetaA = round(arange(
-                structure["theta"][0], 
-                structure["theta"][1] + structure["thetaStep"], 
-                structure["thetaStep"]
+            alphaA = round(arange(
+                structure["alpha"][0], 
+                structure["alpha"][1] + structure["alphaStep"], 
+                structure["alphaStep"]
             ), 9)
             directionA = array(structure["directions"], dtype = float) 
 
             for direction in directionA:
-                for theta in thetaA:
+                for alpha in alphaA:
                     self.cases.append({
                         "label": structure["label"],
-                        "theta": theta,
-                        "thetaStep": structure["thetaStep"],
+                        "alpha": alpha,
+                        "alphaStep": structure["alphaStep"],
                         "direction": direction,
                         "r0": structure["r0"],
                         "filletsEnabled": structure["filletsEnabled"]
@@ -101,13 +101,13 @@ class DefaultConfig(Config):
         self.options = deepcopy(self.content["options"])
 
         labels = ["simple", "bodyCentered", "faceCentered"]
-        thetas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]
+        alphas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]
 
-        for label, theta in zip(labels, thetas):
+        for label, alpha in zip(labels, alphas):
             self.content["structures"].append({
                 "label": label,
-                "theta": theta,
-                "thetaStep": 0.01,
+                "alpha": alpha,
+                "alphaStep": 0.01,
                 "directions": [[1, 0, 0], [0, 0, 1], [1, 1, 1]],
                 "r0": 1,
                 "filletsEnabled": True

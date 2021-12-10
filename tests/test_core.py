@@ -43,10 +43,8 @@ class TestCore(unittest.TestCase):
 
         pathOld = os.path.abspath(".")
         config = self.core.DefaultConfig()
-        config.expand()
-        config.cases = [ config.cases[0] ]
 
-        runner = self.core.UltimateRunner(config = config, exec_id = True)
+        runner = self.core.UltimateRunner(config = config)
 
         runner.computeShape()
         self.assertTrue(path.isfile(path.join(runner.casepath(), "shape.step")))
