@@ -13,9 +13,7 @@ from anisotropy.core.utils import ParallelRunner, Timer
 
 logger = logging.getLogger(__name__)
 
-from anisotropy.database import database, tables
-
-T = tables
+from anisotropy.database import database, tables as T
 
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
@@ -125,8 +123,9 @@ class UltimateRunner(object):
                 T.Shape.shape_id == self.t_shape.shape_id
             )
             
-        logger.info("Computing shape for {} with direction = {} and alpha = {}".format(params.label, params.direction, params.alpha))
-        out, err, returncode = "", "", 0
+        logger.info("Computing shape for {} with direction = {} and alpha = {}".format(
+            params.label, params.direction, params.alpha
+        ))
         filename = "shape.step"
         timer = Timer()
         
@@ -142,22 +141,20 @@ class UltimateRunner(object):
             r0 = params.r0, 
             filletsEnabled = params.filletsEnabled
         )
-        self.shape.build()
+        out, err, returncode = self.shape.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         out, err, returncode = self.shape.export(path.join(self.casepath(), filename))
         
         if returncode == 0:
             params.shapeStatus = "done"
-            params.shapeExecutionTime = timer.elapsed()
-        
+
         else:
             logger.error(err)
-            
             params.shapeStatus = "failed"
-            params.shapeExecutionTime = timer.elapsed()
-        
+
         with self.database:
+            params.shapeExecutionTime = timer.elapsed()
             params.save()
 
     def computeMesh(self):
@@ -173,24 +170,52 @@ class UltimateRunner(object):
                 T.Mesh.shape_id == self.t_shape.shape_id
             )
             
-        logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(t_params.label, t_params.direction, t_params.alpha))
+        logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(
+            t_params.label, t_params.direction, t_params.alpha
+        ))
         filename = "mesh.mesh"
         timer = Timer()
 
+        # TODO: load from object or file
         self.mesh = Mesh(self.shape.shape)
-        self.mesh.build()
+        out, err, returncode = self.mesh.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
-        self.mesh.export(path.join(self.casepath(), filename))
-        
-        with self.database:
+        out, err, returncode = self.mesh.export(path.join(self.casepath(), filename))
+
+        if returncode == 0:
             params.meshStatus = "done"
+
+        else:
+            logger.error(err)
+            params.meshStatus = "failed"
+
+        with self.database:
             params.meshExecutionTime = timer.elapsed()
             params.save()
         
     def computeFlow(self):
-        params = self.config.cases[0]
-        flow = OnePhaseFlow(path = self.casepath())
+        # if not self.type == "worker":
+        #    return
+
+        with self.database:
+            t_params = T.Shape.get(
+                T.Shape.exec_id == self.t_exec,
+                T.Shape.shape_id == self.t_shape.shape_id
+            )
+            m_params = T.Mesh.get(
+                T.Mesh.shape_id == self.t_shape.shape_id
+            )
+            params = T.FlowOnephase.get(
+                T.FlowOnephase.mesh_id == self.t_mesh.mesh_id
+            )
+
+        logger.info("Computing flow for {} with direction = {} and alpha = {}".format(
+            t_params.label, t_params.direction, t_params.alpha
+        ))
+        timer = Timer()
+
+        self.flow = OnePhaseFlow(path = self.casepath())
 
         # initial 43 unnamed patches -> 
         # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
@@ -237,30 +262,42 @@ class UltimateRunner(object):
                 "patches": patches[name]
             })
 
-        flow.append(createPatchDict)
-        flow.write()
+        self.flow.append(createPatchDict)
+        out, err, returncode = self.flow.write()
         #   Build a flow
-        #flow.build()
+        out, err, returncode = self.flow.build()
 
+        if returncode == 0:
+            params.flowStatus = "done"
+
+        else:
+            logger.error(err)
+            params.flowStatus = "failed"
+
+        with self.database:
+            params.flowExecutionTime = timer.elapsed()
+            params.save()
 
     def pipeline(self, stage: str = None):
         self.prepareDatabase()
         self.createRow()
         
         stage = stage or self.config["stage"]
-        
-        if stage in ["shape", "all"]:
-            self.computeShape()
 
-        if stage in ["mesh", "all"]:
-            self.computeMesh()
+        try:
+            if stage in ["shape", "all"]:
+                self.computeShape()
 
-        #elif stage in ["flow", "all"]:
-        #    self.computeFlow()
+            if stage in ["mesh", "all"]:
+                self.computeMesh()
 
-        #elif stage in ["postProcess", "all"]:
-        #    self.postProcess()
+            #elif stage in ["flow", "all"]:
+            #    self.computeFlow()
 
+            #elif stage in ["postProcess", "all"]:
+            #    self.postProcess()
+        except:
+            pass
 
 
 
