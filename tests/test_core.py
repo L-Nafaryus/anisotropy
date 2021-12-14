@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from os import path
 import unittest
 
@@ -7,22 +7,19 @@ unittest.TestLoader.sortTestMethodsUsing = None
 class TestCore(unittest.TestCase):
     def setUp(self):
         try:
-            import netgen
-            NETGEN_MODULE = True 
+            import netgen.occ
+            _ = netgen.occ.Pnt(0, 0, 0)
 
-        except ImportError:
-            NETGEN_MODULE = False
-
-        if not NETGEN_MODULE:
-            self.skipTest("Missing Netgen.")
+        except Exception as e:
+            self.skipTest(e)
 
         else:
-            from anisotropy import core 
+            from anisotropy import core
 
             self.core = core
 
             self.currentPath = os.path.abspath(".")
-            self.outputPath = os.path.join(self.currentPath, "tests/test_core_output")
+            self.outputPath = os.path.join(os.path.dirname(__file__), "test_core_output")
             os.makedirs(self.outputPath, exist_ok = True)
 
     def test_config(self):
@@ -43,8 +40,9 @@ class TestCore(unittest.TestCase):
 
         pathOld = os.path.abspath(".")
         config = self.core.DefaultConfig()
-
+        # TODO: config for solo case
         runner = self.core.UltimateRunner(config = config)
+        runner.createRow()
 
         runner.computeShape()
         self.assertTrue(path.isfile(path.join(runner.casepath(), "shape.step")))
@@ -59,6 +57,7 @@ class TestCore(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(self.currentPath)
+        shutil.rmtree(self.outputPath)
 
 if __name__ == "__main__":
     unittest.main()

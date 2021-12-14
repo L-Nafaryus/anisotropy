@@ -1,5 +1,6 @@
 name: anisotropy 
 channels:
+  - l-nafaryus
   - local
   - conda-forge 
 dependencies:

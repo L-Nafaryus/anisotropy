@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import unittest
 
 unittest.TestLoader.sortTestMethodsUsing = None
@@ -6,21 +6,18 @@ unittest.TestLoader.sortTestMethodsUsing = None
 class TestShaping(unittest.TestCase):
     def setUp(self):
         try:
-            import netgen
-            NETGEN_MODULE = True 
+            import netgen.occ
+            _ = netgen.occ.Pnt(0, 0, 0)
 
-        except ImportError:
-            NETGEN_MODULE = False
-
-        if not NETGEN_MODULE:
-            self.skipTest("Missing Netgen.")
+        except Exception as e:
+            self.skipTest(e)
 
         else:
             from anisotropy import shaping
 
             self.shaping = shaping
 
-            self.outputPath = os.path.join(os.path.abspath("."), "tests/test_shaping_output")
+            self.outputPath = os.path.join(os.path.dirname(__file__), "test_shaping_output")
             os.makedirs(self.outputPath, exist_ok = True)
 
     def test_simple(self):
@@ -68,7 +65,7 @@ class TestShaping(unittest.TestCase):
         faceCentered111.export(os.path.join(self.outputPath, "faceCentered111.step"))
 
     def tearDown(self):
-        pass
+        shutil.rmtree(self.outputPath)
 
 if __name__ == "__main__":
     unittest.main()

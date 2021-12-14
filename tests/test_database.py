@@ -9,7 +9,7 @@ class TestDatabase(unittest.TestCase):
 
         self.database = database
 
-        self.outputPath = os.path.join(os.path.abspath("."), "tests/test_database_output")
+        self.outputPath = os.path.join(os.path.dirname(__file__), "test_database_output")
         os.makedirs(self.outputPath, exist_ok = True)
 
     def test_setup(self):
@@ -28,6 +28,7 @@ class TestDatabase(unittest.TestCase):
                 self.assertTrue(table.table_exists())
 
     def tearDown(self):
+        #pass
         shutil.rmtree(self.outputPath)
 
 if __name__ == "__main__":
