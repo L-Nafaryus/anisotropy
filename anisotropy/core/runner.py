@@ -18,7 +18,7 @@ from anisotropy.database import database, tables as T
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
 from anisotropy.openfoam.presets import CreatePatchDict
-from anisotropy.solving.onephase import OnePhaseFlow
+from anisotropy.solving import OnePhaseFlow
 from multiprocessing import current_process, parent_process
 
 class UltimateRunner(object):
@@ -141,7 +141,8 @@ class UltimateRunner(object):
             r0 = params.r0, 
             filletsEnabled = params.filletsEnabled
         )
-        out, err, returncode = self.shape.build()
+        #out, err, returncode = self.shape.build()
+        self.shape.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         out, err, returncode = self.shape.export(path.join(self.casepath(), filename))
@@ -178,7 +179,8 @@ class UltimateRunner(object):
 
         # TODO: load from object or file
         self.mesh = Mesh(self.shape.shape)
-        out, err, returncode = self.mesh.build()
+        #out, err, returncode = self.mesh.build()
+        self.mesh.build()
 
         os.makedirs(self.casepath(), exist_ok = True)
         out, err, returncode = self.mesh.export(path.join(self.casepath(), filename))
@@ -263,15 +265,20 @@ class UltimateRunner(object):
             })
 
         self.flow.append(createPatchDict)
-        out, err, returncode = self.flow.write()
+        self.flow.write()
         #   Build a flow
-        out, err, returncode = self.flow.build()
+        try:
+            out, err, returncode = self.flow.build()
+
+        except Exception as e:
+            out, err, returncode = "", e, 1
+            logger.error(e, exc_info = True)
 
         if returncode == 0:
             params.flowStatus = "done"
 
         else:
-            logger.error(err)
+            #logger.error(err)
             params.flowStatus = "failed"
 
         with self.database:
@@ -284,20 +291,23 @@ class UltimateRunner(object):
         
         stage = stage or self.config["stage"]
 
-        try:
-            if stage in ["shape", "all"]:
-                self.computeShape()
+        # TODO: fix flow
+        # TODO: change case path to execDATE/label-direction-theta/*
+        # TODO: fix nprocs
+        #try:
+        if stage in ["shape", "all"]:
+            self.computeShape()
 
-            if stage in ["mesh", "all"]:
-                self.computeMesh()
+        if stage in ["mesh", "all"]:
+            self.computeMesh()
 
-            #elif stage in ["flow", "all"]:
-            #    self.computeFlow()
+        if stage in ["flow", "all"]:
+            self.computeFlow()
 
             #elif stage in ["postProcess", "all"]:
             #    self.postProcess()
-        except:
-            pass
+        #except Exception as e:
+        #    logger.error(e)
 
 
 

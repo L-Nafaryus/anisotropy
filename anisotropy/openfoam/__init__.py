@@ -3,35 +3,15 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 
-from .meshConversion import ideasUnvToFoam, netgenNeutralToFoam
-from .meshManipulation import createPatch, transformPoints, checkMesh, renumberMesh
-from .miscellaneous import foamDictionary
-from .parallelProcessing import decomposePar
-from .solvers import potentialFoam, simpleFoam
-from .utils import version, foamClean, uniform
+#from .meshConversion import ideasUnvToFoam, netgenNeutralToFoam
+#from .meshManipulation import createPatch, transformPoints, checkMesh, renumberMesh
+#from .miscellaneous import foamDictionary
+#from .parallelProcessing import decomposePar
+#from .solvers import potentialFoam, simpleFoam
+from .utils import version, uniform #, foamClean
+from .foamfile import FoamFile
+from .foamcase import FoamCase
+from .runner import FoamRunner
 
-__all__ = [
-    # meshConversion
-    "ideasUnvToFoam",
-
-    # meshManipulation
-    "createPatch",
-    "transformPoints",
-    "checkMesh",
-    "renumberMesh",
-
-    # miscellaneous
-    "foamDictionary",
-
-    # parallelProcessing
-    "decomposePar",
-
-    # solvers
-    "potentialFoam",
-    "simpleFoam",
-
-    # utils
-    "version",
-    "foamClean",
-    "uniform"
-]
+from . import presets
+from . import runnerPresets

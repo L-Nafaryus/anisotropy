@@ -2,19 +2,18 @@
 # This file is part of anisotropy.
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
-import anisotropy.openfoam as openfoam
-from anisotropy.openfoam.presets import (
-    ControlDict, FvSchemes, FvSolution, 
-    TransportProperties, TurbulenceProperties, CreatePatchDict,
-    P, U
-)
-from anisotropy.openfoam.foamcase import FoamCase
+import anisotropy.openfoam.presets as F
+import anisotropy.openfoam.runnerPresets as R
+from anisotropy.openfoam import FoamCase, uniform
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OnePhaseFlow(FoamCase):
     def __init__(self, path: str = None):
         FoamCase.__init__(self, path = path)
 
-        controlDict = ControlDict()
+        controlDict = F.ControlDict()
         controlDict.update(
             startFrom = "latestTime",
             endTime = 5000,
@@ -22,9 +21,9 @@ class OnePhaseFlow(FoamCase):
             runTimeModifiable = "true"
         )
 
-        fvSchemes = FvSchemes()
+        fvSchemes = F.FvSchemes()
         
-        fvSolution = FvSolution()
+        fvSolution = F.FvSolution()
         fvSolution["solvers"]["U"].update(
             nSweeps = 2,
             tolerance = 1e-08
@@ -56,20 +55,20 @@ class OnePhaseFlow(FoamCase):
         )
         fvSolution["relaxationFactors"]["equations"]["U"] = 0.5
 
-        transportProperties = TransportProperties()
+        transportProperties = F.TransportProperties()
         transportProperties.update(
             nu = 1e-06
         )
         
-        turbulenceProperties = TurbulenceProperties()
+        turbulenceProperties = F.TurbulenceProperties()
         turbulenceProperties.content = dict(
             simulationType = "laminar"
         )
 
         boundaries = [ "inlet", "outlet", "symetry", "wall"]
-        p = P()
+        p = F.P()
         p["boundaryField"] = {}
-        u = U()
+        u = F.U()
         u["boundaryField"] = {}
 
         # ISSUE: add proxy from geometry direction to outlet boundaryField.
@@ -77,17 +76,17 @@ class OnePhaseFlow(FoamCase):
             if boundary == "inlet":
                 p["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = "uniform 1e-3"
+                    value = uniform(1e-3)
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = "uniform (0 0 -6e-5)" # * direction
+                    value = uniform([0, 0, -6e-5]) # * direction
                 )
 
             elif boundary == "outlet":
                 p["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = "uniform 0"
+                    value = uniform(0)
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "zeroGradient",
@@ -99,7 +98,7 @@ class OnePhaseFlow(FoamCase):
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = "uniform (0 0 0)"
+                    value = uniform([0, 0, 0])
                 ) 
 
         self.extend([
@@ -112,24 +111,28 @@ class OnePhaseFlow(FoamCase):
             u
         ])
 
-    def build(self):
+    def build(self) -> tuple[str, str, int]:
         # TODO: configure working directory (FoamCase)
         with self:
             self.write()
 
-            openfoam.netgenNeutralToFoam("mesh.mesh")
-            openfoam.createPatch()
-            openfoam.checkMesh()
-            openfoam.transformPoints((1e-5, 1e-5, 1e-5))
-            openfoam.renumberMesh()
-            openfoam.potentialFoam()
-            
+            R.netgenNeutralToFoam("mesh.mesh")
+            R.createPatch()
+            R.checkMesh()
+            R.transformPoints({
+                "scale": [1e-5, 1e-5, 1e-5]
+            })
+            R.renumberMesh()
+            R.potentialFoam()
+
             self.read()
 
             self.U["boundaryField"]["outlet"] = dict(
                 type = "pressureInletVelocity",
-                value = "uniform (0 0 0)" # * direction
+                value = uniform([0, 0, 0])  # * direction
             )
             self.write()
-            
-            openfoam.simpleFoam()
+
+            R.simpleFoam()
+
+        return "", "", 0
