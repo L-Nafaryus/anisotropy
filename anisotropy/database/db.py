@@ -38,10 +38,9 @@ class Database(SqliteDatabase):
             #autoconnect = self.autoconnect_
         )
         models.__database_proxy__.initialize(self)
-            
-        self.connect()
-        self.create_tables(self.tables)
-        self.close()
+
+        with self:
+            self.create_tables(self.tables)
 
     def getExecution(self, idn):
         query = models.Execution.select().where(models.Execution.exec_id == idn)
@@ -53,10 +52,9 @@ class Database(SqliteDatabase):
 
     def getLatest(self):
         query = models.Execution.select()
-        #self.connect()
+
         with self:
             table = query[-1] if query.exists() else None
-        #self.close()
 
         return table
 
@@ -67,15 +65,15 @@ class Database(SqliteDatabase):
             .select()
             .join(models.Execution, JOIN.LEFT_OUTER)
             .where(
-                models.Execution.exec_id == execution.exec_id,
+                models.Execution.exec_id == execution,
                 models.Shape.label == label,
                 models.Shape.direction == direction,
                 models.Shape.alpha == alpha
             )
         )
-        self.connect()
-        table = query.get() if query.exists() else None
-        self.close()
+
+        with self:
+            table = query.get() if query.exists() else None
 
         return table
 
@@ -87,35 +85,35 @@ class Database(SqliteDatabase):
             .join(models.Shape, JOIN.LEFT_OUTER)
             .join(models.Execution, JOIN.LEFT_OUTER)
             .where(
-                models.Execution.exec_id == execution.exec_id,
+                models.Execution.exec_id == execution,
                 models.Shape.label == label,
                 models.Shape.direction == direction,
                 models.Shape.alpha == alpha
             )
         )
-        self.connect()
-        table = query.get() if query.exists() else None
-        self.close()
+
+        with self:
+            table = query.get() if query.exists() else None
 
         return table
 
     def getFlowOnephase(self, label, direction, alpha, execution = None):
         execution = execution or self.getLatest()
         query = (
-            models.Mesh
+            models.FlowOnephase
             .select()
             .join(models.Mesh, JOIN.LEFT_OUTER)
             .join(models.Shape, JOIN.LEFT_OUTER)
             .join(models.Execution, JOIN.LEFT_OUTER)
             .where(
-                models.Execution.exec_id == execution.exec_id,
+                models.Execution.exec_id == execution,
                 models.Shape.label == label,
                 models.Shape.direction == direction,
                 models.Shape.alpha == alpha
             )
         )
-        self.connect()
-        table = query.get() if query.exists() else None
-        self.close()
+
+        with self:
+            table = query.get() if query.exists() else None
 
         return table

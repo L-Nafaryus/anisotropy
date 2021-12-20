@@ -11,7 +11,8 @@ from numpy import arange, array, round
 class Config(object):
     def __init__(self):
         self.content = {}
-        self.options = {},
+        self.options = {}
+        self.params = {}
         self.cases = None
 
     def __getitem__(self, key):
@@ -54,9 +55,16 @@ class Config(object):
         with open(path, "w") as io:
             toml.dump(self.content, io, encoder = toml.TomlNumpyEncoder())
 
+    def minimize(self):
+        self.content = None
+        self.cases = None
+
     def purge(self):
-        self.content = {}
-        self.cases = {}
+        self.minimize()
+        self.params = None
+
+    def copy(self):
+        return deepcopy(self)
 
     def expand(self):
         self.cases = []
@@ -82,6 +90,12 @@ class Config(object):
                         "filletsEnabled": structure["filletsEnabled"]
                     })
 
+    def chooseParams(self, idn: int):
+        if len(self.cases) > 0:
+            self.params = self.cases[idn]
+
+        else:
+            raise IndexError("list index out of range in cause of zero length of 'cases'")
 
 class DefaultConfig(Config):
     def __init__(self):

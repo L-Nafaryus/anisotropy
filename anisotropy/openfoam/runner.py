@@ -52,7 +52,7 @@ class FoamRunner(object):
             self.returncode = proc.returncode
 
         except FileNotFoundError as err:
-            self.error = err
+            self.error = err.args[1]
             self.returncode = 2
 
             logger.error(self.error, exc_info = True)
@@ -68,6 +68,6 @@ class FoamRunner(object):
                 io.write(f"Exit code { self.returncode }")
 
         if not self.returncode == 0 and self.exit:
-            raise Exception(f"Subprocess failed: { proc.args }")
+            raise Exception(f"Subprocess failed: { self.error }")
 
         return self.output, self.error, self.returncode

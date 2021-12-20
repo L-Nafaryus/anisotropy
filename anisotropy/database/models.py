@@ -11,7 +11,7 @@ from peewee import (
     TimeField, DateTimeField, Proxy
 )
 from .utils import JSONField
-
+#from playhouse.sqlite_ext import JSONField
 __database_proxy__ = Proxy()
 
 class Execution(Model):

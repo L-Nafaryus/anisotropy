@@ -161,6 +161,9 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose):
         logger.info(f"Loading file from { filepath }")
         config.load(configFile)
 
+    else:
+        logger.info("Using default configuration")
+
     config.update(
         nprocs = nprocs,
         stage = stage,
