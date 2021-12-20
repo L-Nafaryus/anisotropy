@@ -26,6 +26,9 @@ class ListField(TextField):
 
 
 class JSONField(TextField):
+    # TODO: fix double quotes when use __eq__ in 'where' method
+    field_type = "TEXT"
+
     def db_value(self, value):
         if isinstance(value, ndarray):
             formatted = list(value)

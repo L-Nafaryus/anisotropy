@@ -13,7 +13,7 @@ from anisotropy.core.utils import ParallelRunner, Timer
 
 logger = logging.getLogger(__name__)
 
-from anisotropy.database import database, tables as T
+from anisotropy.database import Database, tables as T
 
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered
 from anisotropy.meshing import Mesh
@@ -56,9 +56,8 @@ class UltimateRunner(object):
     
     def prepareDatabase(self):
         # NOTE: separate function in cause of unpicklability of connections (use after process is started)
-        self.database = database
-        self.database.setup(self.config["database"])
-        
+        self.database = Database(path = self.config["database"])
+
     def createRow(self):
         # create a row in each table for the current case
         with self.database:

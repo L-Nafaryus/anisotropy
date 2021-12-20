@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .models import __database__, __models__
-
-database = __database__
+from .models import __models__
+from .db import Database
 
 class tables:
     pass

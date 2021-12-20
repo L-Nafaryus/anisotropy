@@ -8,13 +8,11 @@ from peewee import (
     AutoField, ForeignKeyField, 
     TextField, FloatField, 
     IntegerField, BooleanField, 
-    TimeField, DateTimeField
+    TimeField, DateTimeField, Proxy
 )
 from .utils import JSONField
-from .db import Database
 
-
-__database__ = Database()
+__database_proxy__ = Proxy()
 
 class Execution(Model):
     exec_id = AutoField()
@@ -23,13 +21,13 @@ class Execution(Model):
     executionTime = TimeField(null = True)
 
     class Meta:
-        database = __database__ 
+        database = __database_proxy__
         table_name = "executions"
 
 
 class Shape(Model):
     shape_id = AutoField()
-    exec_id = ForeignKeyField(Execution, backref = "executions")
+    exec_id = ForeignKeyField(Execution, backref = "executions", on_delete = "CASCADE")
 
     shapeStatus = TextField(null = True, default = "idle")
     shapeExecutionTime = TimeField(null = True)   
@@ -52,14 +50,14 @@ class Shape(Model):
     porosityRounded = FloatField(null = True)
 
     class Meta:
-        database = __database__ 
+        database = __database_proxy__
         table_name = "shapes"
         #depends_on = Execution
 
 
 class Mesh(Model):
     mesh_id = AutoField()
-    shape_id = ForeignKeyField(Shape, backref = "shapes")
+    shape_id = ForeignKeyField(Shape, backref = "shapes", on_delete = "CASCADE")
  
     meshStatus = TextField(null = True, default = "idle")
     meshExecutionTime = TimeField(null = True)   
@@ -74,14 +72,14 @@ class Mesh(Model):
 
 
     class Meta:
-        database = __database__ 
+        database = __database_proxy__
         table_name = "meshes"
         #depends_on = Execution
 
 
 class FlowOnephase(Model):
     flow_id = AutoField()
-    mesh_id = ForeignKeyField(Mesh, backref = "meshes")
+    mesh_id = ForeignKeyField(Mesh, backref = "meshes", on_delete = "CASCADE")
 
     flowStatus = TextField(null = True, default = "idle")
     flowExecutionTime = TimeField(null = True)
@@ -90,7 +88,7 @@ class FlowOnephase(Model):
     permeability = FloatField(null = True)
 
     class Meta:
-        database = __database__ 
+        database = __database_proxy__
         table_name = "flows"
         #depends_on = Execution
 
