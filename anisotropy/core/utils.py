@@ -74,12 +74,11 @@ def setupLogger(level: int, filepath: str = None):
             os.makedirs(filepath, exist_ok = True)
 
         filehandler = logging.FileHandler(
-            os.path.join(filepath, "{}.log".format(logger.name))
+            os.path.join(filepath, "{}.log".format("anisotropy"))
         )
-        filehandler.setLevel(level)
+        filehandler.setLevel(logging.INFO)
         filehandler.setFormatter(CustomFormatter())
-        #logger.addHandler(filehandler)
-    
+
         logging.root.addHandler(filehandler)
 
 
@@ -182,21 +181,6 @@ def expand(source, sep = "_"):
                     cur[kk] = v
     return res
 
-#if os.path.exists(env["CONFIG"]):
-#    config = toml.load(env["CONFIG"])
-
-#    for restricted in ["ROOT", "BUILD", "LOG", "CONFIG"]:
-#        if config.get(restricted):
-#            config.pop(restricted)
-
-    # TODO: not working if custom config empty and etc
-#    for m, structure in enumerate(config["structures"]):
-#        for n, estructure in enumerate(env["structures"]):
-#            if estructure["name"] == structure["name"]:
-#                deepupdate(env["structures"][n], config["structures"][m])
-
-#    config.pop("structures")
-#    deepupdate(env, config)
 
 def timer(func: FunctionType) -> (tuple, float):
     """(Decorator) Returns output of inner function and execution time

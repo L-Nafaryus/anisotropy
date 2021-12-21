@@ -60,7 +60,6 @@ class Mesh(object):
         ext = os.path.splitext(filename)[1][1: ]
         
         try:
-            # TODO: write correct boundary names
             if ext == "vol":
                 self.mesh.Save(filename)
             

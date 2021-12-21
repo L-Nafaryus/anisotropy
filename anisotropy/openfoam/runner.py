@@ -48,24 +48,29 @@ class FoamRunner(object):
 
             logger.debug(f"Starting subprocess: { proc.args }")
 
+            if self.logpath:
+                with proc, open(self.logpath, "w") as io:
+                    while True:
+                        output = proc.stdout.read(1)
+
+                        if output == "" and proc.poll() is not None:
+                            break
+
+                        if not output == "":
+                            io.write(output)
+
             self.output, self.error = proc.communicate()
             self.returncode = proc.returncode
+
+            if self.logpath and self.error:
+                with open(self.logpath, "a") as io:
+                    io.write(self.error)
 
         except FileNotFoundError as err:
             self.error = err.args[1]
             self.returncode = 2
 
             logger.error(self.error, exc_info = True)
-
-        if self.logpath:
-            with open(self.logpath, "w") as io:
-                if self.output:
-                    io.write(self.output)
-
-                if self.error:
-                    io.write(self.error)
-
-                io.write(f"Exit code { self.returncode }")
 
         if not self.returncode == 0 and self.exit:
             raise Exception(f"Subprocess failed: { self.error }")

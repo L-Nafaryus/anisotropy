@@ -43,6 +43,14 @@ class Shape(object):
         
         return out, err, returncode
 
+    def load(self, filename: str):
+        ext = os.path.splitext(filename)[1][1:]
+
+        if ext in ["step", "iges", "brep"]:
+            self.shape = OCCGeometry(filename).shape
+
+        else:
+            raise NotImplementedError(f"{ext} is not supported")
 
     def normal(self, face: FACE) -> numpy.array:
         """

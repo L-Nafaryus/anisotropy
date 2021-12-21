@@ -9,29 +9,39 @@ from .runner import FoamRunner
 #   meshConversion
 ##
 
-def netgenNeutralToFoam(meshfile: str, **kwargs) -> tuple[str, str, int]:
+def netgenNeutralToFoam(meshfile: str, run: bool = True, **kwargs) -> FoamRunner:
     command = "netgenNeutralToFoam"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
     args = [ meshfile ]
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
-def ideasUnvToFoam(meshfile: str, **kwargs) -> tuple[str, str, int]:
+def ideasUnvToFoam(meshfile: str, run: bool = True, **kwargs) -> FoamRunner:
     command = "ideasUnvToFoam"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
     args = [ meshfile ]
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
 ###
 #   meshManipulation
 ##
 
-def createPatch(dictfile: str = None, overwrite: bool = True, **kwargs) -> tuple[str, str, int]:
+def createPatch(dictfile: str = None, overwrite: bool = True, run: bool = True, **kwargs) -> FoamRunner:
     command = "createPatch"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
@@ -43,10 +53,15 @@ def createPatch(dictfile: str = None, overwrite: bool = True, **kwargs) -> tuple
     if overwrite:
         args.append("-overwrite")
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
-def transformPoints(transformations: dict, **kwargs) -> tuple[str, str, int]:
+def transformPoints(transformations: dict, run: bool = True, **kwargs) -> FoamRunner:
     command = "transformPoints"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
@@ -64,10 +79,15 @@ def transformPoints(transformations: dict, **kwargs) -> tuple[str, str, int]:
 
     args.append(", ".join(arg))
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
-def checkMesh(allGeometry: bool = True, allTopology: bool = True, **kwargs) -> tuple[str, str, int]:
+def checkMesh(allGeometry: bool = True, allTopology: bool = True, run: bool = True, **kwargs) -> FoamRunner:
     command = "checkMesh"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
@@ -79,10 +99,15 @@ def checkMesh(allGeometry: bool = True, allTopology: bool = True, **kwargs) -> t
     if allTopology:
         args.append("-allTopology")
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
-def renumberMesh(overwrite: bool = True, **kwargs) -> tuple[str, str, int]:
+def renumberMesh(overwrite: bool = True, run: bool = True, **kwargs) -> FoamRunner:
     command = "renumberMesh"
     kwargs.update(logpath = kwargs.get("logpath", f"{ command }.log"))
     kwargs.update(exit = True)
@@ -91,7 +116,12 @@ def renumberMesh(overwrite: bool = True, **kwargs) -> tuple[str, str, int]:
     if overwrite:
         args.append("-overwrite")
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
 ###
@@ -105,20 +135,25 @@ def renumberMesh(overwrite: bool = True, **kwargs) -> tuple[str, str, int]:
 #   parallelProcessing
 ##
 
-def decomposePar(**kwargs) -> tuple[str, str, int]:
+def decomposePar(run: bool = True, **kwargs) -> FoamRunner:
     command = "decomposePar"
     kwargs.update(logpath = kwargs.get("logpath", f"{command}.log"))
     kwargs.update(exit = True)
     args = []
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
 ###
 #   solvers
 ##
 
-def potentialFoam(parallel: bool = False, **kwargs) -> tuple[str, str, int]:
+def potentialFoam(parallel: bool = False, run: bool = True, **kwargs) -> FoamRunner:
     command = "potentialFoam"
     kwargs.update(logpath = kwargs.get("logpath", f"{command}.log"))
     kwargs.update(exit = True)
@@ -128,10 +163,15 @@ def potentialFoam(parallel: bool = False, **kwargs) -> tuple[str, str, int]:
         args.append("-parallel")
         kwargs.update(mpi = True)
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
 
 
-def simpleFoam(parallel: bool = False, **kwargs) -> tuple[str, str, int]:
+def simpleFoam(parallel: bool = False, run: bool = True, **kwargs) -> FoamRunner:
     command = "simpleFoam"
     kwargs.update(logpath = kwargs.get("logpath", f"{command}.log"))
     kwargs.update(exit = True)
@@ -141,4 +181,32 @@ def simpleFoam(parallel: bool = False, **kwargs) -> tuple[str, str, int]:
         args.append("-parallel")
         kwargs.update(mpi = True)
 
-    return FoamRunner(command, args = args, **kwargs).run()
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner
+
+###
+#   postProcessing
+##
+
+def postProcess(func: str = None, latestTime: bool = False, run: bool = True, **kwargs) -> FoamRunner:
+    command = "postProcess"
+    kwargs.update(logpath=kwargs.get("logpath", f"{command}.log"))
+    kwargs.update(exit = True)
+    args = []
+
+    if func:
+        args.extend(["-func", func])
+
+    if latestTime:
+        args.append("-latestTime")
+
+    runner = FoamRunner(command, args = args, **kwargs)
+
+    if run:
+        runner.run()
+
+    return runner

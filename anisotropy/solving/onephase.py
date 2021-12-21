@@ -5,12 +5,13 @@
 import anisotropy.openfoam.presets as F
 import anisotropy.openfoam.runnerPresets as R
 from anisotropy.openfoam import FoamCase, uniform
+from numpy import array
 import logging
 
 logger = logging.getLogger(__name__)
 
 class OnePhaseFlow(FoamCase):
-    def __init__(self, path: str = None):
+    def __init__(self, direction, path: str = None):
         FoamCase.__init__(self, path = path)
 
         controlDict = F.ControlDict()
@@ -80,7 +81,7 @@ class OnePhaseFlow(FoamCase):
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform([0, 0, -6e-5]) # * direction
+                    value = uniform(array(direction) * -6e-5) # uniform([0, 0, -6e-5])
                 )
 
             elif boundary == "outlet":
@@ -111,6 +112,55 @@ class OnePhaseFlow(FoamCase):
             u
         ])
 
+    @staticmethod
+    def facesToPatches(faces: tuple[int, str]):
+        # initial 43 unnamed patches ->
+        # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
+        # 4 inGroups (inlet, outlet, wall, symetry)
+
+        createPatchDict = F.CreatePatchDict()
+        createPatchDict["patches"] = []
+        patches = {}
+
+        for n, name in faces:
+            #   shifted index
+            n += 1
+
+            if patches.get(name):
+                patches[name].append(f"patch{n}")
+
+            else:
+                patches[name] = [f"patch{n}"]
+
+        for name in patches.keys():
+            if name == "inlet":
+                patchGroup = "inlet"
+                patchType = "patch"
+
+            elif name == "outlet":
+                patchGroup = "outlet"
+                patchType = "patch"
+
+            elif name == "wall":
+                patchGroup = "wall"
+                patchType = "wall"
+
+            else:
+                patchGroup = "symetry"
+                patchType = "symetryPlane"
+
+            createPatchDict["patches"].append({
+                "name": name,
+                "patchInfo": {
+                    "type": patchType,
+                    "inGroups": [patchGroup]
+                },
+                "constructFrom": "patches",
+                "patches": patches[name]
+            })
+
+        return createPatchDict
+
     def build(self) -> tuple[str, str, int]:
         # TODO: configure working directory (FoamCase)
         with self:
@@ -129,7 +179,7 @@ class OnePhaseFlow(FoamCase):
 
             self.U["boundaryField"]["outlet"] = dict(
                 type = "pressureInletVelocity",
-                value = uniform([0, 0, 0])  # * direction
+                value = uniform([0, 0, 0])
             )
             self.write()
 

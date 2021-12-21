@@ -4,6 +4,7 @@
 
 import os
 import shutil
+from numpy import ndarray
 #from .application import application
 
 def version() -> str:
@@ -30,7 +31,7 @@ def foamCleanCustom(case: str = None):
 #    application("foamCleanTutorials", useMPI = False, case = case, stderr = True)
 
 def uniform(value) -> str:
-    if type(value) == list or type(value) == tuple:
+    if type(value) == list or type(value) == tuple or type(value) == ndarray:
         return f"uniform ({ value[0] } { value[1] } { value[2] })"
 
     elif type(value) == int or type(value) == float:
@@ -38,3 +39,51 @@ def uniform(value) -> str:
 
     else:
         return ""
+
+def datReader(filename: str):
+    header = []
+    content = []
+
+    with open(filename, "r") as io:
+        for line in io.readlines():
+            if line.startswith("#"):
+                header.append(line)
+
+            else:
+                content.append(line)
+
+    columns = []
+
+    if header[-1].find(":") < 0:
+        for column in header[-1].replace("#", "").split("\t"):
+            columns.append(column.strip())
+
+        header.pop(-1)
+
+    else:
+        for column in range(len(content[0].split("\t"))):
+            columns.append(str(column))
+
+    output = {}
+
+    for row in header:
+        key, value = row.replace("#", "").split(":")
+
+        try:
+            value = float(value.strip())
+
+        except:
+            value = value.strip()
+
+        output[key.strip()] = value
+
+    for column in columns:
+        output[column] = []
+
+    for row in content:
+        values = row.split("\t")
+
+        for column, value in zip(columns, values):
+            output[column].append(float(value))
+
+    return output

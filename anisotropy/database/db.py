@@ -44,9 +44,9 @@ class Database(SqliteDatabase):
 
     def getExecution(self, idn):
         query = models.Execution.select().where(models.Execution.exec_id == idn)
-        self.connect()
-        table = query.get() if query.exists() else None
-        self.close()
+
+        with self:
+            table = query.get() if query.exists() else None
 
         return table
 
@@ -58,7 +58,7 @@ class Database(SqliteDatabase):
 
         return table
 
-    def getShape(self, label, direction, alpha, execution = None):
+    def getShape(self, label = None, direction = None, alpha = None, execution = None, **kwargs):
         execution = execution or self.getLatest()
         query = (
             models.Shape
@@ -77,7 +77,7 @@ class Database(SqliteDatabase):
 
         return table
 
-    def getMesh(self, label, direction, alpha, execution = None):
+    def getMesh(self, label = None, direction = None, alpha = None, execution = None, **kwargs):
         execution = execution or self.getLatest()
         query = (
             models.Mesh
@@ -97,7 +97,7 @@ class Database(SqliteDatabase):
 
         return table
 
-    def getFlowOnephase(self, label, direction, alpha, execution = None):
+    def getFlowOnephase(self, label = None, direction = None, alpha = None, execution = None, **kwargs):
         execution = execution or self.getLatest()
         query = (
             models.FlowOnephase

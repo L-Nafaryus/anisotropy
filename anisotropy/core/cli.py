@@ -124,7 +124,7 @@ def init(path, verbose):
 )
 @click.option(
     "-s", "--stage", "stage", 
-    type = click.Choice(["all", "shape", "mesh", "flow", "postProcessing"]), 
+    type = click.Choice(["all", "shape", "mesh", "flow", "postProcess"]),
     default = "all",
     help = "Current computation stage"
 )
@@ -146,7 +146,10 @@ def init(path, verbose):
     count = True,
     help = "Increase verbose level"
 )
-def compute(path, configFile, nprocs, stage, overwrite, params, verbose):
+@click.option(
+    "--exec-id", "execution"
+)
+def compute(path, configFile, nprocs, stage, overwrite, params, verbose, execution):
     from anisotropy.core.runner import UltimateRunner
     from anisotropy.core.config import DefaultConfig
     from anisotropy.core.utils import setupLogger
@@ -170,7 +173,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose):
         overwrite = overwrite 
     )
     
-    runner = UltimateRunner(config = config)
+    runner = UltimateRunner(config = config, exec_id = execution)
     runner.fill()
     runner.start()
 
