@@ -84,6 +84,14 @@ class FlowOnephase(Model):
     flowStatus = TextField(null = True, default = "idle")
     flowExecutionTime = TimeField(null = True)
 
+    pressureInlet = FloatField(null = True)
+    pressureOutlet = FloatField(null = True)
+    pressureInternal = FloatField(null = True)
+    velocityInlet = FloatField(null = True)
+    velocityOutlet = FloatField(null = True)
+    velocityInternal = FloatField(null = True)
+    viscosity = FloatField(null = True)
+    density = FloatField(null = True)
     flowRate = FloatField(null = True)
     permeability = FloatField(null = True)
 

@@ -146,6 +146,10 @@ class UltimateRunner(object):
         if not returncode:
             shapeParams.shapeStatus = "done"
 
+            shapeParams.volume = self.shape.shape.volume
+            shapeParams.volumeCell = self.shape.cell.volume
+            shapeParams.porosity = shapeParams.volume / shapeParams.volumeCell
+
         else:
             logger.error(err)
             shapeParams.shapeStatus = "failed"
