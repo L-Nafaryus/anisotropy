@@ -7,6 +7,11 @@ import numpy
 from numpy import linalg
 import os
 
+
+class ShapeError(Exception):
+    pass
+
+
 class Shape(object):
     def __init__(self):
         self.groups = {}

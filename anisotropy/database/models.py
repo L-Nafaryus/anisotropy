@@ -11,7 +11,7 @@ from peewee import (
     TimeField, DateTimeField, Proxy
 )
 from .utils import JSONField
-#from playhouse.sqlite_ext import JSONField
+
 __database_proxy__ = Proxy()
 
 class Execution(Model):
@@ -45,9 +45,7 @@ class Shape(Model):
 
     volumeCell = FloatField(null = True)
     volume = FloatField(null = True)
-    volumeRounded = FloatField(null = True)
     porosity = FloatField(null = True)
-    porosityRounded = FloatField(null = True)
 
     class Meta:
         database = __database_proxy__
@@ -87,10 +85,11 @@ class FlowOnephase(Model):
     pressureInlet = FloatField(null = True)
     pressureOutlet = FloatField(null = True)
     pressureInternal = FloatField(null = True)
-    velocityInlet = FloatField(null = True)
-    velocityOutlet = FloatField(null = True)
-    velocityInternal = FloatField(null = True)
+    velocityInlet = JSONField(null = True)
+    velocityOutlet = JSONField(null = True)
+    velocityInternal = JSONField(null = True)
     viscosity = FloatField(null = True)
+    viscosityKinematic = FloatField(null = True)
     density = FloatField(null = True)
     flowRate = FloatField(null = True)
     permeability = FloatField(null = True)

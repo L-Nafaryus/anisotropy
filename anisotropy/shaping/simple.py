@@ -8,6 +8,7 @@ from numpy import pi, sqrt
 
 from .occExtended import *
 from . import Periodic
+from . import ShapeError
 
 class Simple(Periodic):
     def __init__(
@@ -155,6 +156,13 @@ class Simple(Periodic):
         #   Main shape
         self.shape = self.cell - self.lattice
 
+        if not len(self.shape.solids) == 1:
+            raise ShapeError("Expected single solid shape")
+
+        else:
+            self.shape = self.shape.solids[0]
+
+        #   Boundaries (walls)
         for face in self.shape.faces:
             if face.name not in ["inlet", "outlet", *[ f"symetry{ n }" for n in range(6) ]]:
                 face.name = "wall"

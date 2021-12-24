@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "anisotropy compute",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/anisotropy/core/cli.py",
+            "args": ["compute", "-v"],
+            "console": "integratedTerminal",
+            "cwd": "/tmp/anisotropy",
+            "preLaunchTask": "prepare"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "python.pythonPath": "${env:HOME}/.local/share/mambaforge/envs/anisotropy/bin/python",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": ["--ignore=E402,E251,E501", "--verbose"]
+}

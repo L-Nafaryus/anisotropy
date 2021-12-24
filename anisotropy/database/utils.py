@@ -15,6 +15,7 @@ from peewee import (
 import json
 from numpy import ndarray
 
+
 class ListField(TextField):
     field_type = "list"
 
@@ -173,3 +174,4 @@ class JSONField(TextField):
 
     def tree(self):
         return fn.json_tree(self)
+

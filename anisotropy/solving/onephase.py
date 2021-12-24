@@ -11,8 +11,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 class OnePhaseFlow(FoamCase):
-    def __init__(self, direction, path: str = None):
+    def __init__(
+        self,
+        direction: list[float] = None,
+        pressureInlet: float = None,
+        pressureOutlet: float = None,
+        pressureInternal: float = None,
+        velocityInlet: float = None,
+        velocityOutlet: float = None,
+        velocityInternal: float = None,
+        density: float = None,
+        viscosityKinematic: float = None,
+        path: str = None,
+        **kwargs
+    ):
         FoamCase.__init__(self, path = path)
+
+        self.direction = direction 
+        self.pressureInlet = pressureInlet 
+        self.pressureOutlet = pressureOutlet 
+        self.pressureInternal = pressureInternal 
+        self.velocityInlet = velocityInlet 
+        self.velocityOutlet = velocityOutlet 
+        self.velocityInternal = velocityInternal 
+        self.density = density 
+        self.viscosityKinematic = viscosityKinematic
 
         controlDict = F.ControlDict()
         controlDict.update(
@@ -27,7 +50,8 @@ class OnePhaseFlow(FoamCase):
         fvSolution = F.FvSolution()
         fvSolution["solvers"]["U"].update(
             nSweeps = 2,
-            tolerance = 1e-08
+            tolerance = 1e-08,
+            smoother = "GaussSeidel"
         )
         fvSolution["solvers"]["Phi"] = dict(
             solver = "GAMG",
@@ -40,7 +64,7 @@ class OnePhaseFlow(FoamCase):
             relTol = 0.01
         )
         fvSolution["potentialFlow"] = dict(
-            nNonOrthogonalCorrectors = 20,
+            nNonOrthogonalCorrectors = 13,
             PhiRefCell = 0,
             PhiRefPoint = 0,
             PhiRefValue = 0,
@@ -48,7 +72,7 @@ class OnePhaseFlow(FoamCase):
         )
         fvSolution["cache"] = { "grad(U)": None }
         fvSolution["SIMPLE"].update(
-            nNonOrthogonalCorrectors = 10,
+            nNonOrthogonalCorrectors = 6,
             residualControl = dict(
                 p = 1e-05,
                 U = 1e-05
@@ -58,7 +82,7 @@ class OnePhaseFlow(FoamCase):
 
         transportProperties = F.TransportProperties()
         transportProperties.update(
-            nu = 1e-06
+            nu = self.viscosityKinematic
         )
         
         turbulenceProperties = F.TurbulenceProperties()
@@ -66,28 +90,27 @@ class OnePhaseFlow(FoamCase):
             simulationType = "laminar"
         )
 
-        boundaries = [ "inlet", "outlet", "symetry", "wall"]
+        boundaries = ["inlet", "outlet", "symetry", "wall"]
         p = F.P()
         p["boundaryField"] = {}
         u = F.U()
         u["boundaryField"] = {}
 
-        # ISSUE: add proxy from geometry direction to outlet boundaryField.
         for boundary in boundaries:
             if boundary == "inlet":
                 p["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform(1e-3)
+                    value = uniform(self.pressureInlet / self.density)
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform(array(direction) * -6e-5) # uniform([0, 0, -6e-5])
+                    value = uniform(array(self.direction) * -6e-5)
                 )
 
             elif boundary == "outlet":
                 p["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform(0)
+                    value = uniform(self.pressureOutlet / self.density)
                 )
                 u["boundaryField"][boundary] = dict(
                     type = "zeroGradient",
@@ -173,13 +196,13 @@ class OnePhaseFlow(FoamCase):
                 "scale": [1e-5, 1e-5, 1e-5]
             })
             R.renumberMesh()
-            R.potentialFoam()
+            #R.potentialFoam()
 
             self.read()
 
-            self.U["boundaryField"]["outlet"] = dict(
+            self.U["boundaryField"]["inlet"] = dict(
                 type = "pressureInletVelocity",
-                value = uniform([0, 0, 0])
+                value = uniform(self.velocityInlet)
             )
             self.write()
 

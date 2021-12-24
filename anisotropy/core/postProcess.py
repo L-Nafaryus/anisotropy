@@ -16,6 +16,7 @@ class PostProcess(object):
         self.path = path.abspath(dirpath)
 
     def flowRate(self, patch: str):
+        # TODO: fix wrong log path
         func = "patchFlowRate(patch={})".format(patch)
         filepath = path.join(self.path, "postProcessing", func, "0", "surfaceFieldValue.dat")
         postProcess(func, cwd = self.path)

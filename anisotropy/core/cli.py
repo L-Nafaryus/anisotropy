@@ -4,7 +4,7 @@
 
 import click
 import ast
-import os, sys, shutil
+import os
 import logging
 
 

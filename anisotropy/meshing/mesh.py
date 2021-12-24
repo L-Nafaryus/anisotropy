@@ -4,7 +4,7 @@
 
 from netgen.occ import OCCGeometry
 from netgen import meshing
-import numpy
+from numpy import array
 import os
 
 class Mesh(object):
@@ -82,9 +82,20 @@ class Mesh(object):
     def doubleExport(self):
         pass
 
-    def volumes(self) -> numpy.array:
-        #   TODO: check each polyhedron
-        tetras = numpy.array([ [ [ vertex for vertex in mesh[index] ] for index in element.vertices ] for element in self.mesh.Elements3D() ])
-        volumes = numpy.array([ 1 / 6 * linalg.det(numpy.append(tetra.transpose(), numpy.array([[1, 1, 1, 1]]), axis = 0)) for tetra in tetras ])
+    @property
+    def volumes(self) -> array:
+        return array(self.mesh.Elements3D())
+
+    @property
+    def faces(self) -> array:
+        return array(self.mesh.Elements2D())
+
+    @property
+    def edges(self) -> array:
+        # NOTE: returns zero elements for imported mesh 
+        return array(self.mesh.Elements1D())
+
+
+# tetras = numpy.array([ [ [ vertex for vertex in mesh[index] ] for index in element.vertices ] for element in self.mesh.Elements3D() ])
+# volumes = numpy.array([ 1 / 6 * linalg.det(numpy.append(tetra.transpose(), numpy.array([[1, 1, 1, 1]]), axis = 0)) for tetra in tetras ])
         
-        return volumes

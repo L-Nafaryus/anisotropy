@@ -72,22 +72,22 @@ class Config(object):
         #   Expand structures for each direction and each alpha
         for structure in self.content["structures"]:
             # ISSUE: precision error 0.06999999999999999
+            structure = deepcopy(structure)
             alphaA = round(arange(
                 structure["alpha"][0], 
                 structure["alpha"][1] + structure["alphaStep"], 
                 structure["alphaStep"]
             ), 9)
             directionA = array(structure["directions"], dtype = float) 
+            structure.pop("alpha")
+            structure.pop("directions")
 
             for direction in directionA:
                 for alpha in alphaA:
                     self.cases.append({
-                        "label": structure["label"],
                         "alpha": alpha,
-                        "alphaStep": structure["alphaStep"],
                         "direction": direction,
-                        "r0": structure["r0"],
-                        "filletsEnabled": structure["filletsEnabled"]
+                        **structure
                     })
 
     def chooseParams(self, idn: int):
@@ -122,7 +122,15 @@ class DefaultConfig(Config):
                 "label": label,
                 "alpha": alpha,
                 "alphaStep": 0.01,
-                "directions": [[1, 0, 0], [0, 0, 1], [1, 1, 1]],
+                "directions": [[1., 0., 0.], [0., 0., 1.], [1., 1., 1.]],
                 "r0": 1,
-                "filletsEnabled": True
+                "filletsEnabled": True,
+                "pressureInlet": 1,
+                "pressureOutlet": 0,
+                "pressureInternal": 0,
+                "velocityInlet": [0., 0., 0.],
+                "velocityOutlet": None,
+                "velocityInternal": [0., 0., 0.],
+                "density": 1000,
+                "viscosity": 1e-3
             })

@@ -31,6 +31,7 @@ class UltimateRunner(object):
 
         # Database preparation
         self.database = Database(path = self.config["database"])
+        self.exec_id = None
 
         if exec_id:
             if self.database.getExecution(exec_id):
@@ -64,7 +65,7 @@ class UltimateRunner(object):
             flow = self.database.getFlowOnephase(execution = self.exec_id, **self.config.params)
 
             if not flow:
-                flow = T.FlowOnephase.create(mesh_id = mesh)
+                flow = T.FlowOnephase.create(mesh_id = mesh, **self.config.params)
 
     def fill(self):
         self.config.expand()
@@ -202,6 +203,9 @@ class UltimateRunner(object):
 
         if not returncode:
             meshParams.meshStatus = "done"
+            meshParams.edges = len(self.mesh.edges)
+            meshParams.faces = len(self.mesh.faces)
+            meshParams.volumes = len(self.mesh.volumes)
 
         else:
             logger.error(err)
@@ -225,7 +229,16 @@ class UltimateRunner(object):
         ))
         timer = Timer()
 
-        self.flow = OnePhaseFlow(params["direction"], path = self.casepath())
+        flowParams.viscosityKinematic = flowParams.viscosity / flowParams.density
+
+        with self.database:
+            flowParams.save()
+
+            self.flow = OnePhaseFlow(
+                direction = params["direction"], 
+                **flowParams.select().dicts().get(), 
+                path = self.casepath()
+            )
 
         if not self.shape:
             filename = "shape.step"
@@ -299,8 +312,6 @@ class UltimateRunner(object):
 
         if stage in ["postProcess", "all"]:
             self.computePostProcess()
-
-        #logger.info("Pipeline done")
 
     @staticmethod
     def subrunner(*args, **kwargs):
