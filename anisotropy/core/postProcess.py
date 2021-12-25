@@ -18,7 +18,7 @@ class PostProcess(object):
     def flowRate(self, patch: str):
         func = "patchFlowRate(patch={})".format(patch)
         filepath = path.join(self.path, "postProcessing", func, "0", "surfaceFieldValue.dat")
-        postProcess(func, cwd = self.path, logpath = self.path)
+        postProcess(func, cwd = self.path, logpath = path.join(self.path, "patchFlowRate.log"))
         surfaceFieldValue = datReader(filepath)
 
         return surfaceFieldValue["sum(phi)"][-1]
