@@ -217,12 +217,13 @@ class UltimateRunner(object):
         
     def computeFlow(self):
         params = self.config.params
-        flowParams = self.database.getFlowOnephase(
+        query = (
             params["label"],
             params["direction"],
             params["alpha"],
             self.exec_id
         )
+        flowParams = self.database.getFlowOnephase(*query)
 
         logger.info("Computing flow for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
@@ -233,10 +234,12 @@ class UltimateRunner(object):
 
         with self.database:
             flowParams.save()
+            
 
+        with self.database:
             self.flow = OnePhaseFlow(
                 direction = params["direction"], 
-                **flowParams.select().dicts().get(), 
+                **self.database.getFlowOnephase(*query, to_dict = True),
                 path = self.casepath()
             )
 

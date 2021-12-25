@@ -97,7 +97,7 @@ class Database(SqliteDatabase):
 
         return table
 
-    def getFlowOnephase(self, label = None, direction = None, alpha = None, execution = None, **kwargs):
+    def getFlowOnephase(self, label = None, direction = None, alpha = None, execution = None, to_dict = False, **kwargs):
         execution = execution or self.getLatest()
         query = (
             models.FlowOnephase
@@ -114,6 +114,10 @@ class Database(SqliteDatabase):
         )
 
         with self:
-            table = query.get() if query.exists() else None
+            if to_dict:
+                table = query.dicts().get() if query.exists() else None
+            
+            else:
+                table = query.get() if query.exists() else None
 
         return table

@@ -51,6 +51,8 @@ class FoamRunner(object):
             if self.logpath:
                 with proc, open(self.logpath, "w") as io:
                     while True:
+
+
                         output = proc.stdout.read(1)
 
                         if output == "" and proc.poll() is not None:
@@ -59,7 +61,12 @@ class FoamRunner(object):
                         if not output == "":
                             io.write(output)
 
-            self.output, self.error = proc.communicate()
+                    error = proc.stderr.read()
+
+                    if not error == "":
+                        self.error = error
+                        io.write(error)
+
             self.returncode = proc.returncode
 
             if self.logpath and self.error:
