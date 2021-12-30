@@ -42,6 +42,7 @@ class Config(object):
 
         self.content = toml.load(path)
         self.options = deepcopy(self.content["options"])
+        self.content.pop("options")
 
     def dump(self, filename: str):
         path = os.path.abspath(filename)
@@ -51,6 +52,8 @@ class Config(object):
             path += ".toml"
 
         os.makedirs(os.path.split(path)[0], exist_ok = True)
+
+        self.content.update(options = self.options)
 
         with open(path, "w") as io:
             toml.dump(self.content, io, encoder = toml.TomlNumpyEncoder())

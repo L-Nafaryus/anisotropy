@@ -13,15 +13,15 @@ from types import FunctionType
 import os
 
 class CustomFormatter(logging.Formatter):
-    def _getFormat(self, level: int):
+    def __init__(self, colors: bool = True):
+        self.colors = colors
+
+    def applyColors(self, level: int, info: str, msg: str):
         grey = "\x1b[38;21m"
         yellow = "\x1b[33;21m"
         red = "\x1b[31;21m"
         bold_red = "\x1b[31;1m"
         reset = "\x1b[0m"
-        
-        info = "[%(levelname)s %(processName)s %(asctime)s %(funcName)s]" # [ %(processName)s ]
-        msg = " %(message)s"
         
         formats = {
             logging.DEBUG: grey + info + reset + msg,
@@ -34,7 +34,15 @@ class CustomFormatter(logging.Formatter):
         return formats.get(level)
 
     def format(self, record):
-        log_fmt = self._getFormat(record.levelno)
+        info = "[%(levelname)s %(processName)s %(asctime)s %(funcName)s]" # [ %(processName)s ]
+        msg = " %(message)s"
+        
+        if self.colors:
+            log_fmt = self.applyColors(record.levelno, info, msg)
+
+        else:
+            log_fmt = info + msg
+
         time_fmt = "%d-%m-%y %H:%M:%S"
         formatter = logging.Formatter(log_fmt, time_fmt)
 
@@ -42,19 +50,14 @@ class CustomFormatter(logging.Formatter):
 
 
 def setupLogger(level: int, filepath: str = None):
-    """Applies settings to logger
+    """Applies settings to root logger
 
-    :param logger: 
-        Instance of :class:`logging.Logger`
-    
     :param level: 
         Logging level (logging.INFO, logging.WARNING, ..)
 
     :param filepath: 
         Path to directory
     """
-    #logger.handlers = []
-    #logger.setLevel(level)
 
     logging.addLevelName(logging.INFO, "II")
     logging.addLevelName(logging.WARNING, "WW")
@@ -64,20 +67,14 @@ def setupLogger(level: int, filepath: str = None):
     streamhandler = logging.StreamHandler()
     streamhandler.setLevel(level)
     streamhandler.setFormatter(CustomFormatter())
-    #logger.addHandler(streamhandler)
-    
-    logging.root.setLevel(level)
     logging.root.addHandler(streamhandler)
     
+    logging.root.setLevel(level)
+    
     if filepath:
-        if not os.path.exists(filepath):
-            os.makedirs(filepath, exist_ok = True)
-
-        filehandler = logging.FileHandler(
-            os.path.join(filepath, "{}.log".format("anisotropy"))
-        )
+        filehandler = logging.FileHandler(filepath)
         filehandler.setLevel(logging.INFO)
-        filehandler.setFormatter(CustomFormatter())
+        filehandler.setFormatter(CustomFormatter(colors = False))
 
         logging.root.addHandler(filehandler)
 
