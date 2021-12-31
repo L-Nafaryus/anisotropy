@@ -218,7 +218,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
     count = True,
     help = "Increase verbose level"
 )
-def gui(verbose):
+def gui(path, verbose):
     import anisotropy
     from anisotropy.core.utils import setupLogger
     from anisotropy.gui import app 

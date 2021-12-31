@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# This file is part of anisotropy.
+# License: GNU GPL version 3, see the file "LICENSE" for details.
 
 minWidth = { 
     "min-width": "200px", 
@@ -47,7 +50,7 @@ misc = {
 }
 
 logo = {
-     "color": "#ffffff", 
+    "color": "#ffffff", 
     "text-align": "center" 
 }
 

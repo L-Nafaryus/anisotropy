@@ -1,3 +1,0 @@
-# Example of anisotropy bashrc entries (modify it)
-export PATH="${HOME}/programs/salome/SALOME-9.7.0-MPI:${PATH}"
-source "${HOME}/programs/OpenFOAM/OpenFOAM-v2012/etc/bashrc"

@@ -11,7 +11,8 @@ from anisotropy.core.config import DefaultConfig
 import logging
 
 from anisotropy.core.postProcess import PostProcess
-from anisotropy.core.utils import ParallelRunner, Timer
+from anisotropy.core.utils import Timer
+from anisotropy.core.parallel import ParallelRunner
 
 logger = logging.getLogger(__name__)
 

@@ -17,10 +17,10 @@ __repository__ = "https://github.com/L-Nafaryus/anisotropy"
 ###
 #   Environment
 ##
-import os
-from os import path
+from os import path, environ
 
-PROJECT =  path.abspath(path.dirname(__file__))
+
+PROJECT = path.abspath(path.dirname(__file__))
 TMP = "/tmp/anisotropy"
 
 env = {
@@ -33,10 +33,12 @@ env = {
     "DB_FILE": "anisotropy.db"
 }
 
+
 def loadEnv():
     prefix = "ANISOTROPY_"
 
     for k, v in env.items():
-        os.environ[f"{ prefix }{ k }"] = v
+        environ[f"{ prefix }{ k }"] = v
 
-del os, path, PROJECT, TMP
+
+del path, PROJECT, TMP
