@@ -104,18 +104,18 @@ class DefaultConfig(Config):
     def __init__(self):
         Config.__init__(self)
 
+        self.options = {
+            "nprocs": 1,
+            "stage": "all",
+            "overwrite": False,
+            "database": "anisotropy.db",
+            "build": "build",
+            "logs": "logs"
+        }
+
         self.content = {
-            "options": {
-                "nprocs": 1,
-                "stage": "all",
-                "overwrite": False,
-                "database": "anisotropy.db",
-                "build": "build",
-                "logs": "logs"
-            },
             "structures": []
         }
-        self.options = deepcopy(self.content["options"])
 
         labels = ["simple", "bodyCentered", "faceCentered"]
         alphas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]

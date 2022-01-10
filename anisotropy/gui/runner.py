@@ -32,6 +32,9 @@ layout = html.Div([
     #   Runner
     html.H2("Runner"),
     html.Hr(),
+    html.P("Execution (leave zero for the latest)"),
+    dcc.Input(id = "execution", type = "number", value = 0, min = 0, style = minWidth),
+    html.Br(),
     dbc.Button("Start", id = "start", color = "success", style = minWidth),
     dbc.Button("Stop", id = "stop", color = "danger", disabled = True, style = minWidth),
 
@@ -56,20 +59,24 @@ layout = html.Div([
 @app.callback(
     Output("start", "active"),
     [ Input("start", "n_clicks") ],
+    [ State("execution", "value") ],
     prevent_initial_call = True
 )
-def runnerStart(clicks):
+def runnerStart(clicks, execution):
     import subprocess
 
     command = [
         "anisotropy",
         "compute",
         "-v",
-        "--path", "/tmp/anisotropy",
-        "--conf", "anisotropy.toml",
+        "--path", os.environ["ANISOTROPY_CWD"],
+        "--conf", os.environ["ANISOTROPY_CONF_FILE"],
         "--pid", "anisotropy.pid",
-        "--logfile", "anisotropy.log"
+        "--logfile", os.environ["ANISOTROPY_LOG_FILE"],
     ]
+
+    if execution > 0:
+        command.extend([ "--exec-id", str(execution) ])
 
     subprocess.run(
         command,
@@ -87,7 +94,7 @@ def runnerStop(clicks):
     import psutil
     import signal
 
-    pidpath = "/tmp/anisotropy/anisotropy.pid"
+    pidpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.pid")
 
     try:
         pid = int(open(pidpath, "r").read())
@@ -115,7 +122,7 @@ def runnerStop(clicks):
 def monitorUpdate(intervals):
     import psutil
 
-    pidpath = "/tmp/anisotropy/anisotropy.pid"
+    pidpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.pid")
     processes = []
 
     try:
@@ -146,7 +153,7 @@ def monitorUpdate(intervals):
     [ Input("interval", "n_intervals") ]
 )
 def logUpdate(intervals):
-    logpath = "/tmp/anisotropy/anisotropy.log"
+    logpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.log")
 
     if os.path.exists(logpath):
         with open(logpath, "r") as io:
@@ -160,10 +167,11 @@ def logUpdate(intervals):
 
 @app.callback(
     Output("delete", "active"),
-    [ Input("delete", "n_clicks") ]
+    [ Input("delete", "n_clicks") ],
+    prevent_initial_call = True
 )
 def logDelete(clicks):
-    logpath = "/tmp/anisotropy/anisotropy.log"
+    logpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.log")
 
     if os.path.exists(logpath):
         os.remove(logpath)

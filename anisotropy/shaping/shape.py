@@ -55,7 +55,7 @@ class Shape(object):
             self.shape = OCCGeometry(filename).shape
 
         else:
-            raise NotImplementedError(f"{ext} is not supported")
+            raise NotImplementedError(f"Shape format '{ext}' is not supported")
 
     def normal(self, face: FACE) -> numpy.array:
         """

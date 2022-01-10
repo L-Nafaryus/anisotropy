@@ -67,7 +67,7 @@ class Mesh(object):
                 self.mesh.Export(filename, "Neutral Format")
 
             else:
-                raise NotImplementedError(f"{ ext } is not supported")
+                raise NotImplementedError(f"Mesh format '{ ext }' is not supported")
             
         except NotImplementedError as e:
             err = e

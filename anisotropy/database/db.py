@@ -3,7 +3,7 @@
 # License: GNU GPL version 3, see the file "LICENSE" for details.
 
 import os
-from peewee import SqliteDatabase, JOIN
+from peewee import SqliteDatabase, JOIN, OperationalError
 from . import models
 
 class Database(SqliteDatabase):
@@ -41,6 +41,23 @@ class Database(SqliteDatabase):
 
         with self:
             self.create_tables(self.tables)
+
+    def csave(self, table, tries: int = 100):
+        while tries >= 0:
+            if self.is_closed():
+                self.connect()
+            
+            try:
+                table.save()
+            
+            except OperationalError as e:
+                logger.debug(e)
+                tries -= 1
+                time.sleep(1)
+            
+            else:
+                self.close()
+                break
 
     def getExecution(self, idn):
         query = models.Execution.select().where(models.Execution.exec_id == idn)

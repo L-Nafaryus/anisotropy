@@ -36,6 +36,8 @@ pyfoam = "^2021.6"
 click = "^8.0.3"
 dill = "^0.3.4"
 psutil = "^5.9.0"
+dash = {version = "^2.0.0", optional = true, extras = ["gui"]}
+dash-bootstrap-components = {version = "^1.0.2", optional = true, extras = ["gui"]}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

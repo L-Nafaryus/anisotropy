@@ -37,10 +37,13 @@ class UltimateRunner(object):
         if exec_id:
             if self.database.getExecution(exec_id):
                 self.exec_id = exec_id
+            
+            else:
+                logger.warning(f"Execution id '{ exec_id }' not found. Creating new.")
 
         if not self.exec_id:
             with self.database:
-                self.exec_id = T.Execution.create(date=datetime.now())
+                self.exec_id = T.Execution.create(date = datetime.now())
 
         # Parameters
         self.shape = None
@@ -50,23 +53,33 @@ class UltimateRunner(object):
         self.queue = []
 
 
+    def dispose(self):
+        self.shape = None
+        self.mesh = None
+        self.flow = None
+
     def createRow(self):
         # create a row in each table for the current case
         with self.database:
             shape = self.database.getShape(execution = self.exec_id, **self.config.params)
 
-            if not shape:
-                shape = T.Shape.create(exec_id = self.exec_id, **self.config.params)
+        if not shape:
+            shape = T.Shape(exec_id = self.exec_id, **self.config.params)
+            self.database.csave(shape)
 
+        with self.database:
             mesh = self.database.getMesh(execution = self.exec_id, **self.config.params)
 
-            if not mesh:
-                mesh = T.Mesh.create(shape_id = shape)
+        if not mesh:
+            mesh = T.Mesh(shape_id = shape.shape_id)
+            self.database.csave(mesh)
 
+        with self.database:
             flow = self.database.getFlowOnephase(execution = self.exec_id, **self.config.params)
 
-            if not flow:
-                flow = T.FlowOnephase.create(mesh_id = mesh, **self.config.params)
+        if not flow:
+            flow = T.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
+            self.database.csave(mesh)
 
     def fill(self):
         self.config.expand()
@@ -156,9 +169,11 @@ class UltimateRunner(object):
             logger.error(err)
             shapeParams.shapeStatus = "failed"
 
-        with self.database:
-            shapeParams.shapeExecutionTime = timer.elapsed()
-            shapeParams.save()
+        #with self.database:
+        shapeParams.shapeExecutionTime = timer.elapsed()
+        #shapeParams.save()
+        self.database.csave(shapeParams)
+        self.dispose()
 
     def computeMesh(self):
         out, err, returncode = "", "", 0
@@ -177,8 +192,8 @@ class UltimateRunner(object):
         timer = Timer()
 
         if not self.shape:
-            filename = "shape.step"
-            filepath = path.join(self.casepath(), filename)
+            shapefile = "shape.step"
+            filepath = path.join(self.casepath(), shapefile)
 
             if not path.exists(filepath) and not path.isfile(filepath):
                 err = f"File not found: { filepath }"
@@ -215,7 +230,8 @@ class UltimateRunner(object):
         with self.database:
             meshParams.meshExecutionTime = timer.elapsed()
             meshParams.save()
-        
+        self.dispose()
+
     def computeFlow(self):
         params = self.config.params
         query = (
@@ -301,6 +317,8 @@ class UltimateRunner(object):
 
         with self.database:
             flowParams.save()
+        
+        self.dispose()
 
     def pipeline(self, stage: str = None):
         stage = stage or self.config["stage"]

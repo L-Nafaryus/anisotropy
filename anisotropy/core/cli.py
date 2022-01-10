@@ -194,7 +194,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
     for k, v in args.items():
         if v is not None:
             config.update(**{ k: v })
-    
+
     if pid:
         pidpath = os.path.abspath(pid)
 
@@ -206,6 +206,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
     runner.start()
 
     os.remove(pidpath)
+    logger.info("Computation done. Exiting ...")
 
 @anisotropy.command()
 @click.option(
