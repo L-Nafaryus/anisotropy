@@ -114,7 +114,7 @@ class UltimateRunner(object):
 
         execution = "execution-{}".format(self.exec_id)
         case = "{}-[{},{},{}]-{}".format(params["label"], *[ str(d) for d in params["direction"] ], params["alpha"])
-        dirpath = path.join(self.config["build"], execution, case)
+        dirpath = path.join(os.environ["ANISOTROPY_CWD"], self.config["build"], execution, case)
 
         return path.abspath(dirpath)
 
@@ -216,6 +216,7 @@ class UltimateRunner(object):
         if not returncode:
             os.makedirs(self.casepath(), exist_ok = True)
             out, err, returncode = self.mesh.export(path.join(self.casepath(), filename))
+            out, err, returncode = self.mesh.export(path.join(self.casepath(), "mesh.msh"))
 
         if not returncode:
             meshParams.meshStatus = "done"

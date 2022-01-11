@@ -38,6 +38,9 @@ dill = "^0.3.4"
 psutil = "^5.9.0"
 dash = {version = "^2.0.0", optional = true, extras = ["gui"]}
 dash-bootstrap-components = {version = "^1.0.2", optional = true, extras = ["gui"]}
+meshio = "^5.2.2"
+vtk = "^9.1.0"
+dash-vtk = {version = "^0.0.9", optional = true, extras = ["gui"]}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
@@ -53,7 +56,7 @@ pytest-json-report = "^1.4.1"
 [tool.poetry.extras]
 analyze = ["jupyterlab", "seaborn", "sklearn"]
 doc = ["Sphinx", "sphinx-rtd-theme", "pydeps", "peewee-erd"]
-gui = ["dash", "dash-bootstrap-components"]
+gui = ["dash", "dash-bootstrap-components", "dash-vtk"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

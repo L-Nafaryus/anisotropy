@@ -159,13 +159,17 @@ def init(path, verbose):
     help = "Specify log file path"
 )
 def compute(path, configFile, nprocs, stage, overwrite, params, verbose, execution, pid, logfile):
+    import anisotropy
     from anisotropy.core.runner import UltimateRunner
     from anisotropy.core.config import DefaultConfig
     from anisotropy.core.utils import setupLogger
     
+    anisotropy.loadEnv()
+
     if path:
         os.makedirs(os.path.abspath(path), exist_ok = True)
         os.chdir(os.path.abspath(path))
+        os.environ["ANISOTROPY_CWD"] = path
 
     setupLogger(verboseLevel(verbose), logfile)
     logger = logging.getLogger(__name__)

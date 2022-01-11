@@ -10,6 +10,8 @@ import dash_bootstrap_components as dbc
 from . import (
     runner,
     settings,
+    database,
+    visualization,
     about
 )
 from .app import app
@@ -31,6 +33,8 @@ app.layout = html.Div([
         dbc.Nav([
             dbc.NavLink("Runner", href = "/", active = "exact", style = white),
             dbc.NavLink("Settings", href = "/settings", active = "exact", style = white),
+            dbc.NavLink("Database", href = "/database", active = "exact", style = white),
+            dbc.NavLink("Visualization", href = "/visualization", active = "exact", style = white),
             dbc.NavLink("About", href = "/about", active = "exact", style = white),
         ], vertical = True, pills = True),
         
@@ -67,6 +71,12 @@ def displayPage(pathname):
 
     elif pathname == "/about":
         return about.layout
+
+    elif pathname == "/database":
+        return database.layout
+
+    elif pathname == "/visualization":
+        return visualization.layout
 
     else:
         return runner.layout 

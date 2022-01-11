@@ -66,6 +66,9 @@ class Mesh(object):
             elif ext == "mesh":
                 self.mesh.Export(filename, "Neutral Format")
 
+            elif ext == "msh":
+                self.mesh.Export(filename, "Gmsh2 Format")
+
             else:
                 raise NotImplementedError(f"Mesh format '{ ext }' is not supported")
             
