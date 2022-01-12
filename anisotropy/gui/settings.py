@@ -24,12 +24,20 @@ layout = html.Div([
         is_open = False, 
         style = message 
     ),
-
+    dbc.Alert(
+        id = "general-status", 
+        duration = 10000, 
+        dismissable = True, 
+        is_open = False, 
+        style = message 
+    ),
     #   General
     html.H2("General"),
     html.Hr(),
-    html.P("Path: {}".format(os.environ.get("ANISOTROPY_CWD", ""))),
-    dbc.Button("Save", id = "submit", style = minWidth),
+    html.P("Path"),
+    dcc.Input(id = "cwd", style = { "min-width": "500px" }),
+    html.Br(),
+    dbc.Button("Save general", id = "general-save", style = minWidth),
     
     #   Options
     html.H2("Options"),
@@ -42,6 +50,7 @@ layout = html.Div([
         options = [ { "label": k, "value": k } for k in ["all", "shape", "mesh", "flow", "postProcess"] ],
         style = minWidth 
     ),
+    dbc.Button("Save", id = "submit", style = minWidth),
 
     #   Cases
     html.H2("Cases"),
@@ -54,6 +63,29 @@ layout = html.Div([
 #   Callbacks
 ##
 @app.callback(
+    Output("general-status", "children"), 
+    Output("general-status", "is_open"), 
+    Output("general-status", "color"),
+    [ Input("general-save", "n_clicks") ],
+    [ 
+        State("cwd", "value"),
+    ],
+    prevent_initial_call = True
+)
+def generalSave(clicks, cwd):
+    if not os.path.abspath(cwd):
+        return "Cwd path must be absolute", True, "danger"
+    
+    if cwd[-1] == "/":
+        cwd = cwd[ :-1]
+    
+    os.environ["ANISOTROPY_CWD"] = cwd
+
+    return "General settings saved", True, "success"
+
+
+@app.callback(
+    Output("cwd", "value"),
     Output("nprocs", "value"),
     Output("stage", "value"),
     Output("cases", "value"),
@@ -69,7 +101,7 @@ def settingsLoad(pathname):
     if os.path.exists(filepath):
         config.load(filepath)
 
-    return config["nprocs"], config["stage"], toml.dumps(config.content)
+    return os.environ["ANISOTROPY_CWD"], config["nprocs"], config["stage"], toml.dumps(config.content)
 
 
 @app.callback(

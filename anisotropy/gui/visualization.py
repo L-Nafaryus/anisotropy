@@ -71,6 +71,22 @@ class MeshRepresentation(object):
         return representation
         
 
+def databaseColumns():
+    from anisotropy.database import Database
+    import re
+
+    db = Database()
+    idcol = re.compile(r"\s*_id")
+    columns = []
+
+    for table in db.tables:
+        for column in table._meta.columns.keys():
+            if not idcol.search(column):
+                columns.append(column)
+    
+    return columns
+
+
 ###
 #   Layout
 ##
@@ -151,7 +167,7 @@ plotcontrols = html.Div([
     html.P("Data"),
     dcc.Dropdown(
         id = "plot-data",
-        options = [ { "label": v, "value": v } for v in [ "porosity",] ], 
+        options = [ { "label": v, "value": v } for v in databaseColumns() ], 
         value = "porosity",
     ),
     html.Br(),
@@ -233,9 +249,15 @@ def plotDraw(clicks, execution, structure, direction, data):
         else:
             break
 
+    if direction == "all":
+        select = (models.Shape.alpha, column, models.Shape.direction)
+    
+    else:
+        select = (models.Shape.alpha, column)
+
     query = (
         models.Shape
-        .select(models.Shape.alpha, column)
+        .select(*select)
         .join(models.Execution, JOIN.LEFT_OUTER)
         .switch(models.Shape)
         .join(models.Mesh, JOIN.LEFT_OUTER)
@@ -243,15 +265,20 @@ def plotDraw(clicks, execution, structure, direction, data):
         .where(
             models.Shape.exec_id == execution,
             models.Shape.label == structure,
-            models.Shape.direction == json.loads(direction),
         )
     )
-    print(query.sql())
+
+    if not direction == "all":
+        query = qeury.where(models.Shape.direction == json.loads(direction))
 
     with db:
         if query.exists():
             table = []
             for row in query.dicts():
+                for k in row.keys():
+                    if type(row[k]) == list:
+                        row[k] = str(row[k])
+
                 table.append(row)
         
         else:
@@ -273,6 +300,12 @@ def plotDraw(clicks, execution, structure, direction, data):
     fig = px.line(
         DataFrame(table), x = "alpha", y = data, title = structure, markers = True
     )
+
+    if direction == "all":
+        fig = px.line(
+            DataFrame(table), x = "alpha", y = data, title = structure, markers = True, color = "direction"
+        )
+
     fig.layout.template = "custom_dark"
     fig.update_xaxes(showline=True, linewidth=1, linecolor='#4f687d', mirror=True)
     fig.update_yaxes(showline=True, linewidth=1, linecolor='#4f687d', mirror=True)

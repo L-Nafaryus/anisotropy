@@ -132,7 +132,12 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
         filename = "shape.step"
+        shapepath = path.join(self.casepath(), filename)
         timer = Timer()
+        
+        if path.exists(shapepath) and shapeParams.shapeStatus == "done" and not self.config["overwrite"]:
+            logger.info("Shape exists. Skipping ...")
+            return
         
         shape = {
             "simple": Simple,
@@ -189,7 +194,12 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
         filename = "mesh.mesh"
+        meshpath = path.join(self.casepath(), filename)
         timer = Timer()
+
+        if path.exists(meshpath) and meshParams.meshStatus == "done" and not self.config["overwrite"]:
+            logger.info("Mesh exists. Skipping ...")
+            return
 
         if not self.shape:
             shapefile = "shape.step"
