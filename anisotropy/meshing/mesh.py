@@ -7,9 +7,19 @@ from netgen import meshing
 from numpy import array
 import os
 
+
+class NoGeometrySpecified(Exception):
+    def __init__(self, msg):
+        super().__init__(self, msg)
+
+
+class NotSupportedMeshFormat(Exception):
+    def __init__(self, msg):
+        super().__init__(self, msg)
+
 class Mesh(object):
-    def __init__(self, shape):
-        self.geometry = OCCGeometry(shape)
+    def __init__(self, shape: OCCGeometry = None):
+        self.geometry = OCCGeometry(shape) if shape else None
         self.mesh = None
 
         #   Parameters
@@ -43,15 +53,44 @@ class Mesh(object):
         )
 
     def build(self):
-        self.mesh = self.geometry.GenerateMesh(self.parameters)
+        if self.geometry:
+            self.mesh = self.geometry.GenerateMesh(self.parameters)
 
-    def export(self, filename: str):
-        """Export a shape.
+        else:
+            raise NoGeometrySpecified("Specify a geometry to build a mesh")
+
+    formats = {
+        "vol": "Netgen Format",
+        "mesh": "Neutral Format",
+        "msh": "Gmsh2 Format"
+    }
+
+    def load(self, filename: str):
+        """Import a mesh.
         
-        Supported formats: vol, mesh.
+        Use `Mesh.formats` to see supported formats.
         
         :param filename:
-            Name of the file to store the given shape in.
+            Name of the file to store the given mesh in.
+        """
+        ext = os.path.splitext(filename)[1][1: ]
+
+        if ext in self.formats.keys():
+            self.mesh = meshing.Mesh()
+            self.mesh.Load(filename)
+
+        else:
+            raise NotSupportedMeshFormat(f"Mesh format '{ ext }' is not supported")
+        
+        return self
+
+    def export(self, filename: str):
+        """Export a mesh.
+        
+        Use `Mesh.formats` to see supported formats.
+        
+        :param filename:
+            Name of the file to store the given mesh in.
         
         :return:
             Output, error messages and returncode
@@ -63,20 +102,13 @@ class Mesh(object):
             if ext == "vol":
                 self.mesh.Save(filename)
             
-            elif ext == "mesh":
-                self.mesh.Export(filename, "Neutral Format")
-
-            elif ext == "msh":
-                self.mesh.Export(filename, "Gmsh2 Format")
+            elif ext in self.formats.keys():
+                self.mesh.Export(filename, self.formats[ext])
 
             else:
-                raise NotImplementedError(f"Mesh format '{ ext }' is not supported")
+                raise NotSupportedMeshFormat(f"Mesh format '{ ext }' is not supported")
             
-        except NotImplementedError as e:
-            err = e
-            returncode = 1
-        
-        except Exception as e:
+        except (NotSupportedMeshFormat, Exception) as e:
             err = e
             returncode = 1
         

@@ -56,6 +56,51 @@ class Shape(object):
 
         else:
             raise NotImplementedError(f"Shape format '{ext}' is not supported")
+        
+        return self
+
+    def patches(self, group: bool = False, shiftIndex: bool = False, prefix: str = None):
+        """Get patches indices with their names.
+
+        :param group:
+            Group indices together with the same patches names.
+
+        :param shiftIndex:
+            Start numerating with one instead of zero.
+
+        :param prefix:
+            Add string prefix to the index.
+
+        :return:
+            List if group = False else dictionary.
+        """
+        if group:
+            patches_ = {}
+
+            for idn, face in enumerate(self.shape.faces):
+                if shiftIndex:
+                    idn += 1
+
+                item = idn if not prefix else prefix + str(idn)
+                
+                if patches_.get(face.name):
+                    patches_[face.name].append(item)
+
+                else:
+                    patches_[face.name] = [ item ]
+
+        else:
+            patches_ = []
+
+            for idn, face in enumerate(self.shape.faces):
+                if shiftIndex:
+                    idn += 1
+                
+                item = idn if not prefix else prefix + str(idn)
+
+                patches_.append((item, face.name))
+
+        return patches_ 
 
     def normal(self, face: FACE) -> numpy.array:
         """
