@@ -6,6 +6,8 @@ from netgen.occ import OCCGeometry
 from netgen import meshing
 from numpy import array
 import os
+from .utils import extractPoints, extractCells
+import meshio
 
 
 class NoGeometrySpecified(Exception):
@@ -114,21 +116,55 @@ class Mesh(object):
         
         return out, err, returncode
 
-    def doubleExport(self):
-        pass
+    def to_meshio(self): 
+        points = extractPoints(self.mesh.Points())
+        cells = []
+
+        if len(self.mesh.Elements1D()) > 0:
+            cells.extend([ cells_ for cells_ in extractCells(1, self.mesh.Elements1D()).items() ])   
+
+        if len(self.mesh.Elements2D()) > 0:
+            cells.extend([ cells_ for cells_ in extractCells(2, self.mesh.Elements2D()).items() ])   
+
+        if len(self.mesh.Elements3D()) > 0:
+            cells.extend([ cells_ for cells_ in extractCells(3, self.mesh.Elements3D()).items() ])   
+
+        return meshio.Mesh(points, cells)
+
+    @staticmethod
+    def volumeTetra(points: array) -> float:
+        return 1 / 6 * linalg.det(numpy.append(points.transpose(), numpy.array([[1, 1, 1, 1]]), axis = 0))
 
     @property
     def volumes(self) -> array:
-        return array(self.mesh.Elements3D())
+        points = []
+
+        for cells in self.cells:
+            if cells.dim == 3:
+                points.extend([ self.mesh.points[cell] for cell in cells.data ])
+
+        return array(points)
 
     @property
     def faces(self) -> array:
-        return array(self.mesh.Elements2D())
+        points = []
+
+        for cells in self.cells:
+            if cells.dim == 2:
+                points.extend([ self.mesh.points[cell] for cell in cells.data ])
+
+        return array(points)
 
     @property
     def edges(self) -> array:
-        # NOTE: returns zero elements for imported mesh 
-        return array(self.mesh.Elements1D())
+        points = []
+
+        for cells in self.cells:
+            if cells.dim == 1:
+                points.extend([ self.mesh.points[cell] for cell in cells.data ])
+
+        return array(points)
+
 
 
 # tetras = numpy.array([ [ [ vertex for vertex in mesh[index] ] for index in element.vertices ] for element in self.mesh.Elements3D() ])
