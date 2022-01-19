@@ -6,6 +6,8 @@ from netgen.occ import *
 import numpy
 from numpy import linalg
 import os
+from os import PathLike
+from pathlib import Path
 
 
 class ShapeError(Exception):
@@ -17,7 +19,7 @@ class Shape(object):
         self.groups = {}
         self.shape = None
 
-    def export(self, filename: str):
+    def write(self, filename: PathLike):
         """Export a shape.
         
         Supported formats: step.
@@ -29,11 +31,12 @@ class Shape(object):
             Output, error messages and returncode
         """
         out, err, returncode = "", "", 0
-        ext = os.path.splitext(filename)[1][1: ]
+        path = Path(filename).resolve()
+        ext = path.suffix[1: ]
         
         try:
             if ext == "step":
-                self.shape.WriteStep(filename)
+                self.shape.WriteStep(path)
             
             else:
                 raise NotImplementedError(f"{ ext } is not supported")
@@ -48,11 +51,12 @@ class Shape(object):
         
         return out, err, returncode
 
-    def load(self, filename: str):
-        ext = os.path.splitext(filename)[1][1:]
+    def read(self, filename: PathLike):
+        path = Path(filename).resolve()
+        ext = path.suffix[1: ]
 
         if ext in ["step", "iges", "brep"]:
-            self.shape = OCCGeometry(filename).shape
+            self.shape = OCCGeometry(path).shape
 
         else:
             raise NotImplementedError(f"Shape format '{ext}' is not supported")

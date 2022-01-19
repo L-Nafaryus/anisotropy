@@ -4,14 +4,15 @@
 
 from datetime import datetime
 import os
-from os import path
+from os import path, PathLike
+from pathlib import Path
 
 from anisotropy.core.config import DefaultConfig
 
 import logging
 
 from anisotropy.core.postProcess import PostProcess
-from anisotropy.core.utils import Timer
+from anisotropy.core.utils import Timer, ErrorHandler
 from anisotropy.core.parallel import ParallelRunner
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ from anisotropy.database import Database, tables as T
 from anisotropy.shaping import Simple, BodyCentered, FaceCentered, Shape
 from anisotropy.meshing import Mesh
 from anisotropy.solving import OnePhaseFlow
+
 
 class UltimateRunner(object):
     def __init__(self, config = None, exec_id: int = None, typo: str = "master"):
@@ -46,17 +48,8 @@ class UltimateRunner(object):
                 self.exec_id = T.Execution.create(date = datetime.now())
 
         # Parameters
-        self.shape = None
-        self.mesh = None
-        self.flow = None
-        
         self.queue = []
 
-
-    def dispose(self):
-        self.shape = None
-        self.mesh = None
-        self.flow = None
 
     def createRow(self):
         # create a row in each table for the current case
@@ -81,6 +74,7 @@ class UltimateRunner(object):
             flow = T.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
             self.database.csave(mesh)
 
+
     def fill(self):
         self.config.expand()
         logger.info(f"Preparing queue: { len(self.config.cases) }")
@@ -96,7 +90,7 @@ class UltimateRunner(object):
             }
             self.queue.append(kwargs)
     
-        
+
     def start(self, queue: list = None, nprocs: int = None):
         nprocs = nprocs or self.config["nprocs"]
         
@@ -109,17 +103,22 @@ class UltimateRunner(object):
 
         parallel.wait()
 
-    def casepath(self):
+
+    @property
+    def casepath(self) -> PathLike:
         params = self.config.params
+        path = Path(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_BUILD_DIR"])
+        path /= "execution-{}".format(self.exec_id)
+        path /= "{}-[{},{},{}]-{}".format(
+            params["label"], 
+            *[ str(d) for d in params["direction"] ], 
+            params["alpha"]
+        )
 
-        execution = "execution-{}".format(self.exec_id)
-        case = "{}-[{},{},{}]-{}".format(params["label"], *[ str(d) for d in params["direction"] ], params["alpha"])
-        dirpath = path.join(os.environ["ANISOTROPY_CWD"], self.config["build"], execution, case)
+        return path.resolve()
 
-        return path.abspath(dirpath)
 
     def computeShape(self):
-        out, err, returncode = "", "", 0
         params = self.config.params
         shapeParams = self.database.getShape(
             params["label"],
@@ -131,54 +130,48 @@ class UltimateRunner(object):
         logger.info("Computing shape for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        filename = "shape.step"
-        shapepath = path.join(self.casepath(), filename)
+        shapeFile = self.casepath / "shape.step"
         timer = Timer()
         
-        if path.exists(shapepath) and shapeParams.shapeStatus == "done" and not self.config["overwrite"]:
+        if shapeFile.exists() and shapeParams.shapeStatus == "done" and not self.config["overwrite"]:
             logger.info("Shape exists. Skipping ...")
             return
         
-        shape = {
+        shapeSelected = {
             "simple": Simple,
             "bodyCentered": BodyCentered,
             "faceCentered": FaceCentered
         }[shapeParams.label]
         
-        self.shape = shape(
+        shape = shapeSelected(
             direction = shapeParams.direction,
             alpha = shapeParams.alpha,
             r0 = shapeParams.r0,
             filletsEnabled = shapeParams.filletsEnabled
         )
 
-        try:
-            self.shape.build()
+        with ErrorHandler() as (eh, handler):
+            handler(shape.build)()
 
-        except Exception as e:
-            err = e
-            returncode = 1
+        if not eh.returncode:
+            self.casepath.mkdir(exist_ok = True)
 
-        if not returncode:
-            os.makedirs(self.casepath(), exist_ok = True)
-            out, err, returncode = self.shape.export(path.join(self.casepath(), filename))
+            with ErrorHandler() as (eh, handler):
+                handler(shape.write)(shapeFile)
         
-        if not returncode:
+        if not eh.returncode:
             shapeParams.shapeStatus = "done"
-
-            shapeParams.volume = self.shape.shape.volume
-            shapeParams.volumeCell = self.shape.cell.volume
+            shapeParams.volume = shape.shape.volume
+            shapeParams.volumeCell = shape.cell.volume
             shapeParams.porosity = shapeParams.volume / shapeParams.volumeCell
 
         else:
-            logger.error(err)
             shapeParams.shapeStatus = "failed"
+            logger.error(eh.error)
 
-        #with self.database:
         shapeParams.shapeExecutionTime = timer.elapsed()
-        #shapeParams.save()
         self.database.csave(shapeParams)
-        self.dispose()
+
 
     def computeMesh(self):
         out, err, returncode = "", "", 0
@@ -193,40 +186,45 @@ class UltimateRunner(object):
         logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        filename = "mesh.mesh"
-        meshpath = path.join(self.casepath(), filename)
+        meshFile = self.casepath / "mesh.mesh" 
         timer = Timer()
 
-        if path.exists(meshpath) and meshParams.meshStatus == "done" and not self.config["overwrite"]:
+        if meshFile.exists() and meshParams.meshStatus == "done" and not self.config["overwrite"]:
             logger.info("Mesh exists. Skipping ...")
             return
 
-        if not self.shape:
-            shapefile = "shape.step"
-            filepath = path.join(self.casepath(), shapefile)
+        #   Shape
+        shape = None
+        shapeFile = self.casepath / "shape.step"
 
-            if not path.exists(filepath) and not path.isfile(filepath):
-                err = f"File not found: { filepath }"
-                returncode = 2
-
-            if not returncode:
-                self.shape = Shape()
-                self.shape.load(filepath)
+        if not shapeFile.exists() and not shapeFile.is_file():
+            err = f"File not found: { shapeFile }"
+            returncode = 2
 
         if not returncode:
-            self.mesh = Mesh(self.shape.shape)
+            shape = Shape().read(shapeFile)
+
+        #   Mesh
+        if not returncode:
+            mesh = Mesh(shape.shape)
 
             try:
-                self.mesh.build()
+                mesh.generate()
 
             except Exception as e:
                 err = e
                 returncode = 1
 
         if not returncode:
-            os.makedirs(self.casepath(), exist_ok = True)
-            out, err, returncode = self.mesh.export(path.join(self.casepath(), filename))
-            out, err, returncode = self.mesh.export(path.join(self.casepath(), "mesh.msh"))
+            self.casepath.mkdir(exist_ok = True)
+
+            try:
+                mesh.write(meshFile)
+                mesh.write(self.casepath / "mesh.msh")
+            
+            except Exception as e:
+                err = e
+                returncode = 1
 
         if not returncode:
             meshParams.meshStatus = "done"
@@ -241,7 +239,7 @@ class UltimateRunner(object):
         with self.database:
             meshParams.meshExecutionTime = timer.elapsed()
             meshParams.save()
-        self.dispose()
+
 
     def computeFlow(self):
         params = self.config.params
@@ -261,37 +259,33 @@ class UltimateRunner(object):
         flowParams.viscosityKinematic = flowParams.viscosity / flowParams.density
 
         with self.database:
-            flowParams.save()
-            
+            flowParams.save()            
 
         with self.database:
-            self.flow = OnePhaseFlow(
+            flow = OnePhaseFlow(
                 direction = params["direction"], 
                 **self.database.getFlowOnephase(*query, to_dict = True),
-                path = self.casepath()
+                path = self.casepath
             )
 
-        if not self.shape:
-            filename = "shape.step"
-            filepath = path.join(self.casepath(), filename)
+        #   Shape
+        shapeFile = self.casepath / "shape.step"
 
-            if not path.exists(filepath) and not path.isfile(filepath):
-                err = f"File not found: { filepath }"
-                returncode = 2
+        if not shapeFile.exists() and not shapeFile.is_file():
+            err = f"File not found: { shapeFile }"
+            returncode = 2
 
-            if not returncode:
-                self.shape = Shape()
-                self.shape.load(filepath)
+        if not returncode:
+            shape = Shape().read(shapeFile)
 
-        faces = [ (n, face.name) for n, face in enumerate(self.shape.shape.faces) ]
-        createPatchDict = OnePhaseFlow.facesToPatches(faces)
-
-        self.flow.append(createPatchDict)
-        self.flow.write()
+        #   Patches from occ to openfoam
+        patches = shape.patches(group = True, shiftIndex = True, prefix = "patch")
+        flow.createPatches(patches)
+        flow.write()
 
         #   Build a flow
         try:
-            out, err, returncode = self.flow.build()
+            out, err, returncode = flow.build()
 
         except Exception as e:
             out, err, returncode = "", e, 1
@@ -308,6 +302,7 @@ class UltimateRunner(object):
             flowParams.flowExecutionTime = timer.elapsed()
             flowParams.save()
 
+
     def computePostProcess(self):
         params = self.config.params
         flowParams = self.database.getFlowOnephase(
@@ -321,7 +316,7 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
 
-        postProcess = PostProcess(self.casepath())
+        postProcess = PostProcess(self.casepath)
 
         if flowParams.flowStatus == "done":
             flowParams.flowRate = postProcess.flowRate("outlet")

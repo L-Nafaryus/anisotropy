@@ -135,25 +135,14 @@ class OnePhaseFlow(FoamCase):
             u
         ])
 
-    @staticmethod
-    def facesToPatches(faces: tuple[int, str]):
+    
+    def createPatches(self, patches: dict):
         # initial 43 unnamed patches ->
         # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
         # 4 inGroups (inlet, outlet, wall, symetry)
 
         createPatchDict = F.CreatePatchDict()
         createPatchDict["patches"] = []
-        patches = {}
-
-        for n, name in faces:
-            #   shifted index
-            n += 1
-
-            if patches.get(name):
-                patches[name].append(f"patch{n}")
-
-            else:
-                patches[name] = [f"patch{n}"]
 
         for name in patches.keys():
             if name == "inlet":
@@ -182,7 +171,7 @@ class OnePhaseFlow(FoamCase):
                 "patches": patches[name]
             })
 
-        return createPatchDict
+        self.append(createPatchDict)
 
     def build(self) -> tuple[str, str, int]:
         # TODO: configure working directory (FoamCase)

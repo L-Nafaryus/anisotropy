@@ -269,7 +269,7 @@ def plotDraw(clicks, execution, structure, direction, data):
     )
 
     if not direction == "all":
-        query = qeury.where(models.Shape.direction == json.loads(direction))
+        query = query.where(models.Shape.direction == json.loads(direction))
 
     with db:
         if query.exists():

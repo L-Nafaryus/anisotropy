@@ -6,6 +6,7 @@ import logging
 import copy
 import time
 from types import FunctionType
+import contextlib
 
 
 class CustomFormatter(logging.Formatter):
@@ -206,3 +207,33 @@ class Timer(object):
         
     def elapsed(self):
         return time.monotonic() - self.start
+
+
+class ErrorHandler(contextlib.AbstractContextManager):
+    def __init__(self):
+        self.error = ""
+        self.returncode = 0
+        self.traceback = None
+
+    def __enter__(self):
+        return self, self.handler
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            self.error = exc_value.args
+            self.returncode = 1
+            self.traceback = traceback
+
+    def handle(self, obj):
+        def inner(*args, **kwargs):
+            try:
+                output = obj(*args, **kwargs)
+            
+            except Exception as e:
+                self.error = e.args
+                self.returncode = 1
+            
+            else:
+                return output
+        
+        return inner

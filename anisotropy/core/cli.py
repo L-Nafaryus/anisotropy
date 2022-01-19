@@ -396,11 +396,5 @@ def show(params, path, printlist, export, fields, output):
 #   CLI entry
 ##
 if __name__ == "__main__":
-    #try:
-        anisotropy()
+    anisotropy()
 
-    #except KeyboardInterrupt:
-    #    click.echo("Interrupted!")
-
-    #finally:
-    #    sys.exit(0)
