@@ -196,7 +196,7 @@ class Mesh:
             mesh.write(path)
 
     @property
-    def volumes(self) -> list[ndarray]: #   delete?
+    def volumes(self) -> list[ndarray]: 
         """Volumes.
 
         :return:
@@ -220,7 +220,7 @@ class Mesh:
         return np.sum([ metrics.volume(cell) for cell in self.volumes ]) 
 
     @property
-    def faces(self) -> list[ndarray]: #    delete?
+    def faces(self) -> list[ndarray]: 
         """Boundary faces.
 
         :return:

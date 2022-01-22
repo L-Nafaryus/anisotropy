@@ -1,80 +1,95 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
-from netgen.occ import *
-import numpy
-from numpy import linalg
-import os
+from __future__ import annotations
+from numpy import ndarray
 from os import PathLike
-from pathlib import Path
 
+import numpy as np
+import netgen.occ as ng_occ
+import pathlib
 
-class ShapeError(Exception):
-    pass
+from . import utils
 
 
 class Shape(object):
     def __init__(self):
+        """A Shape object contains OCC shape.
+        """
         self.groups = {}
         self.shape = None
 
+    @property
+    def geometry(self) -> ng_occ.OCCGeometry:
+        """Shape as OCCGeometry object.
+        """
+        return ng_occ.OCCGeometry(self.shape)
+    
+    @property
+    def type(self) -> ng_occ.TopAbs_ShapeEnum:
+        """Type of the shape. (shortcut)
+        """
+        return self.shape.type
+    
+    @property
+    def volume(self) -> float:
+        """Volume of the shape. (shortcut)
+        """
+        return self.shape.volume
+
+    @property
+    def center(self) -> ndarray:
+        """Center of the shape.
+        """
+        return np.array(utils.pos(self.shape.center))
+
     def write(self, filename: PathLike):
-        """Export a shape.
-        
+        """Export a shape to the file.
         Supported formats: step.
         
         :param filename:
-            Name of the file to store the given shape in.
-        
-        :return:
-            Output, error messages and returncode
+            Path of the file.
         """
-        out, err, returncode = "", "", 0
-        path = Path(filename).resolve()
+        path = pathlib.Path(filename).resolve()
         ext = path.suffix[1: ]
         
-        try:
-            if ext == "step":
-                self.shape.WriteStep(path)
-            
-            else:
-                raise NotImplementedError(f"{ ext } is not supported")
-            
-        except NotImplementedError as e:
-            err = e
-            returncode = 1
+        if ext == "step":
+            self.shape.WriteStep(str(path))
         
-        except Exception as e:
-            err = e
-            returncode = 1
-        
-        return out, err, returncode
-
+        else:
+            raise NotImplementedError(f"Shape format '{ ext }' is not supported")
+            
     def read(self, filename: PathLike):
-        path = Path(filename).resolve()
+        """Import a shape from the file.
+        Supported formats: step, iges, brep.
+
+        :param filename:
+            Path of the file.
+        """        
+        path = pathlib.Path(filename).resolve()
         ext = path.suffix[1: ]
 
         if ext in ["step", "iges", "brep"]:
-            self.shape = OCCGeometry(path).shape
+            self.shape = ng_occ.OCCGeometry(str(path)).shape
 
         else:
             raise NotImplementedError(f"Shape format '{ext}' is not supported")
         
         return self
 
-    def patches(self, group: bool = False, shiftIndex: bool = False, prefix: str = None):
+    def patches(
+        self, 
+        group: bool = False, 
+        shiftIndex: bool = False, 
+        prefix: str = None
+    ) -> list | dict:
         """Get patches indices with their names.
 
         :param group:
             Group indices together with the same patches names.
-
         :param shiftIndex:
             Start numerating with one instead of zero.
-
         :param prefix:
             Add string prefix to the index.
-
         :return:
             List if group = False else dictionary.
         """
@@ -105,24 +120,3 @@ class Shape(object):
                 patches_.append((item, face.name))
 
         return patches_ 
-
-    def normal(self, face: FACE) -> numpy.array:
-        """
-        :return:
-            Normal vector to face.
-        """
-        _, u, v = face.surf.D1(0, 0)
-
-        return numpy.cross([u.x, u.y, u.z], [v.x, v.y, v.z]) 
-
-
-    def angle(self, vec1: numpy.array, vec2: numpy.array) -> float:
-        """
-        :return:
-            Angle between two vectors in radians.
-        """
-        inner = numpy.inner(vec1, vec2)
-        norms = linalg.norm(vec1) * linalg.norm(vec2)
-        cos = inner / norms
-
-        return numpy.arccos(numpy.clip(cos, -1.0, 1.0))

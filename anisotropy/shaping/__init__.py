@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
+"""
+Shaping is a library for using OCC shapes, provides more convient
+functionality with power NumPy and Python OOP and contains interesing
+primitives.
+"""
 
-from .shape import ShapeError, Shape
+from . import utils
+
+from .shape import Shape
 from .periodic import Periodic
-from .simple import Simple
-from .faceCentered import FaceCentered
-from .bodyCentered import BodyCentered
+
+from . import primitives
+
+
+__all__ = [
+    "utils",
+    "primitives",
+    "Shape",
+    "Periodic"
+]
