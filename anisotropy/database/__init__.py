@@ -1,11 +1,13 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .models import __models__
-from .db import Database
+from . import utils
+from . import tables
 
-class tables:
-    pass
+from .database import Database
 
-for model in __models__:
-    setattr(tables, model.__name__, model)
+
+__all__ = [
+    "utils",
+    "tables",
+    "Database"
+]
