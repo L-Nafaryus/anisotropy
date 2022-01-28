@@ -1,7 +1,6 @@
 name: anisotropy 
 channels:
   - l-nafaryus
-  - local
   - conda-forge 
 dependencies:
   - python>=3.9
@@ -9,3 +8,4 @@ dependencies:
   - sqlite
   - occt
   - l-nafaryus::netgen
+  - l-nafaryus::openfoam
