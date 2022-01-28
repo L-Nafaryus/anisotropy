@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import annotations
-from numpy.typing import ndarray, ArrayLike
+from numpy.typing import ArrayLike
+from numpy import ndarray
 
 import os
 

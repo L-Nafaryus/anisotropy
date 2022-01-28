@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from anisotropy.openfoam.foamfile import FoamFile
 import os, shutil
 import re
 from copy import deepcopy
+
+from . import FoamFile
+
 
 class FoamCase(object):
     def __init__(self, foamfiles: list = None, path: str = None):

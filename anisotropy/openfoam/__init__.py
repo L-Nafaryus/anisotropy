@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from .utils import version, uniform, datReader
-from .foamfile import FoamFile
-from .foamcase import FoamCase
+from . import utils
+from . import conversion
+
+from .file import FoamFile
 from .runner import FoamRunner
+from .case import FoamCase
 
 from . import presets
-from . import runnerPresets
+from . import commands
+
+
+__all__ = [
+    "utils",
+    "conversion",
+    "FoamFile",
+    "FoamRunner",
+    "FoamCase",
+    "presets",
+    "commands"
+]
