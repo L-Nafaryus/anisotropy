@@ -4,8 +4,8 @@
 
 import os
 import toml
-from copy import deepcopy
-from numpy import arange, array, round
+import copy
+import numpy as np
 
 
 class Config(object):
@@ -41,7 +41,7 @@ class Config(object):
             raise FileNotFoundError(path)
 
         self.content = toml.load(path)
-        self.options = deepcopy(self.content["options"])
+        self.options = copy.deepcopy(self.content["options"])
         self.content.pop("options")
 
     def dump(self, filename: str):
@@ -67,21 +67,20 @@ class Config(object):
         self.params = None
 
     def copy(self):
-        return deepcopy(self)
+        return copy.deepcopy(self)
 
     def expand(self):
         self.cases = []
 
         #   Expand structures for each direction and each alpha
         for structure in self.content["structures"]:
-            # ISSUE: precision error 0.06999999999999999
-            structure = deepcopy(structure)
-            alphaA = round(arange(
+            structure = copy.deepcopy(structure)
+            alphaA = np.round(np.arange(
                 structure["alpha"][0], 
                 structure["alpha"][1] + structure["alphaStep"], 
                 structure["alphaStep"]
             ), 9)
-            directionA = array(structure["directions"], dtype = float) 
+            directionA = np.array(structure["directions"], dtype = float) 
             structure.pop("alpha")
             structure.pop("directions")
 
@@ -99,6 +98,7 @@ class Config(object):
 
         else:
             raise IndexError("list index out of range in cause of zero length of 'cases'")
+
 
 class DefaultConfig(Config):
     def __init__(self):

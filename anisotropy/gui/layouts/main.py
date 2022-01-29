@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
 from dash import html
 from dash import dcc
@@ -14,8 +12,8 @@ from . import (
     visualization,
     about
 )
-from .app import app
-from .styles import *
+from ..app import app
+from ..styles import *
 import anisotropy
 
 ###

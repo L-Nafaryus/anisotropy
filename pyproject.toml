@@ -23,7 +23,7 @@ include = ["doc"]
 exclude = ["doc/source", "doc/Makefile"]
 
 [tool.poetry.scripts]
-anisotropy = "anisotropy.core.cli:anisotropy"
+anisotropy = "anisotropy.cli:anisotropy_cli"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"

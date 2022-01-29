@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
-
-from multiprocessing import Queue, Process
+import multiprocessing as mlp
 import dill
 
 
@@ -13,8 +10,8 @@ class ParallelRunner(object):
         self.daemon = daemon
         
         self.processes = []
-        self.queueInput = Queue(maxsize = 1)
-        self.queueOutput = Queue()
+        self.queueInput = mlp.Queue(maxsize = 1)
+        self.queueOutput = mlp.Queue()
         
         self.__pos = -1
         self.output = []
@@ -41,7 +38,7 @@ class ParallelRunner(object):
     
     def start(self):
         for n in range(self.nprocs):
-            self.processes.append(Process(
+            self.processes.append(mlp.Process(
                 target = self.queueRelease, 
                 args = (self.queueInput, self.queueOutput),
                 name = f"worker-{ n + 1 }"
@@ -65,8 +62,3 @@ class ParallelRunner(object):
             proc.join()
         
         self.__pos = -1
-        
-
-
-
-

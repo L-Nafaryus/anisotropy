@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
 from os import path
 import logging
 
 logger = logging.getLogger(__name__)
 
-from anisotropy.openfoam.runnerPresets import postProcess
-from anisotropy.openfoam import datReader
+from anisotropy.openfoam import commands 
+from anisotropy.openfoam import conversion
 
 
 class PostProcess(object):
@@ -18,8 +16,7 @@ class PostProcess(object):
     def flowRate(self, patch: str):
         func = "patchFlowRate(patch={})".format(patch)
         filepath = path.join(self.path, "postProcessing", func, "0", "surfaceFieldValue.dat")
-        postProcess(func, cwd = self.path, logpath = path.join(self.path, "patchFlowRate.log"))
-        surfaceFieldValue = datReader(filepath)
+        commands.postProcess(func, cwd = self.path, logpath = path.join(self.path, "patchFlowRate.log"))
+        surfaceFieldValue = conversion.datReader(filepath)
 
         return surfaceFieldValue["sum(phi)"][-1]
-

@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
 import logging
-import copy
 import time
-from types import FunctionType
 import contextlib
 
 
@@ -76,128 +72,6 @@ def setupLogger(level: int, filepath: str = None):
         logging.root.addHandler(filehandler)
 
 
-class struct:
-    def __init__(self, *args, **kwargs):
-        if len(args) > 0:
-            if type(args[0]) == dict:
-                for (k, v) in args[0].items():
-                    if type(v) == dict:
-                        setattr(self, k, struct(v))
-                    
-                    else:
-                        setattr(self, k, v)
-        else:
-            self.__dict__.update(kwargs)
-
-    def __iter__(self):
-        for k in self.__dict__:
-            if type(getattr(self, k)) == struct:
-                yield k, dict(getattr(self, k))
-
-            else:
-                yield k, getattr(self, k)
-
-    def __str__(self):
-        members = []
-
-        for key in self.__dict__.keys():
-            members.append(f"{ key } = ")
-
-            if type(self.__dict__[key]) == str:
-                members[len(members) - 1] += f"\"{ self.__dict__[key] }\""
-
-            else: 
-                members[len(members) - 1] += f"{ self.__dict__[key] }"
-             
-        return f"struct({', '.join(members)})"
-
-    def __repr__(self):
-        return str(self)
-
-
-def deepupdate(target, src):
-    for k, v in src.items():
-        if isinstance(v, dict):
-            if k not in target:
-                target[k] = copy.deepcopy(v)
-
-            else:
-                deepupdate(target[k], v)
-
-        else:
-            target[k] = copy.copy(v)
-
-
-def collapse(source, key = None, level = 0, sep = "_"):
-    if isinstance(source, dict) and source:
-        level = level + 1
-        res = {}
-
-        for k, v in source.items():
-            ret, lvl = collapse(v, k, level)
-
-            for kk, vv in ret.items():
-                if level == lvl:
-                    newkey = k
-
-                else:
-                    newkey = "{}{}{}".format(k, sep, kk)
-
-                res.update({ newkey: vv })
-
-        if level == 1:
-            return res
-
-        else:
-            return res, level
-
-    else:
-        return { key: source }, level
-
-
-def expand(source, sep = "_"):
-    res = {}
-
-    for k, v in source.items():
-        if k.find(sep) == -1:
-            res.update({ k: v })
-
-        else:
-            keys = k.split(sep)
-            cur = res
-
-            for n, kk in enumerate(keys):
-                if not len(keys) == n + 1:
-                    if not cur.get(kk):
-                        cur.update({ kk: {} })
-
-                    cur = cur[kk]
-
-                else:
-                    cur[kk] = v
-    return res
-
-
-def timer(func: FunctionType) -> (tuple, float):
-    """(Decorator) Returns output of inner function and execution time
-    
-    :param func: inner function
-    :type func: FunctionType
-
-    :return: output, elapsed time
-    :rtype: tuple(tuple, float)
-    """
-
-    def inner(*args, **kwargs):
-        start = time.monotonic()
-        ret = func(*args, **kwargs)
-        elapsed = time.monotonic() - start
-
-        return ret, elapsed
-
-    return inner
-
-
 class Timer(object):
     def __init__(self):
         self.update()
@@ -216,7 +90,7 @@ class ErrorHandler(contextlib.AbstractContextManager):
         self.traceback = None
 
     def __enter__(self):
-        return self, self.handler
+        return self, self.handle
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type:

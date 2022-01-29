@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# This file is part of anisotropy.
-# License: GNU GPL version 3, see the file "LICENSE" for details.
 
 from dash.dash_table import DataTable
 from dash import html
@@ -12,8 +10,8 @@ import dash_vtk.utils
 import vtk
 import os
 
-from .app import app
-from . import styles
+from ..app import app
+from .. import styles
 
 
 class MeshRepresentation(object):

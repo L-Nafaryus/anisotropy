@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import os
-from os import path, PathLike
+from os import PathLike
 from pathlib import Path
 
 from anisotropy.core.config import DefaultConfig
@@ -48,7 +48,6 @@ class UltimateRunner(object):
         # Parameters
         self.queue = []
 
-
     def createRow(self):
         # create a row in each table for the current case
         with self.database:
@@ -72,7 +71,6 @@ class UltimateRunner(object):
             flow = T.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
             self.database.csave(mesh)
 
-
     def fill(self):
         self.config.expand()
         logger.info(f"Preparing queue: { len(self.config.cases) }")
@@ -88,7 +86,6 @@ class UltimateRunner(object):
             }
             self.queue.append(kwargs)
     
-
     def start(self, queue: list = None, nprocs: int = None):
         nprocs = nprocs or self.config["nprocs"]
         
@@ -100,7 +97,6 @@ class UltimateRunner(object):
             parallel.append(self.subrunner, kwargs = kwargs)
 
         parallel.wait()
-
 
     @property
     def casepath(self) -> PathLike:
@@ -114,7 +110,6 @@ class UltimateRunner(object):
         )
 
         return path.resolve()
-
 
     def computeShape(self):
         params = self.config.params
@@ -148,14 +143,14 @@ class UltimateRunner(object):
             filletsEnabled = shapeParams.filletsEnabled
         )
 
-        with ErrorHandler() as (eh, handler):
-            handler(shape.build)()
+        with ErrorHandler() as (eh, handle):
+            handle(shape.build)()
 
         if not eh.returncode:
             self.casepath.mkdir(exist_ok = True)
 
-            with ErrorHandler() as (eh, handler):
-                handler(shape.write)(shapeFile)
+            with ErrorHandler() as (eh, handle):
+                handle(shape.write)(shapeFile)
         
         if not eh.returncode:
             shapeParams.shapeStatus = "done"
@@ -170,9 +165,8 @@ class UltimateRunner(object):
         shapeParams.shapeExecutionTime = timer.elapsed()
         self.database.csave(shapeParams)
 
-
     def computeMesh(self):
-        out, err, returncode = "", "", 0
+        err, returncode = "", 0
         params = self.config.params
         meshParams = self.database.getMesh(
             params["label"],
@@ -238,7 +232,6 @@ class UltimateRunner(object):
             meshParams.meshExecutionTime = timer.elapsed()
             meshParams.save()
 
-
     def computeFlow(self):
         params = self.config.params
         query = (
@@ -286,20 +279,19 @@ class UltimateRunner(object):
             out, err, returncode = flow.build()
 
         except Exception as e:
-            out, err, returncode = "", e, 1
+            # out, err, returncode = "", e, 1
             logger.error(e, exc_info = True)
 
         if returncode == 0:
             flowParams.flowStatus = "done"
 
         else:
-            #logger.error(err)
+            # logger.error(err)
             flowParams.flowStatus = "failed"
 
         with self.database:
             flowParams.flowExecutionTime = timer.elapsed()
             flowParams.save()
-
 
     def computePostProcess(self):
         params = self.config.params
@@ -344,6 +336,3 @@ class UltimateRunner(object):
         runner = UltimateRunner(config = kwargs["config"], exec_id = kwargs["exec_id"], typo = "worker")
         runner.createRow()
         runner.pipeline()
-
-
-
