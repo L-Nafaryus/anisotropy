@@ -8,15 +8,18 @@ from . import conversion
 class FoamFile(object):
     def __init__(
         self, 
+        filename: str = None,
         _version: float = 2.0,
         _format: str = "ascii",
         _class: str = "dictionary",
         _object: str = None,
-        _location: str = None,
-        filename: str = None
+        _location: str = None
     ):
         """A FoamFile object.
 
+        :param filename:
+            Can be used as shortcut to set _location and _object,
+            _location and _object parameters will be ignored.
         :param _version:
             Version of the file format, current is 2.0.
         :param _format:
@@ -29,9 +32,6 @@ class FoamFile(object):
         :param _location:
             Path to the parent directory of the file according 
             to the case root.
-        :param filename:
-            Can be used as shortcut to set _location and _object,
-            _location and _object parameters will be ignored.
         """
 
         if filename:
@@ -49,6 +49,26 @@ class FoamFile(object):
 
         if _location:
             self.header["location"] = f'"{ _location }"'
+
+    @property
+    def version(self) -> str:
+        return self.header.get("version")
+
+    @property
+    def format(self) -> str:
+        return self.header.get("format")
+
+    @property
+    def class_(self) -> str:
+        return self.header.get("class")
+
+    @property
+    def object(self) -> str:
+        return self.header.get("object")
+
+    @property
+    def location(self) -> str:
+        return self.header.get("location")
 
     def __getitem__(self, key):
         return self.content[key]
@@ -72,16 +92,27 @@ class FoamFile(object):
     def __repr__(self) -> str:
         return "<FoamFile: {}>".format(self.header["object"] or None)
 
+    def __add__(self, file):
+        from . import FoamCase
+
+        assert type(file) is FoamFile
+
+        return FoamCase([ self, file ])
+
     def read(self, filename: str = None):
         """Read a FoamFile.
 
         :param filename:
-            Path to the file. If None, use location from header with
-            current working directory.
+            Path to the file. If None, use location and object from header with
+            the current working directory.
         :return:
             Self.
         """
-        path = pathlib.Path(filename or self.header["location"]).resolve()
+        filename = (
+            filename or self.location + "/" + self.object 
+            if self.location else self.object
+        )
+        path = pathlib.Path(filename).resolve()
         header, content = conversion.read_foamfile(path)
 
         self.header = header
@@ -97,8 +128,28 @@ class FoamFile(object):
         """Write a FoamFile to the file.
 
         :param filename:
-            Path to the file. If None, use location from header with
-            current working directory..
+            Path to the file. If None, use location and object from header with
+            the current working directory.
         """  
-        filename = pathlib.Path(filename or self.header["location"]).resolve()
-        conversion.write_foamfile(self.header, self.content, filename)
+        filename = (
+            filename or self.location + "/" + self.object 
+            if self.location else self.object
+        )
+        path = pathlib.Path(filename).resolve()
+        conversion.write_foamfile(self.header, self.content, path)
+
+    def remove(self, filename: str = None):
+        """Remove a FoamFile.
+
+        :param filename:
+            Path to the file. If None, use location and object from header with
+            the current working directory.
+        """  
+        filename = (
+            filename or self.location + "/" + self.object 
+            if self.location else self.object
+        )
+        path = pathlib.Path(filename).resolve()
+
+        if path.exists():
+            pathlib.os.remove(filename)

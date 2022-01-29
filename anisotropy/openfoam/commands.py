@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from typing import List
-from .runner import FoamRunner
+from . import FoamRunner
+
 
 ###
 #   meshConversion
@@ -185,6 +185,7 @@ def simpleFoam(parallel: bool = False, run: bool = True, **kwargs) -> FoamRunner
         runner.run()
 
     return runner
+
 
 ###
 #   postProcessing

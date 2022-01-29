@@ -1,49 +1,85 @@
 # -*- coding: utf-8 -*-
 
-import os, shutil
+from __future__ import annotations
+
+import os
+import shutil
 import re
-from copy import deepcopy
+import pathlib
 
 from . import FoamFile
 
 
 class FoamCase(object):
-    def __init__(self, foamfiles: list = None, path: str = None):
+    def __init__(self, files: FoamFile | list[FoamFile] = None, path: str = None):
         
-        self.path = path or os.path.abspath("")
+        self.path = path 
+        self._files = []
+        
+        if files is not None:
+            self.add(files)
+    
+    def __repr__(self) -> str:
+        content = [ file.object for file in self._files ]
 
-        if foamfiles:
-            self.extend(foamfiles)
+        return "<FoamCase: {}>".format(", ".join(content) or None)
+
+    def add(self, files: FoamFile | list[FoamFile]):
+        if type(files) is not list:
+            assert type(files) is FoamFile, "passed object is not a FoamFile"
+
+            files = [ files ]
+
+        for file in files:
+            assert type(file) is FoamFile, "passed object is not a FoamFile"
+            assert file.object is not None, "FoamFile object attribute is None"
+
+            for n, _file in enumerate(self._files):
+                if _file.object == file.object:
+                    self._files.pop(n)
+                    self._files.append(file)
+                    
+                    return self
             
-    def __enter__(self):
-        self.__curpath = os.path.abspath("")
-        os.chdir(self.path)
-        return
+            self._files.append(file)
+        
+        return self
+            
+    def __add__(self, files: FoamFile | list[FoamFile]):
+        return self.add(files)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(self.__curpath)
-        self.__curpath = None
+    def write(self, path: str = None):
+        path = pathlib.Path(path or self.path or "")
 
-    def append(self, ff: FoamFile):
-        if FoamFile in ff.__class__.mro():
-            setattr(self, ff.header["object"], deepcopy(ff))
+        for file in self._files:
+            path /= (
+                file.location + "/" + file.object 
+                if file.location else file.object
+            )
 
-        else:
-            raise Exception("Trying to put not a FoamFile to FoamCase.")
+            file.write(path.resolve())
+    
+    def read(self, path: str = None):
+        path = pathlib.Path(path or self.path or "")
 
-    def extend(self, foamfiles: list):
-        for ff in foamfiles:
-            self.append(ff)
+        for file in self._files:
+            path /= (
+                file.location + "/" + file.object 
+                if file.location else file.object
+            )
 
-    def write(self):
-        for value in self.__dict__.values():
-            if FoamFile in value.__class__.mro():
-                value.write(self.path)
+            file.read(path.resolve())
 
-    def read(self):
-        for value in self.__dict__.values():
-            if FoamFile in value.__class__.mro():
-                value.read()
+    def remove(self, path: str = None):
+        path = pathlib.Path(path or self.path or "")
+
+        for file in self._files:
+            path /= (
+                file.location + "/" + file.object 
+                if file.location else file.object
+            )
+
+            file.remove(path.resolve())
 
     def clean(self, included: list = ["0", "constant", "system"]):
         regxs = [
@@ -72,5 +108,3 @@ class FoamCase(object):
 
                 if os.path.isfile(file):
                     os.remove(file)
-            
-

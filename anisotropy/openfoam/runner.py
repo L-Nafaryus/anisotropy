@@ -2,14 +2,13 @@
 
 import os
 import subprocess
-import sys
-from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class FoamRunner(object):
-    def __init__(self, command: str, args: List[str] = None, mpi: bool = False, cwd: str = None, logpath: str = None, exit: bool = False):
+    def __init__(self, command: str, args: list[str] = None, mpi: bool = False, cwd: str = None, logpath: str = None, exit: bool = False):
         self.command = command
         self.args = args
         self.mpi = mpi
@@ -20,7 +19,7 @@ class FoamRunner(object):
         self.error = ""
         self.returncode = 0
 
-    def fullcommand(self) -> List[str]:
+    def fullcommand(self) -> list[str]:
         command = []
 
         if self.mpi:
@@ -49,8 +48,6 @@ class FoamRunner(object):
             if self.logpath:
                 with proc, open(self.logpath, "w") as io:
                     while True:
-
-
                         output = proc.stdout.read(1)
 
                         if output == "" and proc.poll() is not None:
