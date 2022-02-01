@@ -93,14 +93,21 @@ class Mesh:
         return None if len(self.points) == 0 else self.points[0].size
 
     @property
-    def geometry(self) -> ng_occ.OCCGeometry:
+    def geometry(self) -> ng_occ.OCCGeometry | None:
         """Netgen OCCGeometry object.
 
         :return:
             OCCGeometry object that can be used for meshing
             or None if shape is not defined.
         """
-        return ng_occ.OCCGeometry(self.shape) if self.shape else None
+        if self.shape is not None:
+            if hasattr(self.shape, "geometry"):
+                return self.shape.geometry
+            
+            else:
+                return ng_occ.OCCGeometry(self.shape)
+
+        return None
 
     def generate(
         self, 

@@ -11,11 +11,11 @@ from . import tables
 
 
 class Database(pw.SqliteDatabase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, filename: str = None, *args, **kwargs):
         """A Database object contains SQLite database with convient
         properties and methods
         """
-        self.filepath = kwargs.get("path", None)
+        self.path = filename 
         self.pragmas_ = kwargs.get("pragmas", { "foreign_keys": 1, "journal_mode": "wal" })
         self.field_types_ = kwargs.get("field_types", { "list": "text" })
         self.autoconnect_ = kwargs.get("autoconnect", False)
@@ -28,7 +28,7 @@ class Database(pw.SqliteDatabase):
             autoconnect = self.autoconnect_
         )
 
-        if self.filepath:
+        if self.path:
             self.setup()
 
     @property
@@ -45,9 +45,9 @@ class Database(pw.SqliteDatabase):
         :return:
             Self.
         """        
-        self.filepath = pathlib.Path(filename or self.filepath).resolve()
+        self.path = pathlib.Path(filename or self.path).resolve()
         self.init(
-            self.filepath,
+            self.path,
             pragmas = self.pragmas_
         )
         tables.database_proxy.initialize(self)

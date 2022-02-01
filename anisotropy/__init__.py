@@ -33,7 +33,7 @@ env = {
 
 
 def loadEnv():
-    prefix = "ANISOTROPY_"
+    prefix = "AP_"
 
     for k, v in env.items():
         environ[f"{ prefix }{ k }"] = v

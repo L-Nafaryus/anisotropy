@@ -1,37 +1,34 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
-import os
 from os import PathLike
-from pathlib import Path
 
-from anisotropy.core.config import DefaultConfig
-
+from os import environ
+from datetime import datetime
+import pathlib
 import logging
 
-from anisotropy.core.postProcess import PostProcess
-from anisotropy.core.utils import Timer, ErrorHandler
-from anisotropy.core.parallel import ParallelRunner
+from anisotropy.database import Database, tables
+from anisotropy import shaping
+from anisotropy import meshing
+from anisotropy import solving
+
+from . import config
+from . import postprocess
+from . import utils
+from . import ParallelRunner
+
 
 logger = logging.getLogger(__name__)
 
-from anisotropy.database import Database, tables as T
-
-from anisotropy.shaping import Simple, BodyCentered, FaceCentered, Shape
-from anisotropy.meshing import Mesh
-from anisotropy.solving import OnePhaseFlow
-
 
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id: int = None, typo: str = "master"):
-        # Configuration file
-        self.config = config or DefaultConfig()
+    def __init__(self, conf = None, exec_id: int = None, typo: str = "master"):
 
-        # Process recognition
-        self.typo = typo
+        # Configuration file
+        self.config = conf or config.DefaultConfig()
 
         # Database preparation
-        self.database = Database(path = self.config["database"])
+        self.database = Database(self.config["database"])
         self.exec_id = None
 
         if exec_id:
@@ -43,35 +40,38 @@ class UltimateRunner(object):
 
         if not self.exec_id:
             with self.database:
-                self.exec_id = T.Execution.create(date = datetime.now())
+                self.exec_id = tables.Execution.create(date = datetime.now())
 
         # Parameters
         self.queue = []
 
-    def createRow(self):
+    def prepare_database(self):
         # create a row in each table for the current case
+        #   shape
         with self.database:
             shape = self.database.getShape(execution = self.exec_id, **self.config.params)
 
         if not shape:
-            shape = T.Shape(exec_id = self.exec_id, **self.config.params)
+            shape = tables.Shape(exec_id = self.exec_id, **self.config.params)
             self.database.csave(shape)
 
+        #   mesh
         with self.database:
             mesh = self.database.getMesh(execution = self.exec_id, **self.config.params)
 
         if not mesh:
-            mesh = T.Mesh(shape_id = shape.shape_id)
+            mesh = tables.Mesh(shape_id = shape.shape_id)
             self.database.csave(mesh)
 
+        # onephase flow
         with self.database:
             flow = self.database.getFlowOnephase(execution = self.exec_id, **self.config.params)
 
         if not flow:
-            flow = T.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
+            flow = tables.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
             self.database.csave(mesh)
 
-    def fill(self):
+    def prepare_queue(self):
         self.config.expand()
         logger.info(f"Preparing queue: { len(self.config.cases) }")
         
@@ -101,7 +101,8 @@ class UltimateRunner(object):
     @property
     def casepath(self) -> PathLike:
         params = self.config.params
-        path = Path(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_BUILD_DIR"])
+
+        path = pathlib.Path(environ["AP_CWD"], environ["AP_BUILD_DIR"])
         path /= "execution-{}".format(self.exec_id)
         path /= "{}-[{},{},{}]-{}".format(
             params["label"], 
@@ -111,7 +112,7 @@ class UltimateRunner(object):
 
         return path.resolve()
 
-    def computeShape(self):
+    def compute_shape(self):
         params = self.config.params
         shapeParams = self.database.getShape(
             params["label"],
@@ -123,50 +124,53 @@ class UltimateRunner(object):
         logger.info("Computing shape for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        shapeFile = self.casepath / "shape.step"
-        timer = Timer()
+        shapefile = self.casepath / "shape.step"
+        timer = utils.Timer()
         
-        if shapeFile.exists() and shapeParams.shapeStatus == "done" and not self.config["overwrite"]:
+        if (
+            shapefile.exists() and 
+            shapeParams.shapeStatus == "done" and 
+            not self.config["overwrite"]
+        ):
             logger.info("Shape exists. Skipping ...")
             return
         
-        shapeSelected = {
-            "simple": Simple,
-            "bodyCentered": BodyCentered,
-            "faceCentered": FaceCentered
+        generate_shape = {
+            "simple": shaping.primitives.simple,
+            "bodyCentered": shaping.primitives.bodyCentered,
+            "faceCentered": shaping.primitives.faceCentered
         }[shapeParams.label]
-        
-        shape = shapeSelected(
-            direction = shapeParams.direction,
-            alpha = shapeParams.alpha,
-            r0 = shapeParams.r0,
-            filletsEnabled = shapeParams.filletsEnabled
-        )
 
-        with ErrorHandler() as (eh, handle):
-            handle(shape.build)()
+        try:
+            #   generate shape
+            shape = generate_shape(
+                shapeParams.alpha,
+                shapeParams.direction,
+                r0 = shapeParams.r0,
+                filletsEnabled = shapeParams.filletsEnabled
+            )
 
-        if not eh.returncode:
+            #   export
             self.casepath.mkdir(exist_ok = True)
 
-            with ErrorHandler() as (eh, handle):
-                handle(shape.write)(shapeFile)
+            shape.write(shapefile)
         
-        if not eh.returncode:
+        except Exception as e:
+            logger.error(e)
+
+            shapeParams.shapeStatus = "failed"
+
+        else:
             shapeParams.shapeStatus = "done"
             shapeParams.volume = shape.shape.volume
             shapeParams.volumeCell = shape.cell.volume
             shapeParams.porosity = shapeParams.volume / shapeParams.volumeCell
 
-        else:
-            shapeParams.shapeStatus = "failed"
-            logger.error(eh.error)
-
+        #   commit parameters
         shapeParams.shapeExecutionTime = timer.elapsed()
         self.database.csave(shapeParams)
 
-    def computeMesh(self):
-        err, returncode = "", 0
+    def compute_mesh(self):
         params = self.config.params
         meshParams = self.database.getMesh(
             params["label"],
@@ -178,59 +182,50 @@ class UltimateRunner(object):
         logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        meshFile = self.casepath / "mesh.mesh" 
-        timer = Timer()
+        meshfile = self.casepath / "mesh.mesh" 
+        timer = utils.Timer()
 
-        if meshFile.exists() and meshParams.meshStatus == "done" and not self.config["overwrite"]:
+        if (
+            meshfile.exists() and 
+            meshParams.meshStatus == "done" and 
+            not self.config["overwrite"]
+        ):
             logger.info("Mesh exists. Skipping ...")
             return
 
         #   Shape
         shape = None
-        shapeFile = self.casepath / "shape.step"
 
-        if not shapeFile.exists() and not shapeFile.is_file():
-            err = f"File not found: { shapeFile }"
-            returncode = 2
+        try:
+            #   load shape
+            shapefile = self.casepath / "shape.step"
+            shape = shaping.Shape().read(shapefile)
 
-        if not returncode:
-            shape = Shape().read(shapeFile)
+            #   generate mesh
+            parameters = meshing.MeshingParameters()
+            mesh = meshing.Mesh(shape)
+            mesh.generate(parameters)
 
-        #   Mesh
-        if not returncode:
-            mesh = Mesh(shape.shape)
-
-            try:
-                mesh.generate()
-
-            except Exception as e:
-                err = e
-                returncode = 1
-
-        if not returncode:
+            #   export
             self.casepath.mkdir(exist_ok = True)
 
-            try:
-                mesh.write(meshFile)
-                mesh.write(self.casepath / "mesh.msh")
-            
-            except Exception as e:
-                err = e
-                returncode = 1
+            mesh.write(meshfile)
+            mesh.write(self.casepath / "mesh.msh")
 
-        if not returncode:
+        except Exception as e:
+            logger.error(e)
+
+            meshParams.meshStatus = "failed"
+
+        else:
             meshParams.meshStatus = "done"
             meshParams.edges = len(self.mesh.edges)
             meshParams.faces = len(self.mesh.faces)
             meshParams.volumes = len(self.mesh.volumes)
 
-        else:
-            logger.error(err)
-            meshParams.meshStatus = "failed"
-
-        with self.database:
-            meshParams.meshExecutionTime = timer.elapsed()
-            meshParams.save()
+        #   commit parameters
+        meshParams.meshExecutionTime = timer.elapsed()
+        self.database.csave(meshParams)
 
     def computeFlow(self):
         params = self.config.params
@@ -245,55 +240,45 @@ class UltimateRunner(object):
         logger.info("Computing flow for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        timer = Timer()
+        timer = utils.Timer()
 
+        #   precalculate some parameters
         flowParams.viscosityKinematic = flowParams.viscosity / flowParams.density
+        self.database.csave(flowParams)            
 
-        with self.database:
-            flowParams.save()            
+        #
+        flowParamsDict = self.database.getFlowOnephase(*query, to_dict = True)
 
-        with self.database:
-            flow = OnePhaseFlow(
-                direction = params["direction"], 
-                **self.database.getFlowOnephase(*query, to_dict = True),
-                path = self.casepath
-            )
+        flow = solving.FlowOnephase(
+            direction = params["direction"], 
+            **flowParamsDict,
+            path = self.casepath
+        )
 
-        #   Shape
-        shapeFile = self.casepath / "shape.step"
-
-        if not shapeFile.exists() and not shapeFile.is_file():
-            err = f"File not found: { shapeFile }"
-            returncode = 2
-
-        if not returncode:
-            shape = Shape().read(shapeFile)
-
-        #   Patches from occ to openfoam
-        patches = shape.patches(group = True, shiftIndex = True, prefix = "patch")
-        flow.createPatches(patches)
-        flow.write()
-
-        #   Build a flow
         try:
-            out, err, returncode = flow.build()
+            #   load shape
+            shapefile = self.casepath / "shape.step"
+            shape = shaping.Shape().read(shapefile)
+
+            patches = shape.patches(group = True, shiftIndex = True, prefix = "patch")
+
+            #   generate solution
+            flow.createPatches(patches)
+            flow.build()
 
         except Exception as e:
-            # out, err, returncode = "", e, 1
-            logger.error(e, exc_info = True)
+            logger.error(e)
 
-        if returncode == 0:
-            flowParams.flowStatus = "done"
-
-        else:
-            # logger.error(err)
             flowParams.flowStatus = "failed"
 
-        with self.database:
-            flowParams.flowExecutionTime = timer.elapsed()
-            flowParams.save()
+        else:
+            flowParams.flowStatus = "done"
 
-    def computePostProcess(self):
+        #   commit parameters
+        flowParams.flowExecutionTime = timer.elapsed()
+        self.database.csave(flowParams)
+
+    def compute_postprocess(self):
         params = self.config.params
         flowParams = self.database.getFlowOnephase(
             params["label"],
@@ -306,33 +291,30 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
 
-        postProcess = PostProcess(self.casepath)
+        postProcess = postprocess.PostProcess(self.casepath)
 
         if flowParams.flowStatus == "done":
             flowParams.flowRate = postProcess.flowRate("outlet")
 
-        with self.database:
-            flowParams.save()
+        self.database.csave(flowParams)
         
-        self.dispose()
-
     def pipeline(self, stage: str = None):
         stage = stage or self.config["stage"]
 
         if stage in ["shape", "all"]:
-            self.computeShape()
+            self.compute_shape()
 
         if stage in ["mesh", "all"]:
-            self.computeMesh()
+            self.compute_mesh()
 
         if stage in ["flow", "all"]:
-            self.computeFlow()
+            self.compute_flow()
 
         if stage in ["postProcess", "all"]:
-            self.computePostProcess()
+            self.compute_postprocess()
 
     @staticmethod
     def subrunner(*args, **kwargs):
-        runner = UltimateRunner(config = kwargs["config"], exec_id = kwargs["exec_id"], typo = "worker")
-        runner.createRow()
+        runner = UltimateRunner(config = kwargs["config"], exec_id = kwargs["exec_id"])
+        runner.prepare_database()
         runner.pipeline()

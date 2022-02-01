@@ -6,7 +6,9 @@ from anisotropy.openfoam import FoamCase, uniform
 from numpy import array
 import logging
 
+
 logger = logging.getLogger(__name__)
+
 
 class OnePhaseFlow(FoamCase):
     def __init__(
@@ -132,7 +134,6 @@ class OnePhaseFlow(FoamCase):
             p, 
             u
         ])
-
     
     def createPatches(self, patches: dict):
         # initial 43 unnamed patches ->
@@ -172,7 +173,6 @@ class OnePhaseFlow(FoamCase):
         self.append(createPatchDict)
 
     def build(self) -> tuple[str, str, int]:
-        # TODO: configure working directory (FoamCase)
         with self:
             self.write()
 
@@ -183,7 +183,7 @@ class OnePhaseFlow(FoamCase):
                 "scale": [1e-5, 1e-5, 1e-5]
             })
             R.renumberMesh()
-            #R.potentialFoam()
+            # R.potentialFoam()
 
             self.read()
 
