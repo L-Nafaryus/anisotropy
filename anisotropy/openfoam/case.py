@@ -14,6 +14,7 @@ class FoamCase(object):
     def __init__(self, files: FoamFile | list[FoamFile] = None, path: str = None):
         
         self.path = path 
+        self._backpath = None
         self._files = []
         
         if files is not None:
@@ -34,12 +35,13 @@ class FoamCase(object):
             assert type(file) is FoamFile, "passed object is not a FoamFile"
             assert file.object is not None, "FoamFile object attribute is None"
 
-            for n, _file in enumerate(self._files):
-                if _file.object == file.object:
-                    self._files.pop(n)
-                    self._files.append(file)
-                    
-                    return self
+            idn = self.contains(file.object)
+
+            if idn is not None:
+                self._files.pop(idn)
+                self._files.append(file)
+                
+                return self
             
             self._files.append(file)
         
@@ -48,16 +50,23 @@ class FoamCase(object):
     def __add__(self, files: FoamFile | list[FoamFile]):
         return self.add(files)
 
+    def contains(self, name: str) -> int | None:
+        for n, file in enumerate(self._files):
+            if file.object == name:
+                return n
+
+        return None
+
     def write(self, path: str = None):
         path = pathlib.Path(path or self.path or "")
 
         for file in self._files:
-            path /= (
+            path_ = path / (
                 file.location + "/" + file.object 
                 if file.location else file.object
             )
 
-            file.write(path.resolve())
+            file.write(path_.resolve())
     
     def read(self, path: str = None):
         path = pathlib.Path(path or self.path or "")
@@ -108,3 +117,14 @@ class FoamCase(object):
 
                 if os.path.isfile(file):
                     os.remove(file)
+
+    def chdir(self, path: str = None):
+        path = pathlib.Path(path or self.path or "").resolve()
+        self._backpath = os.getcwd()
+        
+        os.chdir(path)
+    
+    def chback(self):
+        path = pathlib.Path(self._backpath or "").resolve()
+
+        os.chdir(path)

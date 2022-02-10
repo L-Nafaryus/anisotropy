@@ -154,7 +154,7 @@ class Mesh:
             self.cells += utils.collect_cells(volume_cells, 3, volume_indices)
 
             surface_cells, surface_indices = utils.extract_netgen_cells(mesh, 2)
-            cell_blocks = utils.collect_cells(surface_cells, 3, surface_indices)
+            cell_blocks = utils.collect_cells(surface_cells, 2, surface_indices)
 
             for cellBlock in cell_blocks:
                 cellBlock.is_boundary = True

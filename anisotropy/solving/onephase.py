@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import anisotropy.openfoam.presets as F
-import anisotropy.openfoam.runnerPresets as R
-from anisotropy.openfoam import FoamCase, uniform
-from numpy import array
-import logging
+import numpy as np
+
+import anisotropy.openfoam as of
+from anisotropy.openfoam import presets
+from anisotropy.openfoam import commands
 
 
-logger = logging.getLogger(__name__)
-
-
-class OnePhaseFlow(FoamCase):
+class FlowOnePhase:
     def __init__(
         self,
+        path: str = None,
         direction: list[float] = None,
+        patches: dict = None,
         pressureInlet: float = None,
         pressureOutlet: float = None,
         pressureInternal: float = None,
@@ -22,12 +21,15 @@ class OnePhaseFlow(FoamCase):
         velocityInternal: float = None,
         density: float = None,
         viscosityKinematic: float = None,
-        path: str = None,
         **kwargs
     ):
-        FoamCase.__init__(self, path = path)
-
+        
         self.direction = direction 
+        self.patches = patches
+        self.path = path
+        self.case = None
+        self.boundaryNames = ["inlet", "outlet", "symetry", "wall"]
+
         self.pressureInlet = pressureInlet 
         self.pressureOutlet = pressureOutlet 
         self.pressureInternal = pressureInternal 
@@ -37,23 +39,30 @@ class OnePhaseFlow(FoamCase):
         self.density = density 
         self.viscosityKinematic = viscosityKinematic
 
-        controlDict = F.ControlDict()
-        controlDict.update(
+    def controlDict(self) -> of.FoamFile:
+        ff = presets.controlDict()
+        ff.update(
             startFrom = "latestTime",
             endTime = 5000,
             writeInterval = 100,
             runTimeModifiable = "true"
         )
 
-        fvSchemes = F.FvSchemes()
-        
-        fvSolution = F.FvSolution()
-        fvSolution["solvers"]["U"].update(
+        return ff
+
+    def fvSchemes(self) -> of.FoamFile:
+        ff = presets.fvSchemes()
+
+        return ff
+    
+    def fvSolution(self) -> of.FoamFile:    
+        ff = presets.fvSolution()
+        ff["solvers"]["U"].update(
             nSweeps = 2,
             tolerance = 1e-08,
             smoother = "GaussSeidel"
         )
-        fvSolution["solvers"]["Phi"] = dict(
+        ff["solvers"]["Phi"] = dict(
             solver = "GAMG",
             smoother = "DIC",
             cacheAgglomeration = "yes",
@@ -63,87 +72,122 @@ class OnePhaseFlow(FoamCase):
             tolerance = 1e-06,
             relTol = 0.01
         )
-        fvSolution["potentialFlow"] = dict(
+        ff["potentialFlow"] = dict(
             nNonOrthogonalCorrectors = 13,
             PhiRefCell = 0,
             PhiRefPoint = 0,
             PhiRefValue = 0,
             Phi = 0
         )
-        fvSolution["cache"] = { "grad(U)": None }
-        fvSolution["SIMPLE"].update(
+        ff["cache"] = { "grad(U)": None }
+        ff["SIMPLE"].update(
             nNonOrthogonalCorrectors = 6,
             residualControl = dict(
                 p = 1e-05,
                 U = 1e-05
             )
         )
-        fvSolution["relaxationFactors"]["equations"]["U"] = 0.5
+        ff["relaxationFactors"]["equations"]["U"] = 0.5
 
-        transportProperties = F.TransportProperties()
-        transportProperties.update(
+        return ff
+
+    def transportProperties(self) -> of.FoamFile:
+        ff = presets.transportProperties()
+        ff.update(
             nu = self.viscosityKinematic
         )
+
+        return ff
         
-        turbulenceProperties = F.TurbulenceProperties()
-        turbulenceProperties.content = dict(
+    def turbulenceProperties(self) -> of.FoamFile:
+        ff = presets.turbulenceProperties()
+        ff.content = dict(
             simulationType = "laminar"
         )
 
-        boundaries = ["inlet", "outlet", "symetry", "wall"]
-        p = F.P()
-        p["boundaryField"] = {}
-        u = F.U()
-        u["boundaryField"] = {}
+        return ff
 
-        for boundary in boundaries:
+    def p(self) -> of.FoamFile:
+        ff = presets.p()
+        ff["boundaryField"] = {}
+
+        for boundary in self.boundaryNames:
             if boundary == "inlet":
-                p["boundaryField"][boundary] = dict(
+                ff["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform(self.pressureInlet / self.density)
-                )
-                u["boundaryField"][boundary] = dict(
-                    type = "fixedValue",
-                    value = uniform(array(self.direction) * -6e-5)
+                    value = of.utils.uniform(self.pressureInlet / self.density)
                 )
 
             elif boundary == "outlet":
-                p["boundaryField"][boundary] = dict(
+                ff["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform(self.pressureOutlet / self.density)
+                    value = of.utils.uniform(self.pressureOutlet / self.density)
                 )
-                u["boundaryField"][boundary] = dict(
+
+            else:
+                ff["boundaryField"][boundary] = dict(
+                    type = "zeroGradient"
+                )
+ 
+        return ff
+
+    def U_approx(self) -> of.FoamFile:
+        ff = presets.U()
+        ff["boundaryField"] = {}
+
+        for boundary in self.boundaryNames:
+            if boundary == "inlet":
+                ff["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = of.utils.uniform(np.array(self.direction) * -6e-5)
+                )
+
+            elif boundary == "outlet":
+                ff["boundaryField"][boundary] = dict(
                     type = "zeroGradient",
                 )
 
             else:
-                p["boundaryField"][boundary] = dict(
-                    type = "zeroGradient"
-                )
-                u["boundaryField"][boundary] = dict(
+                ff["boundaryField"][boundary] = dict(
                     type = "fixedValue",
-                    value = uniform([0, 0, 0])
+                    value = of.utils.uniform([0., 0., 0.])
                 ) 
 
-        self.extend([
-            controlDict, 
-            fvSchemes, 
-            fvSolution,
-            transportProperties, 
-            turbulenceProperties,
-            p, 
-            u
-        ])
-    
-    def createPatches(self, patches: dict):
+        return ff
+
+    def U(self) -> of.FoamFile:
+        ff = presets.U()
+        ff["boundaryField"] = {}
+
+        for boundary in self.boundaryNames:
+            if boundary == "inlet":
+                ff["boundaryField"][boundary] = dict(
+                    type = "pressureInletVelocity",
+                    value = of.utils.uniform(self.velocityInlet)
+                )
+
+            elif boundary == "outlet":
+                ff["boundaryField"][boundary] = dict(
+                    type = "zeroGradient",
+                )
+
+            else:
+                ff["boundaryField"][boundary] = dict(
+                    type = "fixedValue",
+                    value = of.utils.uniform([0., 0., 0.])
+                ) 
+
+        return ff
+
+    def createPatchDict(self) -> of.FoamFile:
         # initial 43 unnamed patches ->
-        # 6 named patches (inlet, outlet, wall, symetry0 - 3/5) ->
+        # 6 named patches (inlet, outlet, wall, symetry 0 to 3 or 5) ->
         # 4 inGroups (inlet, outlet, wall, symetry)
 
-        createPatchDict = F.CreatePatchDict()
-        createPatchDict["patches"] = []
+        ff = presets.createPatchDict()
+        ff["patches"] = []
 
-        for name in patches.keys():
+        for name in self.patches.keys():
             if name == "inlet":
                 patchGroup = "inlet"
                 patchType = "patch"
@@ -160,39 +204,60 @@ class OnePhaseFlow(FoamCase):
                 patchGroup = "symetry"
                 patchType = "symetryPlane"
 
-            createPatchDict["patches"].append({
+            ff["patches"].append({
                 "name": name,
                 "patchInfo": {
                     "type": patchType,
                     "inGroups": [patchGroup]
                 },
                 "constructFrom": "patches",
-                "patches": patches[name]
+                "patches": self.patches[name]
             })
 
-        self.append(createPatchDict)
+        return ff
 
-    def build(self) -> tuple[str, str, int]:
-        with self:
-            self.write()
+    def generate(self, approximation: bool = False, meshfile: str = "mesh.mesh"):
 
-            R.netgenNeutralToFoam("mesh.mesh")
-            R.createPatch()
-            R.checkMesh()
-            R.transformPoints({
-                "scale": [1e-5, 1e-5, 1e-5]
-            })
-            R.renumberMesh()
-            # R.potentialFoam()
+        self.case = of.FoamCase(
+            path = self.path,
+            files = [
+                self.controlDict(),
+                self.fvSchemes(),
+                self.fvSolution(),
+                self.transportProperties(), 
+                self.turbulenceProperties(),
+                self.p()
+            ]
+        )
 
-            self.read()
+        if self.patches is not None:
+            self.case += self.createPatchDict()
+        
+        self.case += self.U_approx() if approximation else self.U()
+        
+        self.case.write(self.path)
 
-            self.U["boundaryField"]["inlet"] = dict(
-                type = "pressureInletVelocity",
-                value = uniform(self.velocityInlet)
-            )
-            self.write()
+        self.case.chdir()
 
-            R.simpleFoam()
+        commands.netgenNeutralToFoam(meshfile)
 
-        return "", "", 0
+        # TODO: contain
+        if self.case.contains("createPatchDict"):
+            commands.createPatch()
+
+        commands.checkMesh()
+        commands.transformPoints({
+            "scale": [1e-5, 1e-5, 1e-5]
+        })
+        commands.renumberMesh()
+
+        if approximation:
+            commands.potentialFoam()
+
+            #   replace velocity for the main simulation
+            self.case += self.U()
+            self.case.write(self.path)
+        
+        commands.simpleFoam()
+
+        self.case.chback()

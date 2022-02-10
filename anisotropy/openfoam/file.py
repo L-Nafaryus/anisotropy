@@ -68,7 +68,7 @@ class FoamFile(object):
 
     @property
     def location(self) -> str:
-        return self.header.get("location")
+        return self.header.get("location").replace('"', "")
 
     def __getitem__(self, key):
         return self.content[key]
@@ -136,6 +136,7 @@ class FoamFile(object):
             if self.location else self.object
         )
         path = pathlib.Path(filename).resolve()
+        path.parent.mkdir(parents = True, exist_ok = True)
         conversion.write_foamfile(self.header, self.content, path)
 
     def remove(self, filename: str = None):

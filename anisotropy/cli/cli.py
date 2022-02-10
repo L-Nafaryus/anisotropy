@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import click
+import pathlib
 import os
 import logging
 
@@ -93,30 +94,33 @@ def init(path, verbose):
 def compute(path, configFile, nprocs, stage, overwrite, params, verbose, execution, pid, logfile):
     import anisotropy
     from anisotropy.core import UltimateRunner
-    from anisotropy.core import config
+    from anisotropy.core import config as core_config
     from anisotropy.core import utils as core_utils
     
     anisotropy.loadEnv()
 
     if path:
-        os.makedirs(os.path.abspath(path), exist_ok = True)
-        os.chdir(os.path.abspath(path))
-        os.environ["ANISOTROPY_CWD"] = path
+        path = pathlib.Path(path).resolve()
+
+        os.makedirs(path, exist_ok = True)
+        os.chdir(path)
+        os.environ["AP_CWD"] = str(path)
 
     core_utils.setupLogger(utils.verbose_level(verbose), logfile)
     logger = logging.getLogger(__name__)
     
-    conf = config.DefaultConfig() 
+    config = core_config.DefaultConfig() 
 
     if configFile:
-        filepath = os.path.abspath(configFile)
-        logger.info(f"Loading file from { filepath }")
+        configFile = pathlib.Path(configFile).resolve()
+
+        logger.info(f"Loading file from { configFile }")
 
         try:
-            conf.load(configFile)
+            config.load(configFile)
 
         except FileNotFoundError:
-            conf.dump(configFile)
+            config.dump(configFile)
 
     else:
         logger.info("Using default configuration")
@@ -129,19 +133,21 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
 
     for k, v in args.items():
         if v is not None:
-            conf.update(**{ k: v })
+            config.update(**{ k: v })
 
     if pid:
-        pidpath = os.path.abspath(pid)
+        pid = pathlib.Path(pid).resolve()
 
-        with open(pidpath, "w") as io:
+        with open(pid, "w") as io:
             io.write(str(os.getpid()))
 
-    runner = UltimateRunner(config = conf, exec_id = execution)
-    runner.fill()
+    runner = UltimateRunner(config = config, exec_id = execution)
+    runner.prepare_queue()
     runner.start()
 
-    os.remove(pidpath)
+    if pid:
+        os.remove(pid)
+
     logger.info("Computation done. Exiting ...")
 
 

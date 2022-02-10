@@ -12,7 +12,7 @@ from anisotropy import shaping
 from anisotropy import meshing
 from anisotropy import solving
 
-from . import config
+from . import config as core_config
 from . import postprocess
 from . import utils
 from . import ParallelRunner
@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class UltimateRunner(object):
-    def __init__(self, conf = None, exec_id: int = None, typo: str = "master"):
+    def __init__(self, config = None, exec_id: int = None, typo: str = "master"):
 
         # Configuration file
-        self.config = conf or config.DefaultConfig()
+        self.config = config or core_config.DefaultConfig()
 
         # Database preparation
         self.database = Database(self.config["database"])
@@ -69,7 +69,7 @@ class UltimateRunner(object):
 
         if not flow:
             flow = tables.FlowOnephase(mesh_id = mesh.mesh_id, **self.config.params)
-            self.database.csave(mesh)
+            self.database.csave(flow)
 
     def prepare_queue(self):
         self.config.expand()
@@ -137,8 +137,8 @@ class UltimateRunner(object):
         
         generate_shape = {
             "simple": shaping.primitives.simple,
-            "bodyCentered": shaping.primitives.bodyCentered,
-            "faceCentered": shaping.primitives.faceCentered
+            "bodyCentered": shaping.primitives.body_centered,
+            "faceCentered": shaping.primitives.face_centered
         }[shapeParams.label]
 
         try:
@@ -151,12 +151,12 @@ class UltimateRunner(object):
             )
 
             #   export
-            self.casepath.mkdir(exist_ok = True)
+            self.casepath.mkdir(parents = True, exist_ok = True)
 
             shape.write(shapefile)
         
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info = True)
 
             shapeParams.shapeStatus = "failed"
 
@@ -207,27 +207,26 @@ class UltimateRunner(object):
             mesh.generate(parameters)
 
             #   export
-            self.casepath.mkdir(exist_ok = True)
+            self.casepath.mkdir(parents = True, exist_ok = True)
 
             mesh.write(meshfile)
             mesh.write(self.casepath / "mesh.msh")
 
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info = True)
 
             meshParams.meshStatus = "failed"
 
         else:
             meshParams.meshStatus = "done"
-            meshParams.edges = len(self.mesh.edges)
-            meshParams.faces = len(self.mesh.faces)
-            meshParams.volumes = len(self.mesh.volumes)
+            meshParams.faces = len(mesh.faces)
+            meshParams.volumes = len(mesh.volumes)
 
         #   commit parameters
         meshParams.meshExecutionTime = timer.elapsed()
         self.database.csave(meshParams)
 
-    def computeFlow(self):
+    def compute_flow(self):
         params = self.config.params
         query = (
             params["label"],
@@ -249,25 +248,24 @@ class UltimateRunner(object):
         #
         flowParamsDict = self.database.getFlowOnephase(*query, to_dict = True)
 
-        flow = solving.FlowOnephase(
-            direction = params["direction"], 
-            **flowParamsDict,
-            path = self.casepath
-        )
-
         try:
             #   load shape
             shapefile = self.casepath / "shape.step"
             shape = shaping.Shape().read(shapefile)
 
-            patches = shape.patches(group = True, shiftIndex = True, prefix = "patch")
+            #
+            flow = solving.FlowOnePhase(
+                path = self.casepath,
+                direction = params["direction"], 
+                patches = shape.patches(group = True, shiftIndex = True, prefix = "patch"),
+                **flowParamsDict
+            )
 
             #   generate solution
-            flow.createPatches(patches)
-            flow.build()
+            flow.generate()
 
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info = True)
 
             flowParams.flowStatus = "failed"
 
@@ -291,10 +289,8 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
 
-        postProcess = postprocess.PostProcess(self.casepath)
-
         if flowParams.flowStatus == "done":
-            flowParams.flowRate = postProcess.flowRate("outlet")
+            flowParams.flowRate = postprocess.flowRate("outlet", self.casepath)
 
         self.database.csave(flowParams)
         

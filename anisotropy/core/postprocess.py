@@ -1,22 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from os import path
-import logging
+import pathlib
 
-logger = logging.getLogger(__name__)
-
-from anisotropy.openfoam import commands 
-from anisotropy.openfoam import conversion
+import anisotropy.openfoam as of
 
 
-class PostProcess(object):
-    def __init__(self, dirpath):
-        self.path = path.abspath(dirpath)
+def flowRate(patch: str, path: str = None):
+    func = f"patchFlowRate(patch={ patch })"
 
-    def flowRate(self, patch: str):
-        func = "patchFlowRate(patch={})".format(patch)
-        filepath = path.join(self.path, "postProcessing", func, "0", "surfaceFieldValue.dat")
-        commands.postProcess(func, cwd = self.path, logpath = path.join(self.path, "patchFlowRate.log"))
-        surfaceFieldValue = conversion.datReader(filepath)
+    path = pathlib.Path(path or "").resolve()
+    outfile = path / "postProcessing" / func / "0/surfaceFieldValue.dat"
 
-        return surfaceFieldValue["sum(phi)"][-1]
+    of.commands.postProcess(func, cwd = path, logpath = path / "patchFlowRate.log")
+    surfaceFieldValue = of.conversion.read_dat(outfile)["sum(phi)"][-1]
+
+    return surfaceFieldValue
