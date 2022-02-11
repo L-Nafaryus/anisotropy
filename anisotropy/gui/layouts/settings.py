@@ -90,11 +90,11 @@ def generalSave(clicks, cwd):
     [ Input("url", "pathname") ]
 )
 def settingsLoad(pathname):
-    from anisotropy.core.config import DefaultConfig
+    from anisotropy.core import config as core_config
     import toml
 
     filepath = os.path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_CONF_FILE"])
-    config = DefaultConfig()
+    config = core_config.default_config()
 
     if os.path.exists(filepath):
         config.load(filepath)
@@ -115,11 +115,11 @@ def settingsLoad(pathname):
     prevent_initial_call = True
 )
 def settingsSave(nclick, nprocs, stage, cases):
-    from anisotropy.core.config import DefaultConfig
+    from anisotropy.core import config as core_config
     import toml
 
     filepath = os.path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_CONF_FILE"])
-    config = DefaultConfig()
+    config = core_config.default_config()
 
     if os.path.exists(filepath):
         config.load(filepath) 

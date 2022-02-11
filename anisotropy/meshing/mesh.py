@@ -45,7 +45,7 @@ class MeshingParameters:
         """
         self.__dict__.update(kwargs)
         
-        self.maxh = kwargs.get("maxh", 0.2)
+        self.maxh = kwargs.get("maxh", 0.1)
         self.curvaturesafety = kwargs.get("curvaturesafety", [1, 1.5, 2, 3, 5][key])
         self.segmentsperedge = kwargs.get("segmentsperedge", [0.3, 0.5, 1, 2, 3][key])
         self.grading = kwargs.get("grading", [0.7, 0.5, 0.3, 0.2, 0.1][key])

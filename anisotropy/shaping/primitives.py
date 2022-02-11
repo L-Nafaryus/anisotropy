@@ -53,13 +53,15 @@ def simple(alpha: float, direction: list | ndarray, **kwargs) -> Periodic:
 
                 spheres.append(ng_occ.Sphere(ng_occ.Pnt(x, y, z), pc.radius))
 
-    lattice = np.sum(spheres)
-    lattice = lattice.Scale(zero, pc.maximize)
+    pc.lattice = np.sum(spheres)
 
     if pc.filletsEnabled:
-        lattice = lattice.MakeFillet(lattice.edges, pc.fillets * pc.maximize)
-
-    pc.lattice = lattice.Scale(zero, pc.minimize)
+        pc.lattice = pc.lattice.Scale(zero, pc.maximize)
+        pc.lattice = (
+            pc.lattice
+            .MakeFillet(pc.lattice.edges, pc.fillets * pc.maximize)
+            .Scale(zero, pc.minimize)
+        )
     
     #   Inlet face
     if np.all(pc.direction == [1., 0., 0.]):
@@ -210,13 +212,15 @@ def body_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
                 # shifted
                 spheres.append(ng_occ.Sphere(ng_occ.Pnt(x2, y2, z2), pc.radius))
 
-    lattice = np.sum(spheres)
-    lattice = lattice.Scale(zero, pc.maximize)
+    pc.lattice = np.sum(spheres)
 
     if pc.filletsEnabled:
-        lattice = lattice.MakeFillet(lattice.edges, pc.fillets * pc.maximize)
-
-    pc.lattice = lattice.Scale(zero, pc.minimize)
+        pc.lattice = pc.lattice.Scale(zero, pc.maximize)
+        pc.lattice = (
+            pc.lattice
+            .MakeFillet(pc.lattice.edges, pc.fillets * pc.maximize)
+            .Scale(zero, pc.minimize)
+        )
     
     #   Inlet face
     if np.all(pc.direction == [1., 0., 0.]):
@@ -341,7 +345,7 @@ def face_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
 
     #   additional parameters
     pc.__dict__.update(kwargs)
-    pc.L = 4 / np.sqrt(2) * pc.r0
+    pc.L = pc.r0 * 4 / np.sqrt(2)
     pc.direction = np.asarray(direction)
 
     #   additional attributes
@@ -383,17 +387,19 @@ def face_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
                     .Rotate(ng_occ.Axis(ng_occ.Pnt(x2, y2, z2), ng_occ.Z), 45)
                 )
 
-    lattice = np.sum(spheres) 
-    lattice = (
-        lattice.Move(ng_occ.Vec(-pc.r0 * 2, -pc.r0 * 2, 0))
+    pc.lattice = (
+        np.sum(spheres)
+        .Move(ng_occ.Vec(-pc.r0 * 2, -pc.r0 * 2, 0))
         .Rotate(ng_occ.Axis(zero, ng_occ.Z), 45)
     )
-    lattice = lattice.Scale(zero, pc.maximize)
 
     if pc.filletsEnabled:
-        lattice = lattice.MakeFillet(lattice.edges, pc.fillets * pc.maximize)
-
-    pc.lattice = lattice.Scale(zero, pc.minimize)
+        pc.lattice = pc.lattice.Scale(zero, pc.maximize)
+        pc.lattice = (
+            pc.lattice
+            .MakeFillet(pc.lattice.edges, pc.fillets * pc.maximize)
+            .Scale(zero, pc.minimize)
+        )
 
     #   Inlet face
     if np.all(pc.direction == [1., 0., 0.]):

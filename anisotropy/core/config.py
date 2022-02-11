@@ -100,40 +100,43 @@ class Config(object):
             raise IndexError("list index out of range in cause of zero length of 'cases'")
 
 
-class DefaultConfig(Config):
-    def __init__(self):
-        Config.__init__(self)
+def default_config() -> Config:
+    config = Config()
 
-        self.options = {
-            "nprocs": 1,
-            "stage": "all",
-            "overwrite": False,
-            "database": "anisotropy.db",
-            "build": "build",
-            "logs": "logs"
-        }
+    config.options = {
+        "nprocs": 1,
+        "stage": "all",
+        "overwrite": False,
+        "database": "anisotropy.db",
+        "build": "build",
+        "logs": "logs",
+        "shapefile": "shape.step",
+        "meshfile": "mesh.mesh"
+    }
 
-        self.content = {
-            "structures": []
-        }
+    config.content = {
+        "structures": []
+    }
 
-        labels = ["simple", "bodyCentered", "faceCentered"]
-        alphas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]
+    labels = ["simple", "bodyCentered", "faceCentered"]
+    alphas = [[0.01, 0.28], [0.01, 0.17], [0.01, 0.13]]
 
-        for label, alpha in zip(labels, alphas):
-            self.content["structures"].append({
-                "label": label,
-                "alpha": alpha,
-                "alphaStep": 0.01,
-                "directions": [[1., 0., 0.], [0., 0., 1.], [1., 1., 1.]],
-                "r0": 1,
-                "filletsEnabled": True,
-                "pressureInlet": 1,
-                "pressureOutlet": 0,
-                "pressureInternal": 0,
-                "velocityInlet": [0., 0., 0.],
-                "velocityOutlet": None,
-                "velocityInternal": [0., 0., 0.],
-                "density": 1000,
-                "viscosity": 1e-3
-            })
+    for label, alpha in zip(labels, alphas):
+        config.content["structures"].append({
+            "label": label,
+            "alpha": alpha,
+            "alphaStep": 0.01,
+            "directions": [[1., 0., 0.], [0., 0., 1.], [1., 1., 1.]],
+            "r0": 1,
+            "filletsEnabled": True,
+            "pressureInlet": 1,
+            "pressureOutlet": 0,
+            "pressureInternal": 0,
+            "velocityInlet": [0., 0., 0.],
+            "velocityOutlet": None,
+            "velocityInternal": [0., 0., 0.],
+            "density": 1000,
+            "viscosity": 1e-3
+        })
+    
+    return config

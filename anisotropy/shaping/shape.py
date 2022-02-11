@@ -15,7 +15,6 @@ class Shape(object):
     def __init__(self):
         """A Shape object contains OCC shape.
         """
-        self.groups = {}
         self.shape = None
 
     @property

@@ -28,17 +28,17 @@ def anisotropy_cli():
     help = "Increase verbose level"
 )
 def init(path, verbose):
-    from anisotropy.core import config
+    from anisotropy.core import config as core_config
     from anisotropy.core import utils as core_utils
     
     core_utils.setupLogger(utils.verbose_level(verbose))
     logger = logging.getLogger(__name__)
     
-    conf = config.DefaultConfig() 
+    config = config.default_config() 
     filepath = os.path.abspath(os.path.join(path, "anisotropy.toml"))
     
     logger.info(f"Saving file at { filepath }")
-    conf.dump(filepath)
+    config.dump(filepath)
     
     
 @anisotropy_cli.command()
@@ -109,7 +109,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
     core_utils.setupLogger(utils.verbose_level(verbose), logfile)
     logger = logging.getLogger(__name__)
     
-    config = core_config.DefaultConfig() 
+    config = core_config.default_config() 
 
     if configFile:
         configFile = pathlib.Path(configFile).resolve()
@@ -164,16 +164,18 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
 )
 def gui(path, verbose):
     import anisotropy
-    from anisotropy.core import core_utils
+    from anisotropy.core import utils as core_utils
     from anisotropy.gui import app 
 
     anisotropy.loadEnv()
 
-    os.makedirs(os.path.abspath(path), exist_ok = True)
-    os.chdir(os.path.abspath(path))
-    os.environ["ANISOTROPY_CWD"] = path
+    path = pathlib.Path(path).resolve()
+    path.mkdir(parents = True, exist_ok = True)
+    
+    os.chdir(path)
+    os.environ["ANISOTROPY_CWD"] = str(path)
 
-    core_utils.setupLogger(utils.verboseLevel(verbose))
+    core_utils.setupLogger(utils.verbose_level(verbose))
     # logger = logging.getLogger(__name__)
 
     app.run_server(debug = True)

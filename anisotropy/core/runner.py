@@ -22,25 +22,30 @@ logger = logging.getLogger(__name__)
 
 
 class UltimateRunner(object):
-    def __init__(self, config = None, exec_id: int = None, typo: str = "master"):
+    def __init__(self, config = None, exec_id: int = None, _type: str = "master"):
+
+        self.type = _type
 
         # Configuration file
-        self.config = config or core_config.DefaultConfig()
+        self.config = config or core_config.default_config()
 
         # Database preparation
         self.database = Database(self.config["database"])
         self.exec_id = None
 
-        if exec_id:
+        if exec_id is not None:
             if self.database.getExecution(exec_id):
                 self.exec_id = exec_id
             
             else:
                 logger.warning(f"Execution id '{ exec_id }' not found. Creating new.")
 
-        if not self.exec_id:
+        if self.exec_id is None:
             with self.database:
                 self.exec_id = tables.Execution.create(date = datetime.now())
+
+        if self.type == "master":
+            logger.info(f"Current execution id: { self.exec_id }")
 
         # Parameters
         self.queue = []
@@ -112,6 +117,14 @@ class UltimateRunner(object):
 
         return path.resolve()
 
+    @property
+    def shapefile(self) -> PathLike:
+        return self.casepath / self.config["shapefile"]
+    
+    @property
+    def meshfile(self) -> PathLike:
+        return self.casepath / self.config["meshfile"]
+
     def compute_shape(self):
         params = self.config.params
         shapeParams = self.database.getShape(
@@ -124,17 +137,18 @@ class UltimateRunner(object):
         logger.info("Computing shape for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        shapefile = self.casepath / "shape.step"
         timer = utils.Timer()
         
+        #   check
         if (
-            shapefile.exists() and 
+            self.shapefile.exists() and 
             shapeParams.shapeStatus == "done" and 
             not self.config["overwrite"]
         ):
             logger.info("Shape exists. Skipping ...")
             return
         
+        #
         generate_shape = {
             "simple": shaping.primitives.simple,
             "bodyCentered": shaping.primitives.body_centered,
@@ -153,7 +167,7 @@ class UltimateRunner(object):
             #   export
             self.casepath.mkdir(parents = True, exist_ok = True)
 
-            shape.write(shapefile)
+            shape.write(self.shapefile)
         
         except Exception as e:
             logger.error(e, exc_info = True)
@@ -182,15 +196,19 @@ class UltimateRunner(object):
         logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
-        meshfile = self.casepath / "mesh.mesh" 
         timer = utils.Timer()
 
+        #   check 
         if (
-            meshfile.exists() and 
+            self.meshfile.exists() and 
             meshParams.meshStatus == "done" and 
             not self.config["overwrite"]
         ):
             logger.info("Mesh exists. Skipping ...")
+            return
+        
+        elif not self.shapefile.exists():
+            logger.error("Cannot find shape file to build a mesh.")
             return
 
         #   Shape
@@ -198,8 +216,7 @@ class UltimateRunner(object):
 
         try:
             #   load shape
-            shapefile = self.casepath / "shape.step"
-            shape = shaping.Shape().read(shapefile)
+            shape = shaping.Shape().read(self.shapefile)
 
             #   generate mesh
             parameters = meshing.MeshingParameters()
@@ -209,7 +226,7 @@ class UltimateRunner(object):
             #   export
             self.casepath.mkdir(parents = True, exist_ok = True)
 
-            mesh.write(meshfile)
+            mesh.write(self.meshfile)
             mesh.write(self.casepath / "mesh.msh")
 
         except Exception as e:
@@ -240,6 +257,19 @@ class UltimateRunner(object):
             params["label"], params["direction"], params["alpha"]
         ))
         timer = utils.Timer()
+        
+        #   check
+        if flowParams.flowStatus == "done" and not self.config["overwrite"]:
+            logger.info("Solution exists. Skipping ...")
+            return
+        
+        elif not self.shapefile.exists():
+            logger.error("Cannot find shape file to compute a solution.")
+            return
+        
+        elif not self.meshfile.exists():
+            logger.error("Cannot find mesh file to compute a solution.")
+            return       
 
         #   precalculate some parameters
         flowParams.viscosityKinematic = flowParams.viscosity / flowParams.density
@@ -250,8 +280,7 @@ class UltimateRunner(object):
 
         try:
             #   load shape
-            shapefile = self.casepath / "shape.step"
-            shape = shaping.Shape().read(shapefile)
+            shape = shaping.Shape().read(self.shapefile)
 
             #
             flow = solving.FlowOnePhase(
@@ -296,21 +325,34 @@ class UltimateRunner(object):
         
     def pipeline(self, stage: str = None):
         stage = stage or self.config["stage"]
+        stages = ["shape", "mesh", "flow", "postProcess", "all"]
 
-        if stage in ["shape", "all"]:
-            self.compute_shape()
+        if stage not in stages:
+            logger.error(f"Unknown stage '{ stage }'.")
+            return
+        
+        for current in stages:
+            if current == "shape":
+                self.compute_shape()
 
-        if stage in ["mesh", "all"]:
-            self.compute_mesh()
+            if current == "mesh":
+                self.compute_mesh()
 
-        if stage in ["flow", "all"]:
-            self.compute_flow()
+            if current == "flow":
+                self.compute_flow()
 
-        if stage in ["postProcess", "all"]:
-            self.compute_postprocess()
+            if current == "postProcess":
+                self.compute_postprocess()
+            
+            if current == stage or current == "all":
+                break
 
     @staticmethod
     def subrunner(*args, **kwargs):
-        runner = UltimateRunner(config = kwargs["config"], exec_id = kwargs["exec_id"])
+        runner = UltimateRunner(
+            config = kwargs["config"], 
+            exec_id = kwargs["exec_id"],
+            _type = "worker"
+        )
         runner.prepare_database()
         runner.pipeline()
