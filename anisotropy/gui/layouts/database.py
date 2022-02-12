@@ -6,10 +6,11 @@ from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
-import os
+import pathlib
+from os import environ
 
 from ..app import app
-from ..styles import *
+from .. import styles
 
 
 ###
@@ -22,9 +23,9 @@ layout = html.Div([
         duration = 10000, 
         dismissable = True, 
         is_open = False, 
-        style = message 
+        style = styles.message 
     ),
-    #dcc.Interval(id = "interval", interval = 1000, n_intervals = 0), 
+    # dcc.Interval(id = "interval", interval = 1000, n_intervals = 0), 
 
     #   Query
     html.H2("Database"),
@@ -32,20 +33,26 @@ layout = html.Div([
     html.P("Query"),
     dcc.Textarea(id = "db_input", style = { "min-width": "100%"}),
     html.Br(),
-    dbc.Button("Query", id = "query", style = minWidth),
+    dbc.Button("Query", id = "query", style = styles.minWidth),
 
     #   Output
     html.Hr(),
     html.P("Output"),
-    DataTable(id = "db_output", columns = [], data = [], style_table = { "overflow": "scroll"}, style_cell={
-                                    'textAlign': 'left',
-                                    'width': '150px',
-                                    'minWidth': '180px',
-                                    'maxWidth': '180px',
-                                    'whiteSpace': 'no-wrap',
-                                    'overflow': 'hidden',
-                                    'textOverflow': 'ellipsis',
-                                }),
+    DataTable(
+        id = "db_output", 
+        columns = [], 
+        data = [], 
+        style_table = { "overflow": "scroll"}, 
+        style_cell = {
+            'textAlign': 'left',
+            'width': '150px',
+            'minWidth': '180px',
+            'maxWidth': '180px',
+            'whiteSpace': 'no-wrap',
+            'overflow': 'hidden',
+            'textOverflow': 'ellipsis',
+        }
+    ),
 ])
 
 
@@ -63,17 +70,17 @@ layout = html.Div([
     prevent_initial_call = True
 )
 def db_query(clicks, db_input):
-    from anisotropy.database import Database
-    from peewee import OperationalError
+    from anisotropy import database
+    import peewee as pw
 
-    dbpath = os.path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_DB_FILE"])
-    db = Database(path = dbpath)
+    path = pathlib.Path(environ["AP_CWD"], environ["AP_DB_FILE"])
+    db = database.Database(path)
     
     try:
         db.connect()
         cursor = db.execute_sql(db_input)
     
-    except OperationalError as e:
+    except pw.OperationalError as e:
         db.close()
         return None, None, str(e), True, "danger"
     

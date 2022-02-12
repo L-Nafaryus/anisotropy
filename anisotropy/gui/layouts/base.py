@@ -2,7 +2,7 @@
 
 from dash import html
 from dash import dcc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
 from . import (
@@ -13,31 +13,32 @@ from . import (
     about
 )
 from ..app import app
-from ..styles import *
+from .. import styles
+
 import anisotropy
 
 ###
 #   Layout
 ##
-app.layout = html.Div([
+layout = html.Div([
     #   Location
     dcc.Location(id = "url", refresh = False), 
 
     #   Sidebar
     html.Div([
         #   Sidebar
-        html.H2([html.Img(src = "/assets/simple.png", height = "150px")], style = logo),
+        html.H2([html.Img(src = "/assets/simple.png", height = "150px")], style = styles.logo),
         html.Hr(style = { "color": "#ffffff" }),
         dbc.Nav([
-            dbc.NavLink("Runner", href = "/", active = "exact", style = white),
-            dbc.NavLink("Settings", href = "/settings", active = "exact", style = white),
-            dbc.NavLink("Database", href = "/database", active = "exact", style = white),
-            dbc.NavLink("Visualization", href = "/visualization", active = "exact", style = white),
-            dbc.NavLink("About", href = "/about", active = "exact", style = white),
+            dbc.NavLink("Runner", href = "/", active = "exact", style = styles.white),
+            dbc.NavLink("Settings", href = "/settings", active = "exact", style = styles.white),
+            dbc.NavLink("Database", href = "/database", active = "exact", style = styles.white),
+            dbc.NavLink("Visualization", href = "/visualization", active = "exact", style = styles.white),
+            dbc.NavLink("About", href = "/about", active = "exact", style = styles.white),
         ], vertical = True, pills = True),
         
         #   Misc
-        html.Hr(style = white),
+        html.Hr(style = styles.white),
         dbc.Container([
             dbc.Row([
                 dbc.Col("v1.2.0"),
@@ -48,12 +49,12 @@ app.layout = html.Div([
                     )
                 )
             ])
-        ], style = misc)
-    ], style = sidebar),
+        ], style = styles.misc)
+    ], style = styles.sidebar),
 
     #   Content
-    html.Div(id = "page-content", style = page),
-], style = content)
+    html.Div(id = "page-content", style = styles.page),
+], style = styles.content)
 
 
 ###
@@ -78,4 +79,3 @@ def displayPage(pathname):
 
     else:
         return runner.layout 
-

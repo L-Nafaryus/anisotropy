@@ -5,9 +5,11 @@ from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
-import os
+import pathlib
+from os import environ
+
 from ..app import app
-from ..styles import *
+from .. import styles
 
 
 ###
@@ -20,14 +22,14 @@ layout = html.Div([
         duration = 10000, 
         dismissable = True, 
         is_open = False, 
-        style = message 
+        style = styles.message 
     ),
     dbc.Alert(
         id = "general-status", 
         duration = 10000, 
         dismissable = True, 
         is_open = False, 
-        style = message 
+        style = styles.message 
     ),
     #   General
     html.H2("General"),
@@ -35,25 +37,25 @@ layout = html.Div([
     html.P("Path"),
     dcc.Input(id = "cwd", style = { "min-width": "500px" }),
     html.Br(),
-    dbc.Button("Save general", id = "general-save", style = minWidth),
+    dbc.Button("Save general", id = "general-save", style = styles.minWidth),
     
     #   Options
     html.H2("Options"),
     html.Hr(),
     html.P("Nprocs"),
-    dcc.Input(id = "nprocs", type = "number", style = minWidth),
+    dcc.Input(id = "nprocs", type = "number", style = styles.minWidth),
     html.P("Stage"),
     dcc.Dropdown(
         id = "stage",
         options = [ { "label": k, "value": k } for k in ["all", "shape", "mesh", "flow", "postProcess"] ],
-        style = minWidth 
+        style = styles.minWidth 
     ),
-    dbc.Button("Save", id = "submit", style = minWidth),
+    dbc.Button("Save", id = "submit", style = styles.minWidth),
 
     #   Cases
     html.H2("Cases"),
     html.Hr(),
-    dcc.Textarea(id = "cases", style = bigText),
+    dcc.Textarea(id = "cases", style = styles.bigText),
 ])
 
 
@@ -71,13 +73,12 @@ layout = html.Div([
     prevent_initial_call = True
 )
 def generalSave(clicks, cwd):
-    if not os.path.abspath(cwd):
+    path = pathlib.Path(cwd)
+
+    if not path.is_absolute():
         return "Cwd path must be absolute", True, "danger"
     
-    if cwd[-1] == "/":
-        cwd = cwd[ :-1]
-    
-    os.environ["ANISOTROPY_CWD"] = cwd
+    environ["AP_CWD"] = str(path)
 
     return "General settings saved", True, "success"
 
@@ -93,13 +94,13 @@ def settingsLoad(pathname):
     from anisotropy.core import config as core_config
     import toml
 
-    filepath = os.path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_CONF_FILE"])
+    path = pathlib.Path(environ["AP_CWD"], environ["AP_CONF_FILE"])
     config = core_config.default_config()
 
-    if os.path.exists(filepath):
-        config.load(filepath)
+    if path.exists():
+        config.load(path)
 
-    return os.environ["ANISOTROPY_CWD"], config["nprocs"], config["stage"], toml.dumps(config.content)
+    return environ["AP_CWD"], config["nprocs"], config["stage"], toml.dumps(config.content)
 
 
 @app.callback(
@@ -118,11 +119,11 @@ def settingsSave(nclick, nprocs, stage, cases):
     from anisotropy.core import config as core_config
     import toml
 
-    filepath = os.path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_CONF_FILE"])
+    path = pathlib.Path(environ["AP_CWD"], environ["AP_CONF_FILE"])
     config = core_config.default_config()
 
-    if os.path.exists(filepath):
-        config.load(filepath) 
+    if path.exists():
+        config.load(path) 
 
     config.update(
         nprocs = nprocs,
@@ -131,10 +132,10 @@ def settingsSave(nclick, nprocs, stage, cases):
     
     try:
         config.content = toml.loads(cases)
-        config.dump(filepath)
+        config.dump(path)
 
     except Exception as e:
         return str(e), True, "danger"
     
     else:
-        return f"Saved to { filepath }", True, "success"
+        return f"Saved to { path }", True, "success"

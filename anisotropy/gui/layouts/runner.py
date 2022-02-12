@@ -6,11 +6,13 @@ from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 
+import pathlib
 import os
+from os import environ
 
 from ..app import app
-from ..styles import *
-from ..utils import getSize
+from .. import styles
+from .. import utils
 
 
 ###
@@ -23,7 +25,7 @@ layout = html.Div([
         duration = 10000, 
         dismissable = True, 
         is_open = False, 
-        style = message 
+        style = styles.message 
     ),
     dcc.Interval(id = "interval", interval = 1000, n_intervals = 0), 
 
@@ -31,22 +33,22 @@ layout = html.Div([
     html.H2("Runner"),
     html.Hr(),
     html.P("Execution (leave zero for the latest)"),
-    dcc.Input(id = "execution", type = "number", value = 0, min = 0, style = minWidth),
+    dcc.Input(id = "execution", type = "number", value = 0, min = 0, style = styles.minWidth),
     html.Br(),
-    dbc.Button("Start", id = "start", color = "success", style = minWidth),
-    dbc.Button("Stop", id = "stop", color = "danger", disabled = True, style = minWidth),
+    dbc.Button("Start", id = "start", color = "success", style = styles.minWidth),
+    dbc.Button("Stop", id = "stop", color = "danger", disabled = True, style = styles.minWidth),
 
     #   Monitor
     html.H2("Monitor"),
     html.Hr(),
     html.P(id = "runner-status"),
-    DataTable(id = "monitor", columns = [], data = [], style_table = table),
+    DataTable(id = "monitor", columns = [], data = [], style_table = styles.table),
 
     #   Log
     html.H2("Log"),
     html.Hr(),
-    dbc.Button("Delete", id = "delete", style = minWidth),
-    dcc.Textarea(id = "logger", disabled = True, style = bigText)
+    dbc.Button("Delete", id = "delete", style = styles.minWidth),
+    dcc.Textarea(id = "logger", disabled = True, style = styles.bigText)
 
 ])
 
@@ -67,10 +69,10 @@ def runnerStart(clicks, execution):
         "anisotropy",
         "compute",
         "-v",
-        "--path", os.environ["ANISOTROPY_CWD"],
-        "--conf", os.environ["ANISOTROPY_CONF_FILE"],
+        "--path", environ["AP_CWD"],
+        "--conf", environ["AP_CONF_FILE"],
         "--pid", "anisotropy.pid",
-        "--logfile", os.environ["ANISOTROPY_LOG_FILE"],
+        "--logfile", environ["AP_LOG_FILE"],
     ]
 
     if execution > 0:
@@ -83,6 +85,7 @@ def runnerStart(clicks, execution):
 
     return True
 
+
 @app.callback(
     Output("stop", "active"),
     [ Input("stop", "n_clicks") ],
@@ -92,7 +95,7 @@ def runnerStop(clicks):
     import psutil
     import signal
 
-    pidpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.pid")
+    pidpath = pathlib.Path(environ["AP_CWD"], "anisotropy.pid")
 
     try:
         pid = int(open(pidpath, "r").read())
@@ -107,7 +110,6 @@ def runnerStop(clicks):
         return True
 
 
-
 @app.callback(
     Output("monitor", "columns"),
     Output("monitor", "data"),
@@ -120,14 +122,14 @@ def runnerStop(clicks):
 def monitorUpdate(intervals):
     import psutil
 
-    pidpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.pid")
+    pidpath = pathlib.Path(environ["AP_CWD"], "anisotropy.pid")
     processes = []
 
     try:
         pid = int(open(pidpath, "r").read())
         master = psutil.Process(pid)
     
-    except (FileNotFoundError, psutil.NoSuchProcess) as e:
+    except (FileNotFoundError, psutil.NoSuchProcess):
         return [], [], "Status: not running", False, True, False
     
     else:
@@ -137,7 +139,7 @@ def monitorUpdate(intervals):
                 "name": process.name(),
                 "pid": process.pid,
                 "status": process.status(),
-                "memory": getSize(process.memory_full_info().uss),
+                "memory": utils.getSize(process.memory_full_info().uss),
                 "threads": process.num_threads(),
                 "created": "{}:{}:{}".format(created.tm_hour, created.tm_min, created.tm_sec)
             })
@@ -146,12 +148,13 @@ def monitorUpdate(intervals):
 
         return columns, processes, "Status: running", True, False, True
 
+
 @app.callback(
     Output("logger", "value"),
     [ Input("interval", "n_intervals") ]
 )
 def logUpdate(intervals):
-    logpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.log")
+    logpath = pathlib.Path(environ["AP_CWD"], "anisotropy.log")
 
     if os.path.exists(logpath):
         with open(logpath, "r") as io:
@@ -169,7 +172,7 @@ def logUpdate(intervals):
     prevent_initial_call = True
 )
 def logDelete(clicks):
-    logpath = os.path.join(os.environ["ANISOTROPY_CWD"], "anisotropy.log")
+    logpath = pathlib.Path(environ["AP_CWD"], "anisotropy.log")
 
     if os.path.exists(logpath):
         os.remove(logpath)

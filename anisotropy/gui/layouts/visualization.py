@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from dash.dash_table import DataTable
 from dash import html
 from dash import dcc
 import dash_bootstrap_components as dbc
@@ -8,7 +7,9 @@ from dash.dependencies import Input, Output, State
 import dash_vtk
 import dash_vtk.utils
 import vtk
-import os
+
+import pathlib
+from os import environ
 
 from ..app import app
 from .. import styles
@@ -149,7 +150,10 @@ plotcontrols = html.Div([
     html.P("Structure"),
     dcc.Dropdown(
         id = "plot-structure",
-        options = [ { "label": v, "value": v } for v in [ "simple", "bodyCentered", "faceCentered" ] ],
+        options = [ 
+            { "label": v, "value": v } 
+            for v in [ "simple", "bodyCentered", "faceCentered" ] 
+        ],
         value = "simple"
     ),
     html.Br(),
@@ -157,7 +161,10 @@ plotcontrols = html.Div([
     html.P("Direction"),
     dcc.Dropdown(
         id = "plot-direction",
-        options = [ { "label": str(v), "value": str(v)} for v in [ [1., 0., 0.], [0., 0., 1.], [1., 1., 1.], "all" ] ],
+        options = [ 
+            { "label": str(v), "value": str(v)} 
+            for v in [ [1., 0., 0.], [0., 0., 1.], [1., 1., 1.], "all" ] 
+        ],
         value = str([1., 0., 0.]),
     ),
     html.Br(),
@@ -185,10 +192,11 @@ layout = html.Div([
                     width = 8,
                     children = [
                         html.Div(id = "plot-output", style = { "width": "100%", "min-width": "800px" })
-                    ]
-                , style = { "min-width": "800px" }),
+                    ],
+                    style = { "min-width": "800px" }
+                ),
             ], style = { "height": "100%"}),
-    ]),
+        ]),
     html.Br(),
 
     html.H2("Mesh"),
@@ -201,11 +209,14 @@ layout = html.Div([
                 dbc.Col(
                     width = 8,
                     children = [
-                        html.Div(id = "vtk-output", style = { "height": "800px", "width": "100%", "min-width": "800px" })
-                    ]
-                , style = { "min-width": "800px" }),
+                        html.Div(
+                            id = "vtk-output", 
+                            style = { "height": "800px", "width": "100%", "min-width": "800px" }
+                        )
+                    ],
+                    style = { "min-width": "800px" }),
             ], style = { "height": "100%"}),
-    ])
+        ])
 ])
 
 
@@ -220,19 +231,18 @@ layout = html.Div([
     ]
 )
 def plotDraw(clicks, execution, structure, direction, data):
-    from os import path
     from peewee import JOIN
-    from anisotropy.database import Database, models
+    from anisotropy.database import Database, tables
     import json
     from pandas import DataFrame
     import plotly.express as px
 
-    dbpath = path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_DB_FILE"])
+    path = pathlib.Path(environ["AP_CWD"], environ["AP_DB_FILE"])
 
-    if not path.isfile(dbpath):
+    if not path.is_file():
         return [ "Database not found" ]
     
-    db = Database(path = dbpath)
+    db = Database(path)
     
     if not db.getExecution(execution):
         return [ "Execution not found" ]
@@ -241,33 +251,35 @@ def plotDraw(clicks, execution, structure, direction, data):
         try:
             column = getattr(model, data)
         
-        except AttributeError as e:
+        except AttributeError:
             pass
 
         else:
             break
 
     if direction == "all":
-        select = (models.Shape.alpha, column, models.Shape.direction)
+        select = (tables.Shape.alpha, column, tables.Shape.direction)
     
     else:
-        select = (models.Shape.alpha, column)
+        select = (tables.Shape.alpha, column)
 
     query = (
-        models.Shape
+        tables.Shape
         .select(*select)
-        .join(models.Execution, JOIN.LEFT_OUTER)
-        .switch(models.Shape)
-        .join(models.Mesh, JOIN.LEFT_OUTER)
-        .switch(models.Shape)
+        .join(tables.Execution, JOIN.LEFT_OUTER)
+        .switch(tables.Shape)
+        .join(tables.Mesh, JOIN.LEFT_OUTER)
+        .switch(tables.Shape)
+        # .join(tables.FlowOnephase, JOIN.LEFT_OUTER)
+        # .switch(tables.Shape)
         .where(
-            models.Shape.exec_id == execution,
-            models.Shape.label == structure,
+            tables.Shape.exec_id == execution,
+            tables.Shape.label == structure,
         )
     )
 
     if not direction == "all":
-        query = query.where(models.Shape.direction == json.loads(direction))
+        query = query.where(tables.Shape.direction == json.loads(direction))
 
     with db:
         if query.exists():
@@ -305,8 +317,8 @@ def plotDraw(clicks, execution, structure, direction, data):
         )
 
     fig.layout.template = "custom_dark"
-    fig.update_xaxes(showline=True, linewidth=1, linecolor='#4f687d', mirror=True)
-    fig.update_yaxes(showline=True, linewidth=1, linecolor='#4f687d', mirror=True)
+    fig.update_xaxes(showline = True, linewidth = 1, linecolor = '#4f687d', mirror = True)
+    fig.update_yaxes(showline = True, linewidth = 1, linecolor = '#4f687d', mirror = True)
 
     plot = dcc.Graph(
         figure = fig
@@ -314,7 +326,6 @@ def plotDraw(clicks, execution, structure, direction, data):
 
     return [ plot ]
         
-
 
 @app.callback(
     [ Output("alpha", "min"), Output("alpha", "max") ],
@@ -329,6 +340,7 @@ def alphaLimits(label):
 
     elif label == "faceCentered":
         return 0.01, 0.13
+
 
 @app.callback(
     [ Output("vtk-output", "children") ],
@@ -351,19 +363,22 @@ def alphaLimits(label):
     prevent_initial_call = True
 )
 def meshDraw(clicks, execution, structure, direction, alpha, clip, crinkle, wireframe, normal_x, normal_y, normal_z, origin_x, origin_y, origin_z):
-    from os import path
     import meshio
+    
+    path = pathlib.Path(environ["AP_CWD"], environ["AP_BUILD_DIR"])
+    path /= "execution-{}".format(execution)
+    path /= "{}-{}-{}".format(
+        structure, 
+        direction.replace(" ", ""),
+        alpha
+    )
+    basemeshpath = path / "mesh.msh"
+    meshpath = path / "mesh.vtu"
 
-    execution = "execution-{}".format(execution)
-    case = "{}-{}-{}".format(structure, direction.replace(" ", ""), alpha)
-    casepath = path.join(os.environ["ANISOTROPY_CWD"], os.environ["ANISOTROPY_BUILD_DIR"], execution, case)
-    basemeshpath = path.join(casepath, "mesh.msh")
-    meshpath = path.join(casepath, "mesh.vtu")
-
-    if not path.exists(basemeshpath):
+    if not basemeshpath.exists():
         return [ "Mesh not found" ]
 
-    if not path.exists(meshpath) or not path.isfile(meshpath):
+    if not meshpath.exists() or not meshpath.is_file():
         meshold = meshio.read(basemeshpath)
         meshold.write(meshpath)
 

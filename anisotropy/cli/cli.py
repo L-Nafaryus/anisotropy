@@ -34,7 +34,7 @@ def init(path, verbose):
     core_utils.setupLogger(utils.verbose_level(verbose))
     logger = logging.getLogger(__name__)
     
-    config = config.default_config() 
+    config = core_config.default_config() 
     filepath = os.path.abspath(os.path.join(path, "anisotropy.toml"))
     
     logger.info(f"Saving file at { filepath }")
@@ -165,7 +165,7 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
 def gui(path, verbose):
     import anisotropy
     from anisotropy.core import utils as core_utils
-    from anisotropy.gui import app 
+    from anisotropy import gui
 
     anisotropy.loadEnv()
 
@@ -178,4 +178,4 @@ def gui(path, verbose):
     core_utils.setupLogger(utils.verbose_level(verbose))
     # logger = logging.getLogger(__name__)
 
-    app.run_server(debug = True)
+    gui.run(debug = True)
