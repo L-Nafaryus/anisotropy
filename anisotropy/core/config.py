@@ -136,7 +136,8 @@ def default_config() -> Config:
             "velocityOutlet": None,
             "velocityInternal": [0., 0., 0.],
             "density": 1000,
-            "viscosity": 1e-3
+            "viscosity": 1e-3,
+            "scale": [1e-5, 1e-5, 1e-5]
         })
     
     return config

@@ -6,6 +6,7 @@ from os import environ
 from datetime import datetime
 import pathlib
 import logging
+import numpy as np
 
 from anisotropy.database import Database, tables
 from anisotropy import shaping
@@ -34,15 +35,15 @@ class UltimateRunner(object):
         self.exec_id = None
 
         if exec_id is not None:
-            if self.database.getExecution(exec_id):
-                self.exec_id = exec_id
+            if self.database.getExecution(int(exec_id)):
+                self.exec_id = int(exec_id)
             
             else:
                 logger.warning(f"Execution id '{ exec_id }' not found. Creating new.")
 
         if self.exec_id is None:
             with self.database:
-                self.exec_id = tables.Execution.create(date = datetime.now())
+                self.exec_id = tables.Execution.create(date = datetime.now()).exec_id
 
         if self.type == "master":
             logger.info(f"Current execution id: { self.exec_id }")
@@ -176,8 +177,8 @@ class UltimateRunner(object):
 
         else:
             shapeParams.shapeStatus = "done"
-            shapeParams.volume = shape.shape.volume
-            shapeParams.volumeCell = shape.cell.volume
+            shapeParams.volume = shape.shape.volume * np.prod(params["scale"])
+            shapeParams.volumeCell = shape.cell.volume * np.prod(params["scale"])
             shapeParams.porosity = shapeParams.volume / shapeParams.volumeCell
 
         #   commit parameters
@@ -287,6 +288,7 @@ class UltimateRunner(object):
                 path = self.casepath,
                 direction = params["direction"], 
                 patches = shape.patches(group = True, shiftIndex = True, prefix = "patch"),
+                scale = params["scale"],
                 **flowParamsDict
             )
 

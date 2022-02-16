@@ -21,6 +21,7 @@ class FlowOnePhase:
         velocityInternal: float = None,
         density: float = None,
         viscosityKinematic: float = None,
+        scale: list[float] = None,
         **kwargs
     ):
         
@@ -38,6 +39,7 @@ class FlowOnePhase:
         self.velocityInternal = velocityInternal 
         self.density = density 
         self.viscosityKinematic = viscosityKinematic
+        self.scale = scale
 
     def controlDict(self) -> of.FoamFile:
         ff = presets.controlDict()
@@ -246,9 +248,12 @@ class FlowOnePhase:
             commands.createPatch()
 
         commands.checkMesh()
-        commands.transformPoints({
-            "scale": [1e-5, 1e-5, 1e-5]
-        })
+
+        if self.scale is not None:
+            commands.transformPoints({
+                "scale": self.scale
+            })
+
         commands.renumberMesh()
 
         if approximation:
