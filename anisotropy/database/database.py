@@ -57,7 +57,7 @@ class Database(pw.SqliteDatabase):
 
         return self
 
-    def csave(self, table: pw.Model, tries: int = 100):
+    def csave(self, table: pw.Model, tries: int = 5000):
         """Try to save data from model to the database ignoring
         peewee.OperationalError. Usefull for concurrent processes.
 
@@ -82,7 +82,12 @@ class Database(pw.SqliteDatabase):
                 self.close()
                 break
 
-    def getExecution(self, idn: int) -> tables.Execution | None:
+    def getExecution(
+        self, 
+        idn: int,
+        to_dict: bool = False,
+        **kwargs
+    ) -> tables.Execution | None:
         """Get execution entry from database.
 
         :param idn:
@@ -93,7 +98,11 @@ class Database(pw.SqliteDatabase):
         query = tables.Execution.select().where(tables.Execution.exec_id == idn)
 
         with self:
-            table = query.get() if query.exists() else None
+            if to_dict:
+                table = query.dicts().get() if query.exists() else None
+            
+            else:
+                table = query.get() if query.exists() else None
 
         return table
 
@@ -116,6 +125,7 @@ class Database(pw.SqliteDatabase):
         direction: list[float] | ndarray = None, 
         alpha: float = None, 
         execution: int = None, 
+        to_dict: bool = False,
         **kwargs
     ) -> tables.Shape | None:
         """Get shape entry from database.
@@ -145,7 +155,11 @@ class Database(pw.SqliteDatabase):
         )
 
         with self:
-            table = query.get() if query.exists() else None
+            if to_dict:
+                table = query.dicts().get() if query.exists() else None
+            
+            else:
+                table = query.get() if query.exists() else None
 
         return table
 
@@ -155,6 +169,7 @@ class Database(pw.SqliteDatabase):
         direction: list[float] | ndarray = None, 
         alpha: float = None, 
         execution: int = None, 
+        to_dict: bool = False,
         **kwargs
     ) -> tables.Mesh | None:
         """Get mesh entry from database.
@@ -185,7 +200,11 @@ class Database(pw.SqliteDatabase):
         )
 
         with self:
-            table = query.get() if query.exists() else None
+            if to_dict:
+                table = query.dicts().get() if query.exists() else None
+            
+            else:
+                table = query.get() if query.exists() else None
 
         return table
 

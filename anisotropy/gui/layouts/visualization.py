@@ -231,7 +231,7 @@ layout = html.Div([
     ]
 )
 def plotDraw(clicks, execution, structure, direction, data):
-    from peewee import JOIN
+    import peewee as pw
     from anisotropy.database import Database, tables
     import json
     from pandas import DataFrame
@@ -263,21 +263,33 @@ def plotDraw(clicks, execution, structure, direction, data):
     else:
         select = (tables.Shape.alpha, column)
 
-    query = (
+    """query = (
         tables.Shape
         .select(*select)
         .join(tables.Execution, JOIN.LEFT_OUTER)
         .switch(tables.Shape)
         .join(tables.Mesh, JOIN.LEFT_OUTER)
+        #.switch(tables.Shape)
+        .join(tables.FlowOnephase, JOIN.LEFT_OUTER)
         .switch(tables.Shape)
-        # .join(tables.FlowOnephase, JOIN.LEFT_OUTER)
-        # .switch(tables.Shape)
         .where(
             tables.Shape.exec_id == execution,
             tables.Shape.label == structure,
         )
-    )
+    )"""
+    query = model.select(*select)
+    idn = db.tables.index(model)
 
+    for table in reversed(db.tables[ :idn]):
+        query = query.join(table, pw.JOIN.LEFT_OUTER)
+    
+    query = query.switch(tables.Shape)
+    query = query.where(
+        tables.Shape.exec_id == execution,
+        tables.Shape.label == structure,
+    )
+    query = query.order_by(tables.Shape.alpha)
+    
     if not direction == "all":
         query = query.where(tables.Shape.direction == json.loads(direction))
 

@@ -22,6 +22,10 @@ def read_foamfile(filename: str) -> tuple[dict, dict]:
     header = ppf.header or {}
     content = ppf.content or {}
 
+    if type(content) == dict:
+        if content.get("internalField"):
+            content["internalField"] = np.asarray(content["internalField"])
+
     return header, content
 
 

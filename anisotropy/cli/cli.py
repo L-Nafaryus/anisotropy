@@ -65,7 +65,7 @@ def init(path, verbose):
 @click.option(
     "-f", "--force", "overwrite",
     is_flag = True,
-    # default = False,
+    default = None,
     help = "Overwrite existing entries"
 )
 @click.option(
@@ -130,11 +130,12 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
         "stage": stage,
         "overwrite": overwrite 
     }
-
+    
     for k, v in args.items():
         if v is not None:
             config.update(**{ k: v })
 
+    print(config.options)
     if pid:
         pid = pathlib.Path(pid).resolve()
 

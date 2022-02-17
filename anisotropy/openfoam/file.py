@@ -68,10 +68,16 @@ class FoamFile(object):
 
     @property
     def location(self) -> str:
-        return self.header.get("location").replace('"', "")
+        return (
+            self.header.get("location").replace('"', "") 
+            if self.header.get("location") else None
+        )
 
     def __getitem__(self, key):
         return self.content[key]
+
+    def get(self, key, default = None):
+        return self.content.get(key, default)
 
     def __setitem__(self, key, value):
         self.content[key] = value
@@ -99,6 +105,15 @@ class FoamFile(object):
 
         return FoamCase([ self, file ])
 
+    def exists(self, filename: str = None) -> bool:
+        filename = filename or (
+            self.location + "/" + self.object 
+            if self.location else self.object
+        )
+        path = pathlib.Path(filename).resolve()
+
+        return path.exists() and path.is_file()
+
     def read(self, filename: str = None):
         """Read a FoamFile.
 
@@ -108,8 +123,8 @@ class FoamFile(object):
         :return:
             Self.
         """
-        filename = (
-            filename or self.location + "/" + self.object 
+        filename = filename or (
+            self.location + "/" + self.object 
             if self.location else self.object
         )
         path = pathlib.Path(filename).resolve()
@@ -131,8 +146,8 @@ class FoamFile(object):
             Path to the file. If None, use location and object from header with
             the current working directory.
         """  
-        filename = (
-            filename or self.location + "/" + self.object 
+        filename = filename or (
+            self.location + "/" + self.object 
             if self.location else self.object
         )
         path = pathlib.Path(filename).resolve()
@@ -146,8 +161,8 @@ class FoamFile(object):
             Path to the file. If None, use location and object from header with
             the current working directory.
         """  
-        filename = (
-            filename or self.location + "/" + self.object 
+        filename = filename or (
+            self.location + "/" + self.object 
             if self.location else self.object
         )
         path = pathlib.Path(filename).resolve()

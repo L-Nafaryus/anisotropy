@@ -12,6 +12,7 @@ from anisotropy.database import Database, tables
 from anisotropy import shaping
 from anisotropy import meshing
 from anisotropy import solving
+from anisotropy import openfoam
 
 from . import config as core_config
 from . import postprocess
@@ -29,7 +30,7 @@ class UltimateRunner(object):
 
         # Configuration file
         self.config = config or core_config.default_config()
-
+        
         # Database preparation
         self.database = Database(self.config["database"])
         self.exec_id = None
@@ -50,6 +51,24 @@ class UltimateRunner(object):
 
         # Parameters
         self.queue = []
+
+    def _query_database(self, tableName: str, to_dict: bool = False):
+        tableName = tableName.lower()
+        get_row = {
+            "shape": self.database.getShape,
+            "mesh": self.database.getMesh,
+            "flowonephase": self.database.getFlowOnephase
+        }[tableName]
+        #   query
+        args = (
+            self.config.params["label"],
+            self.config.params["direction"],
+            self.config.params["alpha"],
+            self.exec_id,
+            to_dict
+        )
+
+        return get_row(*args)
 
     def prepare_database(self):
         # create a row in each table for the current case
@@ -128,25 +147,16 @@ class UltimateRunner(object):
 
     def compute_shape(self):
         params = self.config.params
-        shapeParams = self.database.getShape(
-            params["label"],
-            params["direction"],
-            params["alpha"],
-            self.exec_id
-        )
+        shapeParams = self._query_database("shape")
 
         logger.info("Computing shape for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
         timer = utils.Timer()
         
-        #   check
-        if (
-            self.shapefile.exists() and 
-            shapeParams.shapeStatus == "done" and 
-            not self.config["overwrite"]
-        ):
-            logger.info("Shape exists. Skipping ...")
+        #   check physical existence
+        if self.shapefile.exists() and self.config["overwrite"] is not True:
+            logger.info("Shape exists, skipping ...")
             return
         
         #
@@ -187,25 +197,16 @@ class UltimateRunner(object):
 
     def compute_mesh(self):
         params = self.config.params
-        meshParams = self.database.getMesh(
-            params["label"],
-            params["direction"],
-            params["alpha"],
-            self.exec_id
-        )
+        meshParams = self._query_database("mesh")
 
         logger.info("Computing mesh for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
         timer = utils.Timer()
 
-        #   check 
-        if (
-            self.meshfile.exists() and 
-            meshParams.meshStatus == "done" and 
-            not self.config["overwrite"]
-        ):
-            logger.info("Mesh exists. Skipping ...")
+        #   check physical existence
+        if self.meshfile.exists() and self.config["overwrite"] is not True:
+            logger.info("Mesh exists, skipping ...")
             return
         
         elif not self.shapefile.exists():
@@ -246,21 +247,15 @@ class UltimateRunner(object):
 
     def compute_flow(self):
         params = self.config.params
-        query = (
-            params["label"],
-            params["direction"],
-            params["alpha"],
-            self.exec_id
-        )
-        flowParams = self.database.getFlowOnephase(*query)
+        flowParams = self._query_database("flowonephase")
 
         logger.info("Computing flow for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
         timer = utils.Timer()
         
-        #   check
-        if flowParams.flowStatus == "done" and not self.config["overwrite"]:
+        #   check physical existence
+        if openfoam.FoamCase(path = self.casepath).is_converged() and not self.config["overwrite"]:
             logger.info("Solution exists. Skipping ...")
             return
         
@@ -277,7 +272,7 @@ class UltimateRunner(object):
         self.database.csave(flowParams)            
 
         #
-        flowParamsDict = self.database.getFlowOnephase(*query, to_dict = True)
+        flowParamsDict = self._query_database("flowonephase", to_dict = True)
 
         try:
             #   load shape
@@ -309,19 +304,15 @@ class UltimateRunner(object):
 
     def compute_postprocess(self):
         params = self.config.params
-        flowParams = self.database.getFlowOnephase(
-            params["label"],
-            params["direction"],
-            params["alpha"],
-            self.exec_id
-        )
+        flowParams = self._query_database("flowonephase")
 
         logger.info("Computing post process for {} with direction = {} and alpha = {}".format(
             params["label"], params["direction"], params["alpha"]
         ))
 
         if flowParams.flowStatus == "done":
-            flowParams.flowRate = postprocess.flowRate("outlet", self.casepath)
+            if flowParams.flowRate is None and self.config["overwrite"] is not True:
+                flowParams.flowRate = postprocess.flowRate("outlet", self.casepath)
 
         self.database.csave(flowParams)
         
@@ -335,15 +326,43 @@ class UltimateRunner(object):
         
         for current in stages:
             if current == "shape":
+                params = self._query_database("shape")
+
+                #   check database entry
+                if params.shapeStatus == "done" and self.config["overwrite"] is not True:
+                    logger.info("Successful shape entry exists, skipping ...")
+                    continue
+
                 self.compute_shape()
 
             if current == "mesh":
+                params = self._query_database("mesh")
+
+                #   check database entry
+                if params.meshStatus == "done" and self.config["overwrite"] is not True:
+                    logger.info("Successful mesh entry exists, skipping ...")
+                    continue
+
                 self.compute_mesh()
 
             if current == "flow":
+                params = self._query_database("flowonephase")
+
+                #   check database entry
+                if params.flowStatus == "done" and self.config["overwrite"] is not True:
+                    logger.info("Successful flow entry exists, skipping ...")
+                    continue
+
                 self.compute_flow()
 
             if current == "postProcess":
+                params = self._query_database("flowonephase")
+
+                #   check database entry
+                # if params.flowStatus == "done" and self.config["overwrite"] is not True:
+                #    logger.info("Successful flow entry exists, skipping ...")
+                #    continue
+
                 self.compute_postprocess()
             
             if current == stage or current == "all":
