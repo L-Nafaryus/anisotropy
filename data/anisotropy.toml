@@ -1,0 +1,57 @@
+[[structures]]
+label = "simple"
+alpha = [ 0.01, 0.27,]
+alphaStep = 0.005
+directions = [ [ 1.0, 0.0, 0.0,], [ 0.0, 0.0, 1.0,], [ 1.0, 1.0, 1.0,],]
+r0 = 1
+filletsEnabled = true
+pressureInlet = 1
+pressureOutlet = 0
+pressureInternal = 0
+velocityInlet = [ 0.0, 0.0, 0.0,]
+velocityInternal = [ 0.0, 0.0, 0.0,]
+density = 1000
+viscosity = 0.001
+scale = [ 1e-5, 1e-5, 1e-5,]
+
+[[structures]]
+label = "bodyCentered"
+alpha = [ 0.01, 0.16,]
+alphaStep = 0.005
+directions = [ [ 1.0, 0.0, 0.0,], [ 0.0, 0.0, 1.0,], [ 1.0, 1.0, 1.0,],]
+r0 = 1
+filletsEnabled = true
+pressureInlet = 1
+pressureOutlet = 0
+pressureInternal = 0
+velocityInlet = [ 0.0, 0.0, 0.0,]
+velocityInternal = [ 0.0, 0.0, 0.0,]
+density = 1000
+viscosity = 0.001
+scale = [ 1e-5, 1e-5, 1e-5,]
+
+[[structures]]
+label = "faceCentered"
+alpha = [ 0.01, 0.12,]
+alphaStep = 0.005
+directions = [ [ 1.0, 0.0, 0.0,], [ 0.0, 0.0, 1.0,], [ 1.0, 1.0, 1.0,],]
+r0 = 1
+filletsEnabled = true
+pressureInlet = 1
+pressureOutlet = 0
+pressureInternal = 0
+velocityInlet = [ 0.0, 0.0, 0.0,]
+velocityInternal = [ 0.0, 0.0, 0.0,]
+density = 1000
+viscosity = 0.001
+scale = [ 1e-5, 1e-5, 1e-5,]
+
+[options]
+nprocs = 4
+stage = "shape"
+overwrite = false
+database = "anisotropy.db"
+build = "build"
+logs = "logs"
+shapefile = "shape.step"
+meshfile = "mesh.mesh"
