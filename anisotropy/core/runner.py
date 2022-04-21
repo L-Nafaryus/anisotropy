@@ -189,7 +189,16 @@ class UltimateRunner(object):
             shapeParams.shapeStatus = "done"
             shapeParams.volume = shape.shape.volume * np.prod(params["scale"])
             shapeParams.volumeCell = shape.cell.volume * np.prod(params["scale"])
+            shapeParams.radius = shape.radius
+            shapeParams.fillets = shape.fillets
             shapeParams.porosity = shapeParams.volume / shapeParams.volumeCell
+            shapeParams.areaOutlet = np.sum([ 
+                face.mass for face in shape.shape.faces if face.name == "outlet" 
+            ]) * params["scale"][0] ** 2
+            shapeParams.length = shape.length * params["scale"][0]
+            shapeParams.areaCellOutlet = np.sum([ 
+                face.mass for face in shape.cell.faces if face.name == "outlet" 
+            ]) * params["scale"][0] ** 2
 
         #   commit parameters
         shapeParams.shapeExecutionTime = timer.elapsed()
@@ -327,7 +336,7 @@ class UltimateRunner(object):
         for current in stages:
             if current == "shape":
                 params = self._query_database("shape")
-
+                
                 #   check database entry
                 if params.shapeStatus == "done" and self.config["overwrite"] is not True:
                     logger.info("Successful shape entry exists, skipping ...")

@@ -31,6 +31,7 @@ def simple(alpha: float, direction: list | ndarray, **kwargs) -> Periodic:
     pc.__dict__.update(kwargs)
     pc.L = 2 * pc.r0
     pc.direction = np.asarray(direction)
+    pc.length = 0.
 
     #   additional attributes
     pc.cell: ng_occ.Solid = None
@@ -130,6 +131,7 @@ def simple(alpha: float, direction: list | ndarray, **kwargs) -> Periodic:
 
     vecFlow = utils.normal(inletface)
     pc.cell = inletface.Extrude(extr, ng_occ.Vec(*vecFlow))
+    pc.length = extr
     
     #   Boundary faces
     symetryId = 0
@@ -189,6 +191,7 @@ def body_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
     #   additional attributes
     pc.cell: ng_occ.Solid = None
     pc.lattice: ng_occ.Solid = None
+    pc.length = 0.
 
     #   constants   
     zero = ng_occ.Pnt(0, 0, 0)
@@ -292,6 +295,7 @@ def body_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
 
     vecFlow = utils.normal(inletface)
     pc.cell = inletface.Extrude(extr, ng_occ.Vec(*vecFlow))
+    pc.length = extr
     
     #   Boundary faces
     symetryId = 0
@@ -347,6 +351,7 @@ def face_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
     pc.__dict__.update(kwargs)
     pc.L = pc.r0 * 4 / np.sqrt(2)
     pc.direction = np.asarray(direction)
+    pc.length = 0.
 
     #   additional attributes
     pc.cell: ng_occ.Solid = None
@@ -374,7 +379,6 @@ def face_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
                 x = x0 + xn * 2 * pc.r0
                 x2 = x20 + xn * 2 * pc.r0 + pc.r0
 
-                # TODO: fix rotations (arcs intersection -> incorrect boolean operations
                 spheres.append(
                     ng_occ.Sphere(ng_occ.Pnt(x, y, z), pc.radius)
                     .Rotate(ng_occ.Axis(ng_occ.Pnt(x, y, z), ng_occ.X), 45)
@@ -471,6 +475,7 @@ def face_centered(alpha: float, direction: list | ndarray, **kwargs) -> Periodic
 
     vecFlow = utils.normal(inletface)
     pc.cell = inletface.Extrude(extr, ng_occ.Vec(*vecFlow))
+    pc.length = extr
     
     #   Boundary faces
     symetryId = 0

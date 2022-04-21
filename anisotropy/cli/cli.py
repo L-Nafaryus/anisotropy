@@ -135,7 +135,6 @@ def compute(path, configFile, nprocs, stage, overwrite, params, verbose, executi
         if v is not None:
             config.update(**{ k: v })
 
-    print(config.options)
     if pid:
         pid = pathlib.Path(pid).resolve()
 

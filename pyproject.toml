@@ -41,6 +41,7 @@ dash-bootstrap-components = {version = "^1.0.2", optional = true, extras = ["gui
 meshio = "^5.2.2"
 vtk = "^9.1.0"
 dash-vtk = {version = "^0.0.9", optional = true, extras = ["gui"]}
+lz = "^0.11.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

@@ -6,6 +6,7 @@ from numpy import ndarray
 import peewee as pw
 import pathlib
 import time
+import pandas as pd
 
 from . import tables 
 
@@ -255,3 +256,54 @@ class Database(pw.SqliteDatabase):
                 table = query.get() if query.exists() else None
 
         return table
+
+    def load(
+        self, 
+        field: str,
+        execution: int = None,
+        label: str = None, 
+        direction: list[float] | ndarray = None
+    ):
+        execution = execution or self.getLatest()
+
+        for table in self.tables:
+            try:
+                column = getattr(table, field)
+            
+            except AttributeError:
+                pass
+
+            else:
+                break
+
+        query = table.select(tables.Shape.alpha, column, tables.Shape.direction, tables.Shape.label)
+
+        for current in reversed(self.tables[ :self.tables.index(table)]):
+            query = query.join(table, pw.JOIN.LEFT_OUTER)
+            
+        query = (
+            query.switch(tables.Shape)
+            .where(tables.Shape.exec_id == execution)
+            .order_by(tables.Shape.label, tables.Shape.direction, tables.Shape.alpha)
+        )
+        resp = None
+
+        with self:
+            if query.exists():
+                resp = []
+                for row in query.dicts():
+                    for k in row.keys():
+                        if type(row[k]) == list:
+                            row[k] = str(row[k])
+
+                    resp.append(row)
+            
+        resp = pd.DataFrame(resp)
+
+        if label is not None:
+            resp = resp[resp.label == label]
+        
+        if direction is not None:
+            resp = resp[resp.direction == direction]
+        
+        return resp[field]

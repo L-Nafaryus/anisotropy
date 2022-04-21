@@ -42,6 +42,10 @@ class Shape(pw.Model):
     volume = pw.FloatField(null = True)
     porosity = pw.FloatField(null = True)
 
+    areaOutlet = pw.FloatField(null = True)
+    length = pw.FloatField(null = True)
+    areaCellOutlet = pw.FloatField(null = True)
+
     class Meta:
         database = database_proxy
         table_name = "shapes"
