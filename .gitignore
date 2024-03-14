@@ -26,3 +26,4 @@ env/
 dist/
 doc/anisotropy/*
 !doc/anisotropy/.gitkeep
+/.idea
